@@ -1,0 +1,11 @@
+{
+  "name": "@volleyball-mythics/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.91.0",
+    "@volleyball-mythics/protocol": "*"
+  }
+}
