@@ -14,3 +14,10 @@
 - Verificação: a mesma suíte passou com 15/15. Casos cobrem bola exatamente na linha, fora, quarto contato, mudança de lado, contatos consecutivos, toque de bloqueio e saque expirado.
 - Implementação: cálculo de ponto usa último lado a tocar; toque muda posse e zera contagem do outro time; bloqueio não incrementa contagem; serviço puro retorna lado que recebe ponto em timeout.
 - Limitações: separação física da bola entre contatos é mantida pela simulação/servidor, não por este módulo de regras.
+
+## 002-T3 — Movimento e bola em passo fixo
+
+- Requisito: simulação reproduzível por ticks, movimento limitado e colisões com chão/rede mesmo atravessando o plano entre endpoints.
+- Verificação: suíte 15/15 passou; inclui repetição de 30 ticks, queda a 100 m/s e atravessamento da rede a 120 m/s em um tick.
+- Implementação: integração por passo fixo, colisão varrida por fração temporal, bounds para atleta e normalização de diagonal.
+- Limitações: colisão da rede usa reflexão simplificada; rotação, efeito, colisão entre atletas e física artística ficam para spike/render e gameplay posterior.
