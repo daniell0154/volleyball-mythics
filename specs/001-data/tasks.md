@@ -9,7 +9,7 @@ Todas referenciam R01; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: supabase/migrations.
   - Aceite/verificação: Aplicar em banco vazio; FK, uniques, atributos 1–100 e placares 0–6 rejeitam dados inválidos.
 
-- [ ] 001-T3 — Aplicar políticas e identidade guest
+- [x] 001-T3 — Aplicar políticas e identidade guest
   - Destinos: supabase/migrations, apps/web/src/auth.
   - Aceite/verificação: Dois guests distintos não alteram catálogo ou resultados; sessão persiste no reload.
 

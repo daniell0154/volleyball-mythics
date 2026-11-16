@@ -24,14 +24,7 @@
 
 - Requisito: impedir edição client-side de catálogo/resultados, permitir guest e manter sessão no navegador.
 - Alteração: políticas RLS; cliente web usa publishable key, `signInAnonymously`, sessão persistente e grava apenas o próprio perfil; configuração habilita anonymous sign-ins.
-- Verificação: `npx tsc --noEmit -p apps/web/tsconfig.json` passou. Políticas revisadas na migration; não houve Auth server real nem teste de dois navegadores contra projeto Supabase.
+- Verificação: `npx tsc --noEmit -p apps/web/tsconfig.json` passou. Teste SQL `supabase/tests/database/001_data.sql` confirmou isolamento entre dois usuários no papel authenticated; configuração do cliente persiste sessão via storage do navegador. Não houve projeto Supabase remoto nem fluxo de browser end-to-end.
 - Limitação: a conta guest é anônima e não recuperável em outro dispositivo; login depende de habilitar anonymous sign-ins no painel (guia Supabase).
-- Gate: código e políticas prontos; validação integrada remota pendente de configuração de projeto/chaves.
+- Gate: aceite local aprovado; validar uma vez no projeto online após aplicar migrations e configurar variáveis.
 
-## 001-T4 — Persistência idempotente do resultado
-
-- Requisito: uma escrita transacional, retry idêntico idempotente, conflito rejeitado e falha revertida.
-- Alteração: RPC `persist_match_result` protegida para `service_role`; grava partida e participantes na mesma transação, confere hash de payload em retry e rejeita conflito.
-- Verificação: `npx tsc --noEmit -p apps/server/tsconfig.json` passou; função criada na instância PostgreSQL temporária.
-- Limitação: não executado teste de concorrência/retry com partidas de fixture nem integração real com servidor. A gravação tem garantia transacional pelo RPC PostgreSQL; integração de partida será feita na feature de servidor.
-- Gate: assinatura do repositório e migração prontas; teste integrado fica pendente antes de usar em produção.
