@@ -5,7 +5,7 @@ Todas referenciam R02; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: packages/domain/src/match.
   - Aceite/verificação: Cobrir transições permitidas, 6–5, após finished e rally duplicado.
 
-- [ ] 002-T2 — Toques, limites e saque
+- [x] 002-T2 — Toques, limites e saque
   - Destinos: packages/domain/src/rules.
   - Aceite/verificação: Cobrir linha dentro, fora por último toque, quarto toque, consecutivos 1v1/2v2 e bloqueio.
 
