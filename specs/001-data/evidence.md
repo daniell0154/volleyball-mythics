@@ -28,3 +28,11 @@
 - Limitação: a conta guest é anônima e não recuperável em outro dispositivo; login depende de habilitar anonymous sign-ins no painel (guia Supabase).
 - Gate: aceite local aprovado; validar uma vez no projeto online após aplicar migrations e configurar variáveis.
 
+## 001-T4 — Persistência idempotente do resultado
+
+- Requisito: escrita transacional; retry idêntico idempotente, conflito rejeitado e falha revertida.
+- Alteração: RPC `persist_match_result` protegida para `service_role`; grava partida e participantes na mesma transação, confere hash do payload e rejeita conflito. Repositório TypeScript do servidor chama apenas a RPC.
+- Verificação: `npx tsc --noEmit -p apps/server/tsconfig.json` passou; `supabase/tests/database/001_data.sql` confirmou retry idempotente sem duplicação e rejeitou payload conflitante. Ambas as migrations foram aplicadas em PostgreSQL Supabase 17.12 temporário.
+- Limitação: teste de sessão simultânea e integração com servidor de partidas/projeto online ficam para features seguintes. A unicidade da partida no PostgreSQL serializa concorrência para o mesmo ID.
+- Gate: implementação e verificação local aprovadas.
+

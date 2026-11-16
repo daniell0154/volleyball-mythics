@@ -13,7 +13,7 @@ Todas referenciam R01; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: supabase/migrations, apps/web/src/auth.
   - Aceite/verificação: Dois guests distintos não alteram catálogo ou resultados; sessão persiste no reload.
 
-- [ ] 001-T4 — Persistir resultado atomicamente
+- [x] 001-T4 — Persistir resultado atomicamente
   - Destinos: apps/server/src/persistence.
   - Aceite/verificação: Retry idêntico retorna mesmo registro; concorrência não duplica; conflito rejeitado; falha rollback.
 
