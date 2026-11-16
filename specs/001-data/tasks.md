@@ -5,7 +5,7 @@ Todas referenciam R01; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: package.json, packages/protocol/src.
   - Aceite/verificação: Typecheck dos contratos e imports entre pacotes; registrar versões escolhidas.
 
-- [ ] 001-T2 — Criar migrações de personagens versionados, perfis, partidas e participantes
+- [x] 001-T2 — Criar migrações de personagens versionados, perfis, partidas e participantes
   - Destinos: supabase/migrations.
   - Aceite/verificação: Aplicar em banco vazio; FK, uniques, atributos 1–100 e placares 0–6 rejeitam dados inválidos.
 
