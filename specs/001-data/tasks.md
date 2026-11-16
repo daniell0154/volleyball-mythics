@@ -1,7 +1,7 @@
 # Tarefas — Banco e identidade
 Todas referenciam R01; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 001-T1 — Bootstrap workspace e contratos
+- [x] 001-T1 — Bootstrap workspace e contratos
   - Destinos: package.json, packages/protocol/src.
   - Aceite/verificação: Typecheck dos contratos e imports entre pacotes; registrar versões escolhidas.
 
