@@ -1,7 +1,7 @@
 # Tarefas — Regras e simulação
 Todas referenciam R02; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 002-T1 — Estados e pontuação
+- [x] 002-T1 — Estados e pontuação
   - Destinos: packages/domain/src/match.
   - Aceite/verificação: Cobrir transições permitidas, 6–5, após finished e rally duplicado.
 
