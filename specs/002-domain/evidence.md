@@ -21,3 +21,10 @@
 - Verificação: suíte 15/15 passou; inclui repetição de 30 ticks, queda a 100 m/s e atravessamento da rede a 120 m/s em um tick.
 - Implementação: integração por passo fixo, colisão varrida por fração temporal, bounds para atleta e normalização de diagonal.
 - Limitações: colisão da rede usa reflexão simplificada; rotação, efeito, colisão entre atletas e física artística ficam para spike/render e gameplay posterior.
+
+## 002-T4 — Configuração física e atributos
+
+- Requisito: configuração versionada, parâmetros arcade documentados, validação de NaN/inf, limites físicos e atributos válidos.
+- Verificação: suíte final 15/15 passou; casos cobrem NaN, infinito, passo maior que 1/30 s, atributo acima de 100 e média geral arredondada.
+- Parâmetros v1: 60 Hz, gravidade 9,81 m/s², bola raio 0,11 m, rede 2,43 m, quadra 9 × 18 m, restituição da rede 0,45, velocidade 2–8 m/s, salto 4–9 m/s, saque 8 s, countdown 3 s e intervalo 2 s.
+- Limitações: parâmetros são ponto de partida técnico e devem ser ajustados no spike de jogabilidade; alterações que mudem replay devem aumentar `version`.
