@@ -20,6 +20,19 @@ O script verifica teclado e blur com eventos reais, recria a cena dez vezes, exi
 
 O p95 mede a cadência total da aplicação, não tempo isolado da GPU. Dez recriações e um canvas verificam o ciclo de vida visível, sem alegar análise exaustiva de memória do driver. O adaptador libera explicitamente geometrias, materiais e contexto. O benchmark usa o servidor de desenvolvimento; os avisos do build são registrados em evidence.md.
 
+## Carga 2v2 da spec 007
+
+Compile o servidor e execute o benchmark padrão para 10 salas 2v2, por 15 minutos:
+
+```powershell
+npm.cmd run build --workspace @volleyball-mythics/server
+node docs/benchmarks/007-load.mjs
+```
+
+O relatório é salvo em `docs/benchmarks/007-local.json` com CPU, memória, Node, p95 e máximo do trabalho de simulação por tick de 60 Hz, atraso do agendamento, reinícios de partida, snapshots e fanout serializado. A saída `passed` exige p95 <=16,7 ms, duração completa e mesmo número de ticks nas dez salas. `--duration-seconds 10` serve apenas para smoke test e não satisfaz o gate de 15 minutos. `--out <arquivo>` permite escolher outro destino.
+
+Esse ensaio mede o runtime e a serialização/fanout síncrona em uma máquina local; não substitui uma carga distribuída ou um hardware de referência aprovado. A condição de rede com quatro clientes usa o teste de integração `apps/server/tests/network-latency.test.mjs`, que injeta atraso e jitter em WebSockets locais e compara o placar após a entrega estabilizar.
+
 Calibração física técnica, sem renderer ou UI:
 
 ```powershell

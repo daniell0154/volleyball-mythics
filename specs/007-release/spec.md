@@ -1,5 +1,5 @@
 # Qualidade e beta web
-Status: implementação em andamento; 007-T1 concluída.
+Status: implementação em andamento; 007-T1 e 007-T2 concluídas.
 Requisito R07: Site permite jogar com quatro amigos com desempenho medido.
 
 ## Aceitação
