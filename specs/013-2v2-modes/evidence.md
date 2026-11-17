@@ -22,6 +22,8 @@ Web 24/24, typecheck e build completos passaram. Build sem chunk Demo/Game; chun
 
 ## 013-T4 — aceite técnico executado; revisão do proprietário pendente
 
+Pedido posterior do proprietário: facilitar acesso ao admin por botão. Link do cabeçalho foi destacado como “Admin do elenco” e incluído na prévia 013, cujo cabeçalho de fixture não mostrava o acesso. Prévia aponta para /admin da build local servida em 3016; produção usa /admin no mesmo site. Não altera autorização nem elimina necessidade da configuração Supabase da 012. Build web e git diff --check passaram após esse ajuste de navegação.
+
 `npm run test --workspace @volleyball-mythics/server`: 43/43 passou. Três testes adicionais em 2v2-acceptance.test.mjs verificam início incompleto recusado, suspensão com tick congelado, retorno em 19s/contagem 3s, prazo 20s, orçamento acumulado 40s, cancelamento com ambos os lados incompletos, abandono, sexto ponto persistido com quatro participantes e necessidade dos quatro votos. Relógio controlado e repositório de resultados em memória; não é evidência de espera WAN real.
 
 `node supabase/tests/database/005_match.cjs`: passou com PostgreSQL/WASM local, incluindo leitura de personagens iniciais e gravação/leitura de resultado legado 1v1, resultado cancelado, idempotência, conflito, rollback e permissões. Sem nova migration nesta spec; nenhuma enum/história apagada. Não alega validação remota do Supabase.
