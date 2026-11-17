@@ -20,4 +20,4 @@ Para revisão interativa, iniciar Vite como acima e executar `node docs/acceptan
 
 Para operar o admin real, aplicar migrations 005/006 e provisionar a conta conforme docs/admin/012-operations.md; abrir /admin usando configuração pública do Supabase. Não usar credenciais reais no preview de teste.
 
-Pendente: revisão da experiência pelo proprietário e validação do login/RPC no Supabase configurado. Sem evidência de Firefox/Safari ou benchmark de renderer nesta spec; não altera física, rede de inputs ou modelo inicial aprovado. Não iniciar 013 antes de integrar 012.
+Experiência aprovada pelo proprietário, que adiou explicitamente a configuração/validação de login/RPC no Supabase para depois. Instruções em docs/admin/012-operations.md; nenhum teste remoto é inferido da aprovação. Sem evidência de Firefox/Safari ou benchmark de renderer nesta spec; não altera física, rede de inputs ou modelo inicial aprovado. Não iniciar 013 antes de integrar 012.

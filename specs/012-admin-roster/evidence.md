@@ -28,3 +28,7 @@ Chrome 157.0.8103.79 em 1440x1100: formulário/preenchimento/save/publicação/p
 
 Web 24/24 passou com teste do namespace de avatar dinâmico, além de 40/40 do servidor e SQL T1/T2. Typecheck dos workspaces, build completo e git diff --check passaram na integração final. Não foram aplicadas migrations no Supabase remoto nem provisionada conta do proprietário: checkout sem .env (Test-Path .env = False). Bootstrap e operação documentados, sem inventar conta ou publicar fixtures. T4 permanece pendente da revisão do proprietário e validação Auth/RPC remota. Abrir PR draft com limites explícitos; nenhuma aprovação visual inferida do smoke. Próxima spec será 013 somente após aceite/integração da 012.
 
+## Aceite final do proprietário
+
+Após a revisão, o proprietário respondeu: “aprovado, depois eu configuro no supabase. so me passa o que eu preciso subir.” Aprovação da experiência registrada; configuração/validação remota explicitamente adiada para o proprietário. Gate T4 concluído pelos critérios desse aceite, preservando os limites dos ensaios locais. Guia de operação ampliado com ordem dos arquivos, conta admin, variáveis e verificações após configuração. A PR #15 passa a pronta para revisão; sem merge/deploy. Atualização apenas documental, verificada com git diff --check; não repetir ensaios de código sem mudança de implementação. A 013 só é elegível após integrar a 012.
+
