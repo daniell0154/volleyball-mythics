@@ -1,5 +1,5 @@
 # Modelos articulados e identidade visual
-Status: proposta; não implementada.
+Status: implementada; T1–T4 concluídas, modelos finais aprovados pelo proprietário e custo medido. Aguardando integração da PR #11.
 Requisito R08: modelos articulados e identidade visual para a versão de tese.
 
 ## Escopo e referência

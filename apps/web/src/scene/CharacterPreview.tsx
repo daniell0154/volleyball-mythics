@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { createAvatar, disposeAvatar } from "./avatar.js";
+import { disposeAvatar } from "./avatar.js";
+import { createPresentationAvatar } from "./avatarManifest.js";
 export function CharacterPreview({ assetKey, team }: { assetKey: string; team: "A" | "B" }) {
   const host = useRef<HTMLDivElement>(null);
   const [error, setError] = useState(false);
@@ -10,7 +11,7 @@ export function CharacterPreview({ assetKey, team }: { assetKey: string; team: "
     try { renderer = new THREE.WebGLRenderer({ antialias: true }); } catch { setError(true); return; }
     const scene = new THREE.Scene(); scene.background = new THREE.Color("#183449");
     let avatar: THREE.Group;
-    try { avatar = createAvatar(assetKey, team); } catch { renderer.dispose(); renderer.forceContextLoss(); setError(true); return; }
+    try { avatar = createPresentationAvatar(assetKey, team); } catch { renderer.dispose(); renderer.forceContextLoss(); setError(true); return; }
     setError(false); avatar.rotation.y = -0.25; scene.add(avatar);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x35536a, 3));
     const light = new THREE.DirectionalLight(0xffffff, 2); light.position.set(2, 4, 3); scene.add(light);

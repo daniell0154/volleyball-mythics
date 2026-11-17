@@ -44,10 +44,14 @@ export function createAvatar(assetKey: string, team: "A" | "B"): THREE.Group {
 }
 
 export function disposeAvatar(group: THREE.Object3D): void {
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
   group.traverse((object) => {
     if (object instanceof THREE.Mesh) {
-      object.geometry.dispose();
-      for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
+      geometries.add(object.geometry);
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
     }
   });
+  for (const geometry of geometries) geometry.dispose();
+  for (const material of materials) material.dispose();
 }
