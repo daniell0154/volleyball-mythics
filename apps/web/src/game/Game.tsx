@@ -48,6 +48,7 @@ export function Game({ createScene }: { createScene: SceneFactory }) {
       <button onClick={() => { keyboard.current.clear(); setInputPhase(inputPhase === "rally" ? "serving" : "rally"); }}>Fase de entrada: {inputPhase === "rally" ? "rally" : "saque"}</button>
     </View>
     {error && <Text role="alert" style={{ color: "#ffceab" }}>{error}</Text>}
+    {error && <div role="status" aria-label="Resumo textual da demonstração sem gráficos" style={{ padding: 16, color: "#fff", background: "#102236", border: "2px solid #fff" }}><strong>Resumo da demonstração</strong><p>Quadra 3D indisponível. Os gráficos exigem WebGL. Controles: WASD mover, Espaço saltar, J receber, K levantar, L atacar ou sacar, U especial. Use também os botões de ação quando estiver em uma partida online.</p></div>}
     <div ref={host} tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra escolar 3D com bola e quatro atletas. Clique para usar o teclado." style={{ width: "100%", height: "min(72vh, 720px)", minHeight: 280 }} />
     <Text style={{ color: "#b9d9e8" }}>WASD mover · Espaço saltar · J receber · K levantar · L atacar/sacar · U especial. Intenções em demonstração; os atletas ainda seguem snapshots sintéticos.</Text>
     <Text style={{ color: "#f0f6ff" }}>{inputDisplay}</Text>

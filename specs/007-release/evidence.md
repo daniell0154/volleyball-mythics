@@ -17,3 +17,17 @@ Base: branch `feat/007-release`, criada sobre `main` após merge da PR #8 (commi
 - Resultado: `docs/benchmarks/007-local.json`: 54.000 chamadas de tick; p95 0,3277 ms (limite 16,7 ms), máximo isolado 27,7776 ms, atraso de agendamento p95 14,107 ms; 180.180 snapshots e 720.720 entregas contabilizadas; 80 partidas reiniciadas ao chegar ao sexto ponto; tick final idêntico nas dez salas. O teste de rede passou sem divergência final. Nenhuma capacidade foi ampliada.
 - Ambiente: Windows 10.0.26200, Node v22.14.0, Intel Core i7-1185G7, 8 núcleos lógicos, 15,7 GiB. O benchmark mede o runtime e serialização/fanout local; o atraso de rede é simulado em clientes WebSocket loopback. Este computador não foi declarado hardware de referência e o ensaio não prova latência WAN nem capacidade de produção.
 - Gate: aprovado para os limites medidos neste ambiente; manter escala atual até hardware/região de produção serem definidos.
+
+## 007-T3 — UX e navegadores
+
+- Implementação: placar/fase/equipe em texto, botões com rótulos e teclas, região de status/alerta, fallback informativo quando WebGL falha, controle de qualidade textual e volume de sinais de ponto ajustável com preferência local. O escopo da versão de tese foi atualizado conforme confirmação do proprietário: Samuel e Caio são iniciais; o elenco pode crescer depois.
+- Cenários/comando: `node .test-build/007-smoke.cjs` abriu Chrome e Edge desktop; ambos renderizaram um canvas, mostraram instruções de teclado e não tiveram erros JS. Com `--disable-webgl`, Chrome exibiu o resumo textual de fallback da demonstração.
+- Navegadores/versões: Chrome 157.0.8103.79 e Edge 157.0.4341.60 passaram smoke. Firefox não está instalado; Safari requer macOS e não foi executado. O fallback de partida online e o controle de volume com uma sessão conectada não foram exercitados no browser.
+- Limites: smoke não substitui benchmark prolongado nem atesta as versões estáveis em outros sistemas. Não declarar compatibilidade de Firefox/Safari até execução e registro.
+- Gate: parcial; manter T3 aberta para Firefox/Safari e validação online.
+
+## 007-T4 — Preparar entrega
+
+- Implementação documental: `docs/deployment/007-release.md` registra isolamento dos ambientes, ordem/reconciliação das migrations, backup, restauração, rollback seguro, gestão de segredos e passos de smoke em staging.
+- Limite: nenhum projeto de staging foi identificado/autorizado neste ensaio; não houve backup externo, migration remota, deploy ou custo.
+- Gate: documentação preparada; staging pendente, portanto T4 permanece aberta.

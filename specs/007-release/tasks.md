@@ -11,9 +11,9 @@ Todas referenciam R07; executar em ordem. Cada tarefa depende da anterior e das 
 
 - [ ] 007-T3 — UX e navegadores
   - Destinos: apps/web/src, docs/acceptance.
-  - Aceite/verificação: Chrome/Firefox/Edge/Safari desktop estáveis com versão registrada; fallback gráfico, contraste, volume, teclado e feedback além de cor.
+  - Aceite/verificação: Chrome/Firefox/Edge/Safari desktop estáveis com versão registrada; fallback gráfico, contraste, volume, teclado e feedback além de cor. Chrome/Edge e fallback da demonstração medidos; Firefox/Safari e fallback online permanecem pendentes.
 
 - [ ] 007-T4 — Preparar entrega
   - Destinos: docs/deployment.
-  - Aceite/verificação: Descrever migrações, rollback, backup/restauração, ambientes e segredos; ensaio de staging. Publicação e custos só com autorização correspondente.
+  - Aceite/verificação: roteiro em `docs/deployment/007-release.md`; ensaio real de staging ainda pendente. Publicação e custos só com autorização correspondente.
 
