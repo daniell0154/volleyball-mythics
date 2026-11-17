@@ -56,10 +56,15 @@ export interface ClientEnvelope<TType extends string, TPayload> {
 
 export interface CreateRoomPayload {
   mode: MatchMode;
+  matchKind?: "vsBots";
+  humanSlots?: 1 | 2;
+  difficulty?: BotDifficulty;
 }
+export type BotDifficulty="easy"|"normal"|"hard";
 
 export interface JoinRoomPayload {
   code: string;
+  acceptBots?: true;
 }
 
 export interface SelectCharacterPayload {
@@ -102,6 +107,7 @@ export interface ServerMessage<TType extends string, TPayload> {
 }
 
 export type ServerErrorCode =
+  | "client_update_required"
   | "mode_unavailable"
   | "unauthorized"
   | "invalid_message"
@@ -111,15 +117,20 @@ export type ServerErrorCode =
   | "forbidden"
   | "rate_limited";
 
-export interface RoomMember {
-  userId: string;
+interface MemberBase {
   team: Team;
   slot: 0 | 1;
   character: { id: string; version: number } | null;
   ready: boolean;
   connected: boolean;
 }
+export type RoomMember = MemberBase & ({userId:string;participantId?:string;controller?:"human"}|{userId?:never;participantId:string;controller:"bot"});
 export interface RoomState {
+  matchKind?: "humans"|"vsBots";
+  humanSlots?: 1|2;
+  difficulty?: BotDifficulty;
+  botSeed?: number;
+  botPolicyVersion?: 1;
   roomId: string;
   code: string;
   mode: MatchMode;

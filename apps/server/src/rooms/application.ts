@@ -35,7 +35,7 @@ export class RoomApplication {
     member.connected = true; this.hooks.reconnect?.(room, session.userId); this.changed(room);
   }
   broadcast(room: RoomState, type: string, payload: unknown): void {
-    for (const member of room.members) this.sessions.get(member.userId)?.send(type, payload);
+    for (const member of room.members) if(member.userId)this.sessions.get(member.userId)?.send(type, payload);
   }
   sendTo(userId: string, type: string, payload: unknown): void { this.sessions.get(userId)?.send(type, payload); }
   private changed(room: RoomState): void { this.broadcast(room, "roomState", room); }

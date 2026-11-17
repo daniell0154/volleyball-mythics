@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { MatchMode, RoomState, ServerErrorCode } from "@volleyball-mythics/protocol";
+import {humans} from "./participants.js";
 export class RoomError extends Error { constructor(public readonly code: ServerErrorCode) { super(code); } }
 export class RoomRegistry {
   private rooms = new Map<string, RoomState>();
@@ -10,7 +11,7 @@ export class RoomRegistry {
     return room;
   }
   all(): readonly RoomState[] { return [...this.rooms.values()]; }
-  destroy(room: RoomState): void { for (const member of room.members) this.membership.delete(member.userId); this.rooms.delete(room.code); }
+  destroy(room: RoomState): void { for (const member of humans(room)) this.membership.delete(member.userId); this.rooms.delete(room.code); }
   create(userId: string, mode: MatchMode): RoomState {
     if (this.membership.has(userId)) throw new RoomError("invalid_state");
     let code: string;
@@ -36,14 +37,14 @@ export class RoomRegistry {
     }
     throw new RoomError("room_full");
   }
-  invalidate(room: RoomState): void { for (const member of room.members) member.ready = false; }
+  invalidate(room: RoomState): void { for (const member of room.members) member.ready = member.controller==="bot"&&member.character!==null; }
   leave(userId: string): RoomState | null {
     const room = this.roomFor(userId);
     if (room.status !== "lobby" && room.status !== "finished") throw new RoomError("invalid_state");
     room.members = room.members.filter((member) => member.userId !== userId);
     this.membership.delete(userId); this.invalidate(room);
-    if (!room.members.length) { this.rooms.delete(room.code); return null; }
-    if (room.ownerId === userId) room.ownerId = room.members[0]!.userId;
+    if (!humans(room).length) { this.rooms.delete(room.code); return null; }
+    if (room.ownerId === userId) room.ownerId = humans(room)[0]!.userId;
     return room;
   }
 }
