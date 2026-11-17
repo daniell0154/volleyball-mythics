@@ -18,6 +18,14 @@ Ambiente: Windows, Node 26.13.1; dependências fixadas no package-lock.
 - Regressão: 15/15 testes do domínio passaram; typecheck de todos os workspaces e build web passaram. Build emite avisos de diretivas use client do RN Web e bundle acima de 500 kB (~840 kB antes de gzip).
 - Validação visual informada pelo proprietário em 2026-11-16: executou o roteiro local e confirmou tudo funcionando corretamente (visibilidade, redimensionamento, qualidade e recriação de cena). T2 aprovada; testes adicionais de navegador e medição de T4 registrados abaixo.
 
+## 003-T3 — Entrada e qualidade gráfica (R03)
+
+- Captura WASD normalizada, Espaço, J/K/L/U e L conforme fase (serve/attack); ações discretas sem repetição automática. Teclado restrito à quadra focada; blur de janela/quadra e aba oculta limpam movimento e ações pendentes. Cleanup remove listeners.
+- A UI mostra intenções, sem simular movimento ou determinar pontos; o consumo em rede será feito em 004. Baixa qualidade usa pixel ratio 1; alta limita a 2.
+- `npm.cmd run test --workspace @volleyball-mythics/web`: 4/4 testes passaram (câmera e três casos de teclado).
+- Edge 157 real automatizado via Playwright: pressionadas todas as teclas, conferidos movimentos normalizados, serve/attack por fase e limpeza no blur; dez recriações mantiveram um único canvas. Nenhum erro JavaScript até o início da medição.
+- Gate T3 aprovado. A apresentação ainda usa snapshots sintéticos; controle efetivo dos atletas depende do servidor.
+
 ## Reprodução e próximos aceites
 
 1. `npm.cmd ci` e `npm.cmd run dev --workspace @volleyball-mythics/web`. Abrir a URL local indicada pelo Vite.

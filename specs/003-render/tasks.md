@@ -9,7 +9,7 @@ Todas referenciam R03; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene.
   - Aceite/verificação: Visualizar rally em toda quadra; obstáculos decorativos não alteram colisão.
 
-- [ ] 003-T3 — Entrada e qualidade gráfica
+- [x] 003-T3 — Entrada e qualidade gráfica
   - Destinos: apps/web/src/input.
   - Aceite/verificação: WASD movimento, Espaço salto, J recepção, K levantamento, L ataque/saque conforme fase, U especial; blur limpa teclas.
 
