@@ -6,7 +6,7 @@ Todas referenciam R08; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Registrar vistas frontal/lateral e câmera de jogo de Samuel/Caio; definir silhuetas, proporções e paleta. Capturar baseline de quatro atletas e obter aceite da direção antes de produzir ambos.
 
-- [ ] 008-T2 — Rig e modelo reutilizável
+- [x] 008-T2 — Rig e modelo reutilizável
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Criar hierarquia com pivôs nomeados, volumes arredondados, mãos/pés e rosto legível. Ombros, cotovelos, joelhos e tornozelos giram sem separar membros. Hitboxes e atributos permanecem iguais.
 
