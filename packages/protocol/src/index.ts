@@ -109,6 +109,23 @@ export type ServerErrorCode =
   | "forbidden"
   | "rate_limited";
 
+export interface RoomMember {
+  userId: string;
+  team: Team;
+  slot: 0 | 1;
+  character: { id: string; version: number } | null;
+  ready: boolean;
+  connected: boolean;
+}
+export interface RoomState {
+  roomId: string;
+  code: string;
+  mode: MatchMode;
+  ownerId: string;
+  status: "lobby" | "active" | "suspended";
+  members: RoomMember[];
+}
+
 export type ServerResponse<T> =
   | ServerMessage<"ack", { requestId: string; result: T }>
   | ServerMessage<"error", { requestId: string; code: ServerErrorCode }>;

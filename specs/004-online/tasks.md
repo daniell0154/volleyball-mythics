@@ -5,7 +5,7 @@ Todas referenciam R04; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/server/src/network.
   - Aceite/verificação: Token inválido/expirado e payload excessivo rejeitados; não logar tokens.
 
-- [ ] 004-T2 — Criar e entrar em salas
+- [x] 004-T2 — Criar e entrar em salas
   - Destinos: apps/server/src/rooms.
   - Aceite/verificação: Código/link resolve mesma sala; concorrência respeita lotação; dono que sai no lobby transfere ao mais antigo.
 

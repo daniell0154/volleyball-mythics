@@ -10,3 +10,10 @@ Dependências 001/002 integradas; 003 integrada por merge da PR #4, commit 79245
 - `npm.cmd run test --workspace @volleyball-mythics/server`: 5 testes de contrato/transporte em sockets reais, com verificador injetado: token inválido, identidade expirada, comando sem autenticação, frame excessivo, identidade autenticada e limite de comandos.
 - Limitação: projeto Supabase na nuvem em preparação pelo proprietário; assinatura real, guest e catálogo remoto serão exercitados após configuração. Os testes locais não alegam validação end-to-end do Auth remoto.
 - Gate de transporte local aprovado; integração remota pendente.
+
+## 004-T2 — Salas privadas (R04)
+
+- Registro em memória com UUID, código aleatório de seis caracteres e associação única por identidade autenticada. Código de query `?room=CODE` e código digitado resolvem a mesma sala. Admissão síncrona, sem await entre capacidade e inserção.
+- Lotação 2/4, slots únicos por equipe; entrada/saída invalida prontidão; dono que sai transfere ao membro restante mais antigo e sala vazia expira.
+- Testes: seis tentativas concorrentes em cada modo preservam lotação; código extraído do link resolve a sala; transferência de dono e expiração de código verificadas.
+- Gate local aprovado; nenhum serviço remoto necessário para o registro de salas.
