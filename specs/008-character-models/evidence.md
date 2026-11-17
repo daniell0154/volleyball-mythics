@@ -22,3 +22,13 @@ Resultado T2: suíte web 10/10 passou.
 
 avatarManifest.ts mapeia explicitamente as duas chaves iniciais para athletic-v2; createAvatar v1 segue intacto e atende chaves fora do manifesto. Preview e cena usam createPresentationAvatar. O servidor não recebe código de modelo nem muda assetKeys/revisões publicadas; contracts.md registra essa decisão de compatibilidade. Chave desconhecida segue erro no construtor e placeholder na cena.
 Suíte web 11/11: repetição do resolvedor mantém dimensões e metadados, incluindo recriação de apresentação com a mesma chave após uma conexão ser reconstruída. Esse teste verifica o comportamento do renderer, não constitui novo ensaio de reconexão WebSocket real. Fonte de aparência é a mesma semente, tanto no preview quanto no jogo. Gate de implementação aprovado.
+
+## 008-T4 — Aceite visual e custo
+
+- Proprietário aprovou explicitamente: “Aprovo os dois modelos”, após apresentação de 008-models.png. O modelo segue a direção atlética autorizada. Rig estático pronto para animação na 009, sem declarar animações entregues.
+- Chrome 157.0.8103.79, Windows 11 Pro, i7-1185G7/Iris Xe/D3D11, 1280×720, DPR1, baixa, Vite/headless: 300.010 ms, 18.009 frames, p95 16,9 ms, máximo 49,8 ms, aba visível, zero exceções JS. Baseline 16,8 ms: +0,595%, dentro de 10% e p95 <=33,3 ms.
+- Um atleta: 41 chamadas de desenho, 4.756 triângulos. Dez ciclos de criação/render/descarte no mesmo renderer: 41 geometrias ativas e zero após descarte em todos; uma textura interna permanece constante (sem mapas de textura nos modelos). São contadores do renderer, não bytes de VRAM nem análise de heap.
+- Critério inicial de textura igual a zero marcou falha por cache interno estável. Corrigido para ausência de crescimento entre ciclos; JSON preserva amostras e recalcula somente o gate. Não foi removida amostra. Primeira tentativa de medição foi invalidada por HMR e descartada; o relatório corresponde à segunda execução contínua.
+- Capturas: 008-models.png e 008-candidate-court.png. Reprodução: 008-integration.md, script 008-candidate.cjs --candidate. O baseline antigo exige checkout histórico para não medir o manifesto novo.
+- Verificação: suíte web 11/11, typecheck e build passaram. Avisos anteriores de bundle >500kB e use client continuam. Nenhum código de servidor/domínio foi alterado, portanto o ensaio de carga da 007 não foi repetido nem apresentado como novo resultado.
+- Gate: aprovado no ambiente medido. Não é validação de Safari/Firefox, rede WAN ou capacidade de produção. Coerência revisada entre contrato, manifesto, preview e cena; T1–T4 completas. Próxima spec: 009, após integração da 008.

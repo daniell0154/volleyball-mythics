@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="UTF-8"><title>008 · Direção visual</title>
+<style>body{margin:0;padding:32px;background:#101d2b;color:#f0f5fa;font:16px system-ui}h1{margin:0}p{max-width:1000px;color:#b9cad9}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}article{background:#1c3043;border:1px solid #496579;border-radius:12px;padding:16px}canvas{width:100%;display:block}h2{font-size:18px}.proposal{display:none}strong{color:#edc775}</style>
+<h1>008 · Modelos atléticos</h1>
+<p>Samuel e Caio: modelos atléticos no estilo aprovado, com identidade derivada das sementes originais.</p>
+<div class="grid" id="current"></div><article class="proposal"><h2>Proposta · corpo base esportivo estilizado</h2><p>Volumes arredondados, ombros definidos, mãos e tênis distinguíveis. Uniforme azul/vermelho identifica a equipe. Rosto, cabelo e cores de pele do catálogo continuam determinísticos. Articulações serão construídas após aprovação.</p><div id="proposal"></div></article>
+<script type="module">
+import * as THREE from 'three';
+import {createPresentationAvatar as createAvatar} from '/apps/web/src/scene/avatarManifest.ts';
+window.reviewThree=THREE; const looks=[['Samuel','procedural:v1:male:2626328580'],['Caio','procedural:v1:male:2016838844']];
+function render(host,model,side,width=360,height=360){const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(1);renderer.setSize(width,height);host.append(renderer.domElement);const scene=new THREE.Scene();scene.background=new THREE.Color('#1c3043');scene.add(model,new THREE.HemisphereLight(0xffffff,0x435366,3));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(3,5,4);scene.add(light);const camera=new THREE.PerspectiveCamera(35,width/height,.1,100);camera.position.set(...side);camera.lookAt(0,1,0);renderer.render(scene,camera);}
+for(const [name,key]of looks)for(const [view,pos]of [['Frente',[0,1.3,4.3]],['Lado',[4.3,1.3,0]],['Distância de jogo',[2,4,9]]]){const card=document.createElement('article');card.innerHTML='<h2>'+name+' · '+view+'</h2>';document.querySelector('#current').append(card);render(card,createAvatar(key,'A'),pos);}
+const concept=new THREE.Group();
+function ellipsoid(x,y,z,sx,sy,sz,color){const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),new THREE.MeshStandardMaterial({color,roughness:.8}));mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);concept.add(mesh);}
+const skin='#d8a07b',blue='#215f99',dark='#192438';
+ellipsoid(0,1.18,0,.31,.37,.18,blue);ellipsoid(0,.87,0,.27,.18,.17,dark);ellipsoid(0,1.75,0,.19,.23,.18,skin);ellipsoid(0,1.94,-.015,.20,.09,.18,'#30221b');ellipsoid(0,1.49,0,.09,.12,.09,skin);
+for(const s of [-1,1]){ellipsoid(s*.37,1.30,0,.13,.15,.13,blue);ellipsoid(s*.39,1.10,0,.095,.18,.095,skin);ellipsoid(s*.40,.85,.035,.08,.16,.08,skin);ellipsoid(s*.40,.68,.05,.085,.10,.065,skin);ellipsoid(s*.15,.67,0,.13,.24,.13,dark);ellipsoid(s*.15,.29,0,.085,.21,.085,skin);ellipsoid(s*.15,.07,.07,.115,.07,.21,'#e9eef3');ellipsoid(s*.075,1.79,.169,.025,.025,.014,'#162032');}
+const wrapper=document.querySelector('#proposal');wrapper.style.display='flex';for(const pos of [[0,1.3,4.3],[4.3,1.3,0],[2,4,9]])render(wrapper,concept.clone(),pos);
+</script></html>

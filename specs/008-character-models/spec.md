@@ -1,5 +1,5 @@
 # Modelos articulados e identidade visual
-Status: T1 em revisão visual; baseline e estudo preparados. T2–T4 aguardam aceite da direção.
+Status: implementada; T1–T4 concluídas, modelos finais aprovados pelo proprietário e custo medido. Aguardando integração da PR #11.
 Requisito R08: modelos articulados e identidade visual para a versão de tese.
 
 ## Escopo e referência

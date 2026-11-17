@@ -1,0 +1,146 @@
+{
+    "baseCommit":  "d318ab8",
+    "timestamp":  "2026-11-17T13:07:57.086Z",
+    "browser":  "157.0.8103.79",
+    "os":  "Windows 11 Pro",
+    "cpu":  "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+    "ramGiB":  15.68770980834961,
+    "gpu":  "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "width":  1280,
+    "height":  720,
+    "dpr":  1,
+    "quality":  "low",
+    "mode":  "Vite dev, headless, synthetic rally, four athletic-v2 avatars, no network",
+    "durationMs":  300010,
+    "frames":  18009,
+    "p95Ms":  16.900000000001455,
+    "maxMs":  49.799999999999955,
+    "hidden":  false,
+    "lifecycle":  [
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      },
+                      {
+                          "active":  {
+                                         "geometries":  41,
+                                         "textures":  1,
+                                         "calls":  41,
+                                         "triangles":  4756
+                                     },
+                          "after":  {
+                                        "geometries":  0,
+                                        "textures":  1
+                                    }
+                      }
+                  ],
+    "errors":  [
+
+               ],
+    "regressionPercent":  0.5952380951421921,
+    "pass":  true
+}

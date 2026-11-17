@@ -14,7 +14,7 @@ Todas referenciam R08; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Mesmo personagem tem mesma aparência no preview e na partida, inclusive após reconexão. Manter procedural:v1 e fallback; novas variantes usam chave/manifesto versionado, sem regenerar revisões publicadas.
 
-- [ ] 008-T4 — Aceite visual e custo
+- [x] 008-T4 — Aceite visual e custo
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Proprietário reconhece Samuel/Caio em preview e na câmera de jogo. Dez montagens/desmontagens não acumulam objetos/recursos; medir chamadas de desenho e memória, e cumprir orçamento de render do documento. Registrar evidências.
 

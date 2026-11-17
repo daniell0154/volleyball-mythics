@@ -72,12 +72,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
     dispose() {
       if (disposed) return;
       disposed = true;
-      scene.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
-        }
-      });
+      disposeAvatar(scene);
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); scene.clear(); athletes.clear();
     },
   };
