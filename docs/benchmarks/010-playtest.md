@@ -1,6 +1,6 @@
 # 010-T4 — Playtest e critérios humanos
 
-O candidato foi implementado e comparado em fixtures. Falta medir pessoas familiarizadas com os controles e registrar diversão/previsibilidade. Não substituir essas evidências por contagens de testes automatizados.
+O perfil foi implementado e comparado em fixtures, e o proprietário aprovou a melhoria de jogabilidade. A coleta humana ampliada abaixo foi dispensada explicitamente como requisito de conclusão da 010. A ferramenta e as metas ficam disponíveis para investigação opcional futura; testes automatizados não são amostras humanas.
 
 ## Ferramenta local sem banco
 
@@ -47,7 +47,7 @@ Os participantes abrem http://192.168.0.100:5176/docs/benchmarks/playtest/ em se
 node docs/benchmarks/010-human-summary.mjs CAMINHO/010-playtest-human.json
 ```
 
-O resumo exige experiência/opinião e 20 rallies por modo no perfil 3. Meta proposta: pelo menos 70% dos saques legais devolvidos e mediana de três contatos legais após saque, além de aprovação do proprietário sobre diversão e previsibilidade. Timeout sem saque é contado separadamente, não melhora artificialmente o denominador. Se a meta prejudicar o jogo, revisar explicitamente a meta e/ou perfil antes do gate.
+Para uma investigação quantitativa completa, o resumo exige experiência/opinião e 20 rallies por modo no perfil 3; --partial aceita relatório incompleto sem declarar meta atingida. Meta proposta: pelo menos 70% dos saques legais devolvidos e mediana de três contatos legais após saque. Timeout sem saque é contado separadamente, não melhora artificialmente o denominador. Essa coleta não bloqueia o aceite da 010, conforme dispensa do proprietário.
 
 Para comparar manualmente com o legado, usar o mesmo comando do servidor com argumento 1 e arquivo separado. Na aplicação normal com Supabase, a opção equivalente é RALLY_RULES_VERSION e logging agregado RALLY_TELEMETRY=1.
 

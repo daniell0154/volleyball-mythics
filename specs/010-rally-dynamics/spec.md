@@ -1,5 +1,5 @@
 # Rallies dinâmicos e resposta de controle
-Status: T1–T3 implementadas; T4 técnica verificada e melhoria qualitativa aprovada pelo proprietário. A amostra humana de 20 rallies por modo ainda está pendente.
+Status: implementada; T1–T4 aprovadas. Coleta humana ampliada dispensada explicitamente pelo proprietário; aguardando integração.
 Requisito R10: rallies dinâmicos e resposta de controle para a versão de tese.
 
 ## Escopo e referência
@@ -15,4 +15,6 @@ Seguir [documento de melhorias](../../docs/MELHORIAS.md). Samuel e Caio são ini
 - **Validar tuning:** Comparar baseline com 20 rallies novos por modo e metas do documento; proprietário avalia diversão e previsibilidade. Regressões cobrem 6–5, faltas, contatos simultâneos, habilidades, abandono, reconexão e resultado idempotente. Repetir carga e ensaio de latência com parâmetros finais.
 
 Gate: todos os aceites de tasks.md com evidências reais; critérios visuais exigem aprovação do proprietário. Conteúdo novo, bots e publicação ficam fora desta spec.
+
+Decisão de aceite da 010: o proprietário aprovou a melhoria de jogabilidade e dispensou a coleta manual de 20 rallies por modo por ser trabalhosa. A comparação de 20 amostras técnicas por modo, regressões e carga permanecem obrigatórias e foram realizadas. Metas quantitativas humanas são referência opcional futura, não requisito para fechar esta entrega. Não declarar essas metas medidas/atingidas por pessoas.
 

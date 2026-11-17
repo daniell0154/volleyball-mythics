@@ -38,6 +38,8 @@ Não aumentar todas as velocidades. Primeiro medir baseline: duração de rally,
 
 Meta inicial de playtest: em 20 rallies por modo, pelo menos 70% dos saques legais têm devolução e a mediana atinge 3 contatos legais após o saque, com jogadores familiarizados com os controles. São metas de calibração propostas, não garantias nem estatísticas atuais. Registrar participantes, build e condições; se a amostra mostrar que prejudicam diversão ou partidas curtas, revisar a meta antes de aprovar tuning.
 
+Decisão de aceite da 010: após testar e aprovar a melhoria, o proprietário dispensou explicitamente a coleta manual de 20 rallies humanos por modo por ser trabalhosa. Esta entrega usa a comparação técnica reproduzível de 20 amostras por modo, regressões/carga e aprovação qualitativa do proprietário. As metas humanas acima ficam como referência opcional futura, sem alegação de terem sido atingidas.
+
 ## Interface e acessibilidade
 Entrada com modelo/ficha e duas ações principais: criar sala e entrar por código. Lobby mostra slots, prontidão e convite; jogo mostra placar, fase, sacador, equipe e recarga. Indicadores de chão identificam o jogador local com forma/texto além da cor. Sinais curtos de contato e ponto respeitam volume; reduzir movimento desativa balanço de câmera e efeitos extras. Manter foco visível e comandos acessíveis.
 
