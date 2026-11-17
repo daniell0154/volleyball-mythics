@@ -8,7 +8,7 @@
 - [x] Personagens finais dependem do proprietário.
 - [x] Pausa online substituída por suspensão controlada por desconexão.
 - [ ] Gates técnicos comprovados por implementação.
-- [ ] Elenco final e regras de poderes fornecidos (gate de lançamento da 007; Samuel e Caio confirmados como elenco inicial da 006 em 2026-11-17).
+- [ ] Elenco final e regras de poderes para lançamento amplo (para a versão de tese, Samuel e Caio são o elenco inicial confirmado em 2026-11-17; personagens adicionais serão cadastrados depois).
 - [ ] Hardware medido, orçamento e hosting de produção definidos.
 
 Os itens concluídos são revisão documental; não significam testes executados ou software pronto.

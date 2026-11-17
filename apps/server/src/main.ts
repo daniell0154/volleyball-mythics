@@ -55,7 +55,14 @@ async function main() {
   transport.http.listen(port, host, () => console.log(`Servidor iniciado em ${host}:${port}`));
   let previous = performance.now();
   const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); lifecycle.tick(); runtime.advance(Math.min(100, now - previous)); void results.queue.tick(); previous = now; }, 5);
-  const close = () => { clearInterval(ticker); void transport.close(); };
+  let closing: Promise<void> | undefined;
+  const close = () => {
+    if (closing) return;
+    clearInterval(ticker);
+    runtime.cancelForShutdown();
+    closing = (async () => { await results.queue.tick(); await transport.close(); })();
+    void closing.catch(() => { process.exitCode = 1; });
+  };
   process.once("SIGINT", close); process.once("SIGTERM", close);
 }
 main().catch((error: unknown) => { console.error(error instanceof Error ? error.message : "Falha ao iniciar servidor"); process.exitCode = 1; });

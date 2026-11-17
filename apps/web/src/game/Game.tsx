@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text } from "react-native-web";
+import { Text } from "react-native-web";
 import { syntheticSnapshot, type SceneFactory } from "./presentation.js";
 import { KeyboardInput, attachKeyboard } from "../input/keyboard.js";
 
@@ -39,17 +39,18 @@ export function Game({ createScene }: { createScene: SceneFactory }) {
     frame = requestAnimationFrame(render);
     return () => { cancelAnimationFrame(frame); observer.disconnect(); adapter.dispose(); };
   }, [createScene, quality, generation]);
-  return <View style={{ padding: 20, gap: 12 }}>
+  return <main style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
     <Text style={{ color: "#f0f6ff", fontSize: 26, fontWeight: "bold" }}>Volleyball Mythics</Text>
     <Text style={{ color: "#b9d9e8" }}>Spike 3D · rally sintético · quatro atletas temporários · sem partida online</Text>
-    <View style={{ flexDirection: "row", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
       <button onClick={() => setQuality(quality === "low" ? "high" : "low")}><Text style={{ color: "#a8f5cb" }}>Qualidade: {quality === "low" ? "baixa" : "alta"}</Text></button>
       <button onClick={() => setGeneration((n) => n + 1)}><Text style={{ color: "#a8f5cb" }}>Recriar cena</Text></button>
       <button onClick={() => { keyboard.current.clear(); setInputPhase(inputPhase === "rally" ? "serving" : "rally"); }}>Fase de entrada: {inputPhase === "rally" ? "rally" : "saque"}</button>
-    </View>
+    </div>
     {error && <Text role="alert" style={{ color: "#ffceab" }}>{error}</Text>}
+    {error && <div role="status" aria-label="Resumo textual da demonstração sem gráficos" style={{ padding: 16, color: "#fff", background: "#102236", border: "2px solid #fff" }}><strong>Resumo da demonstração</strong><p>Quadra 3D indisponível. Os gráficos exigem WebGL. Controles: WASD mover, Espaço saltar, J receber, K levantar, L atacar ou sacar, U especial. Use também os botões de ação quando estiver em uma partida online.</p></div>}
     <div ref={host} tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra escolar 3D com bola e quatro atletas. Clique para usar o teclado." style={{ width: "100%", height: "min(72vh, 720px)", minHeight: 280 }} />
     <Text style={{ color: "#b9d9e8" }}>WASD mover · Espaço saltar · J receber · K levantar · L atacar/sacar · U especial. Intenções em demonstração; os atletas ainda seguem snapshots sintéticos.</Text>
     <Text style={{ color: "#f0f6ff" }}>{inputDisplay}</Text>
-  </View>;
+  </main>;
 }

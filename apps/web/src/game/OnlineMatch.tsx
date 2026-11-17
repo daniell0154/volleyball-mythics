@@ -4,6 +4,7 @@ import { KeyboardInput, attachKeyboard } from "../input/keyboard.js";
 import type { RoomConnection } from "../network/connection.js";
 import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
+import { enableFeedbackSound, playFeedbackSound } from "./feedbackSound.js";
 
 const phases: Record<string, string> = { countdown: "Prepare-se", serving: "Saque", rally: "Em jogo", point: "Ponto", finished: "Partida encerrada", cancelled: "Partida cancelada", disconnectedSuspension: "Aguardando reconexão" };
 export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string; abilityAvailable: boolean }) {
@@ -11,12 +12,24 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   const buffer = useRef(new SnapshotBuffer());
   const keyboard = useRef(new KeyboardInput());
   const phase = useRef("");
+  const lastScore = useRef("");
   const [error, setError] = useState("");
   const [quality, setQuality] = useState<"low" | "high">("low");
+  const [volume, setVolume] = useState(() => {
+    let saved = 50;
+    try {
+      const stored = localStorage.getItem("volleyball-mythics-volume");
+      if (stored !== null) saved = Number(stored);
+    } catch { /* storage may be disabled */ }
+    return Number.isFinite(saved) ? Math.max(0, Math.min(100, saved)) : 50;
+  });
   useEffect(() => { if (snapshot) {
     buffer.current.push(snapshot, performance.now()); phase.current = snapshot.phase;
     keyboard.current.synchronizeSequence(snapshot.lastProcessedSeq[userId] ?? 0);
-  } }, [snapshot, userId]);
+    const score = `${snapshot.score.A}:${snapshot.score.B}`;
+    if (lastScore.current && score !== lastScore.current) playFeedbackSound(volume);
+    lastScore.current = score;
+  } }, [snapshot, userId, volume]);
   useEffect(() => setError(""), [snapshot?.phase]);
   useEffect(() => {
     if (!host.current) return;
@@ -50,8 +63,10 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
       <span>{phases[snapshot?.phase ?? ""] ?? "Aguardando servidor"}{snapshot?.secondsRemaining ? ` · ${Math.ceil(snapshot.secondsRemaining)}s` : ""}</span>
       <span>Você: equipe {team} · Saque: {snapshot?.servingSide ?? "A"}</span>
       <button onClick={() => setQuality(quality === "low" ? "high" : "low")}>Qualidade: {quality === "low" ? "baixa" : "alta"}</button>
+      <label>Volume dos sinais <input aria-label="Volume dos sinais sonoros" type="range" min="0" max="100" value={volume} onPointerDown={enableFeedbackSound} onKeyDown={enableFeedbackSound} onChange={(event) => { const next = Number(event.target.value); setVolume(next); try { localStorage.setItem("volleyball-mythics-volume", String(next)); } catch { /* keep the in-memory preference */ } }} /></label>
     </div>
     <div ref={host} tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." style={{ width: "100%", height: "65vh", minHeight: 280, outlineColor: "#8bf0ce" }} />
+    {error && <div role="status" aria-label="Placar textual, modo gráfico indisponível" style={{ padding: 16, color: "#fff", background: "#102236", border: "2px solid #fff" }}><strong>Modo gráfico indisponível</strong><p>Placar: equipe A {snapshot?.score.A ?? 0}, equipe B {snapshot?.score.B ?? 0}. {phases[snapshot?.phase ?? ""] ?? "Aguardando servidor"}. Você joga pela equipe {team}; o saque é da equipe {snapshot?.servingSide ?? "A"}.</p><p>Você ainda pode usar os botões de ação abaixo. Para recuperar a quadra 3D, habilite WebGL/aceleração gráfica e recarregue.</p></div>}
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
       <button disabled={!playing} onClick={() => trigger("Space")}>Saltar · Espaço</button>
       <button disabled={!serving} onClick={() => trigger("KeyL")}>Sacar · L</button>

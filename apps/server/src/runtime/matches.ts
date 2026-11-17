@@ -49,6 +49,9 @@ export class MatchRuntime {
   suspend(room: RoomState): void { const match = this.matches.get(room.roomId); if (match && !match.ended) { match.suspended = true; match.pending.clear(); this.emit(room, this.snapshot(match)); } }
   resume(room: RoomState): void { const match = this.matches.get(room.roomId); if (match && !match.ended) { match.suspended = false; match.pending.clear(); this.emit(room, this.snapshot(match)); } }
   remove(roomId: string): void { this.matches.delete(roomId); }
+  cancelForShutdown(): void {
+    for (const match of this.matches.values()) if (!match.ended) this.finish(match.room, null, "server_failure");
+  }
   finish(room: RoomState, winner: Team | null, reason: "forfeit" | "server_failure"): void {
     const match = this.matches.get(room.roomId); if (!match || match.ended) return;
     match.winner = winner; match.reason = reason;
