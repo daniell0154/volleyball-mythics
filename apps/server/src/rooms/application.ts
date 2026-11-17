@@ -5,11 +5,23 @@ import { RoomRegistry, RoomError } from "./registry.js";
 export class RoomApplication {
   readonly rooms = new RoomRegistry();
   private sessions = new Map<string, Session>();
-  constructor(readonly catalog: readonly CatalogEntry[], private hooks: {
+  constructor(public catalog: readonly CatalogEntry[], private hooks: {
     start?(room: RoomState): void;
     input?(room: RoomState, userId: string, input: InputPayload): void;
     suspend?(room: RoomState): void;
+    remove?(roomId: string): void;
   } = {}) {}
+  refreshCatalog(catalog: readonly CatalogEntry[]): void {
+    this.catalog = catalog;
+    for (const room of this.rooms.all()) if (room.status === "lobby") {
+      let changed = false;
+      for (const member of room.members) if (member.character && !catalog.some((c) => c.id === member.character!.id && c.version === member.character!.version)) {
+        member.character = null; changed = true;
+      }
+      if (changed) { this.rooms.invalidate(room); this.changed(room); }
+    }
+    for (const session of this.sessions.values()) session.send("catalog", catalog);
+  }
   connect(session: Session): void {
     this.sessions.set(session.userId, session); session.send("catalog", this.catalog);
   }
@@ -24,6 +36,7 @@ export class RoomApplication {
     else {
       const member = room.members.find((m) => m.userId === session.userId)!; member.connected = false;
       room.status = "suspended"; this.hooks.suspend?.(room); this.changed(room);
+      if (room.members.every((m) => !m.connected)) { this.rooms.destroy(room); this.hooks.remove?.(room.roomId); }
     }
   }
   command(session: Session, message: ClientMessage): void {
@@ -56,7 +69,7 @@ export class RoomApplication {
           case "start":
             if (room.ownerId !== session.userId) throw new RoomError("forbidden");
             if (room.members.length !== (room.mode === "1v1" ? 2 : 4) || room.members.some((m) => !m.ready || !m.character || !m.connected)) throw new RoomError("invalid_state");
-            room.status = "active"; this.hooks.start?.(room); break;
+            this.hooks.start?.(room); room.status = "active"; break;
           case "leave": {
             const remaining = this.rooms.leave(session.userId);
             session.send("roomState", null); if (remaining) this.changed(remaining);

@@ -10,6 +10,7 @@ export class RoomRegistry {
     return room;
   }
   all(): readonly RoomState[] { return [...this.rooms.values()]; }
+  destroy(room: RoomState): void { for (const member of room.members) this.membership.delete(member.userId); this.rooms.delete(room.code); }
   create(userId: string, mode: MatchMode): RoomState {
     if (this.membership.has(userId)) throw new RoomError("invalid_state");
     let code: string;

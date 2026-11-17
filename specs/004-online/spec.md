@@ -1,5 +1,5 @@
 # Salas e transporte
-Status: especificado, não implementado.
+Status: implementado e validado em feat/004-online; integração na main depende da PR desta spec. Catálogo final do proprietário permanece pendente, sem impedir os testes de transporte com fixtures locais.
 Requisito R04: Amigos entram em sala privada autenticada e escolhem equipes/personagens.
 
 ## Aceitação

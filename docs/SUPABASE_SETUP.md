@@ -17,7 +17,7 @@ Instale a CLI, autentique com `supabase login`, vincule o projeto com `supabase 
 
 ## Chaves e segurança
 
-Para a aplicação web use apenas Project URL e publishable/anon key, configuradas como `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Nunca coloque `service_role`/secret key no bundle web, no Git ou em mensagens. A escrita de partidas ficará no servidor. Sem personagens cadastrados, o seletor de elenco não terá conteúdo para iniciar uma partida.
+Para a aplicação web use Project URL e publishable key, configuradas como `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no `.env` da raiz. Essas duas variáveis bastam para testar login e salas; o backend também lê o catálogo como guest autenticado sob RLS. Nunca coloque `service_role`/secret key no bundle web, no Git ou em mensagens. A escrita futura de partidas ficará no servidor e exigirá secret key. Sem personagens cadastrados, o seletor de elenco não terá conteúdo para iniciar uma partida. Veja [o roteiro online](ONLINE_TESTING.md) para iniciar os dois processos e testar sessões independentes.
 
 O nome de exibição guest será escolhido pelo cliente; o perfil deve ser inserido com `user_id` retornado pelo Auth. A sessão anônima é armazenada no navegador pelo cliente Supabase e persiste em reload enquanto os dados do site não forem apagados. Não equivale a uma conta recuperável entre dispositivos.
 

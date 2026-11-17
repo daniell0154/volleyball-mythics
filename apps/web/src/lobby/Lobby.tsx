@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { CatalogEntry, ClientMessage, RoomState } from "@volleyball-mythics/protocol";
+import type { CatalogEntry, ClientMessage, RoomState, MatchSnapshot } from "@volleyball-mythics/protocol";
 import { createWebSupabaseClient, saveGuestProfile } from "../auth/client.js";
 import { RoomConnection } from "../network/connection.js";
+import { OnlineMatch } from "../game/OnlineMatch.js";
 
 export function Lobby() {
   const connection = useRef<RoomConnection | null>(null);
@@ -12,22 +13,22 @@ export function Lobby() {
   const [code, setCode] = useState(new URLSearchParams(location.search).get("room")?.toUpperCase() ?? "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [snapshot, setSnapshot] = useState<unknown>(null);
+  const [snapshot, setSnapshot] = useState<MatchSnapshot | null>(null);
   useEffect(() => () => connection.current?.close(), []);
   const connect = async () => {
     setBusy(true); setError("");
     try {
-      const client = createWebSupabaseClient({ url: import.meta.env.VITE_SUPABASE_URL ?? "", publishableKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? "" });
+      const client = createWebSupabaseClient({ url: import.meta.env.VITE_SUPABASE_URL ?? "", publishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" });
       let { data: { session } } = await client.auth.getSession();
       if (!session) {
         const result = await client.auth.signInAnonymously(); if (result.error) throw result.error; session = result.data.session;
       }
       if (!session) throw new Error("Sessão guest indisponível");
       await saveGuestProfile(client, name);
-      const socket = new RoomConnection(import.meta.env.VITE_GAME_SERVER_URL ?? "ws://localhost:3001/socket", (type, payload) => {
-        if (type === "roomState") setRoom(payload as RoomState | null);
+      const socket = new RoomConnection(import.meta.env.VITE_GAME_SERVER_URL ?? "ws://127.0.0.1:3001/socket", (type, payload) => {
+        if (type === "roomState") { setRoom(payload as RoomState | null); if (!payload) setSnapshot(null); }
         if (type === "catalog") setCatalog(payload as CatalogEntry[]);
-        if (type === "snapshot") setSnapshot(payload);
+        if (type === "snapshot") setSnapshot(payload as MatchSnapshot);
         if (type === "disconnected") { setUserId(""); setRoom(null); setError("Conexão encerrada. Conecte novamente."); }
       });
       connection.current = socket;
@@ -64,7 +65,7 @@ export function Lobby() {
       <button disabled={!self?.character || room.status !== "lobby"} onClick={() => command("ready", { ready: !self?.ready })}>{self?.ready ? "Não pronto" : "Pronto"}</button>
       {room.ownerId === userId && <button disabled={room.status !== "lobby"} onClick={() => command("start")}>Iniciar</button>}
       <button disabled={room.status !== "lobby"} onClick={() => command("leave")}>Sair da sala</button>
-      {snapshot !== null && <p>Estado de partida recebido.</p>}
+      {room.status !== "lobby" && connection.current && <OnlineMatch snapshot={snapshot} connection={connection.current} />}
     </div>}
     {userId && <button onClick={() => connection.current?.close()}>Desconectar</button>}
   </section>;

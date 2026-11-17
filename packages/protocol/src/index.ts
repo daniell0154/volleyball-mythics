@@ -126,6 +126,18 @@ export interface RoomState {
   members: RoomMember[];
 }
 export interface CatalogEntry { id: string; version: number; name: string }
+export interface Vector3 { readonly x: number; readonly y: number; readonly z: number }
+export interface MatchSnapshot {
+  matchId: string;
+  tick: number;
+  phase: "countdown" | "serving" | "rally" | "disconnectedSuspension";
+  score: Readonly<Record<Team, number>>;
+  serverTime: number;
+  lastProcessedSeq: Readonly<Record<string, number>>;
+  athletes: readonly { id: string; team: Team; position: Vector3 }[];
+  ball: Vector3;
+  cooldowns: Readonly<Record<string, number>>;
+}
 
 export type ServerResponse<T> =
   | ServerMessage<"ack", { requestId: string; result: T }>

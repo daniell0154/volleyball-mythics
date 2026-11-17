@@ -13,7 +13,7 @@ Todas referenciam R04; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/lobby, apps/server/src/rooms.
   - Aceite/verificação: Equipe com capacidade, versão de personagem válida e somente dono inicia; mudança invalida prontidão.
 
-- [ ] 004-T4 — Snapshots e inputs
+- [x] 004-T4 — Snapshots e inputs
   - Destinos: apps/server/src/runtime, apps/web/src/network.
   - Aceite/verificação: Simulação 60Hz e snapshots 20Hz; seq repetido ignorado, identidade de outro atleta não controlável.
 

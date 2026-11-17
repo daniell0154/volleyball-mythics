@@ -2,7 +2,7 @@
 export interface Position { readonly x: number; readonly y: number; readonly z: number }
 export interface SceneSnapshot {
   readonly tick: number;
-  readonly phase: "serving" | "rally";
+  readonly phase: string;
   readonly score: { readonly A: number; readonly B: number };
   readonly ball: Position;
   readonly athletes: readonly { readonly id: string; readonly team: "A" | "B"; readonly position: Position }[];

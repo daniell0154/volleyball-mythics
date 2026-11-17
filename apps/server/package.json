@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc --outDir dist",
+    "build": "npm run build --workspace @volleyball-mythics/domain && tsc --outDir dist",
     "test": "npm run build && node --test tests/*.test.mjs",
     "start": "node --env-file-if-exists=../../.env dist/main.js"
   },
