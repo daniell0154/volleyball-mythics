@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, type BallState } from "@volleyball-mythics/domain";
 import type { InputPayload, MatchSnapshot, RoomState, Vector3 } from "@volleyball-mythics/protocol";
-interface Athlete { id: string; team: "A" | "B"; slot: number; position: Vector3; velocityY: number }
+interface Athlete { id: string; team: "A" | "B"; slot: number; position: Vector3; velocityY: number; assetKey?: string }
 interface RunningMatch {
   room: RoomState; matchId: string; tick: number; phase: MatchSnapshot["phase"];
   athletes: Athlete[]; ball: BallState; pending: Map<string, InputPayload>;
@@ -11,10 +11,13 @@ interface RunningMatch {
 export class MatchRuntime {
   private matches = new Map<string, RunningMatch>();
   private accumulator = 0;
-  constructor(private emit: (room: RoomState, snapshot: MatchSnapshot) => void, private now: () => number = Date.now) {}
+  constructor(private emit: (room: RoomState, snapshot: MatchSnapshot) => void, private now: () => number = Date.now, private resolveAsset: (id: string, version: number) => string | undefined = () => undefined) {}
   start(room: RoomState): void {
-    const athletes = room.members.map((m) => ({ id: m.userId, team: m.team, slot: m.slot,
-      position: { x: room.mode === "1v1" ? 0 : m.slot === 0 ? -2 : 2, y: 0, z: m.team === "A" ? -6 : 6 }, velocityY: 0 }));
+    const athletes = room.members.map((m) => {
+      const assetKey = m.character ? this.resolveAsset(m.character.id, m.character.version) : undefined;
+      return { id: m.userId, team: m.team, slot: m.slot, ...(assetKey ? { assetKey } : {}),
+        position: { x: room.mode === "1v1" ? 0 : m.slot === 0 ? -2 : 2, y: 0, z: m.team === "A" ? -6 : 6 }, velocityY: 0 };
+    });
     this.matches.set(room.roomId, { room, matchId: randomUUID(), tick: 0, phase: "countdown", athletes,
       ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false },
       pending: new Map(), receivedTick: {}, receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])) });
@@ -78,6 +81,6 @@ export class MatchRuntime {
   }
   private snapshot(match: RunningMatch): MatchSnapshot {
     return { matchId: match.matchId, tick: match.tick, phase: match.phase, score: { A: 0, B: 0 }, serverTime: this.now(),
-      lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position } })), ball: { ...match.ball.position }, cooldowns: {} };
+      lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position }, ...(a.assetKey ? { assetKey: a.assetKey } : {}) })), ball: { ...match.ball.position }, cooldowns: {} };
   }
 }

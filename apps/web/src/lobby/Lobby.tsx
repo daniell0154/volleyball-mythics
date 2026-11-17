@@ -4,6 +4,7 @@ import { createWebSupabaseClient, saveGuestProfile } from "../auth/client.js";
 import { RoomConnection } from "../network/connection.js";
 import { OnlineMatch } from "../game/OnlineMatch.js";
 import { gameServerUrl } from "../network/serverUrl.js";
+import { CharacterPreview } from "../scene/CharacterPreview.js";
 
 export function Lobby() {
   const connection = useRef<RoomConnection | null>(null);
@@ -41,6 +42,7 @@ export function Lobby() {
     setError(""); try { await connection.current?.request(type, payload); } catch (e) { setError(e instanceof Error ? e.message : "Falha no comando"); }
   };
   const self = room?.members.find((m) => m.userId === userId);
+  const selected = catalog.find((c) => c.id === self?.character?.id && c.version === self?.character?.version);
   return <section style={{ color: "#f0f6ff", padding: 20, fontFamily: "sans-serif" }}>
     <h1>Sala privada</h1>
     {error && <p role="alert">{error}</p>}
@@ -58,8 +60,10 @@ export function Lobby() {
       <ul>{room.members.map((member) => <li key={member.userId}>{member.userId === userId ? "Você" : member.userId.slice(0, 8)} · {member.team}/{member.slot + 1} · {member.ready ? "Pronto" : "Aguardando"}{member.userId === room.ownerId ? " · Dono" : ""}</li>)}</ul>
       {!catalog.length && <p>O catálogo ainda está vazio. O proprietário precisa fornecer o elenco antes de iniciar partidas.</p>}
       <label>Personagem <select disabled={room.status !== "lobby"} value={self?.character ? JSON.stringify([self.character.id, self.character.version]) : ""} onChange={(e) => { const [characterId, version] = JSON.parse(e.target.value); void command("selectCharacter", { characterId, version }); }}>
-        <option value="" disabled>Selecionar</option>{catalog.map((c) => <option key={`${c.id}:${c.version}`} value={JSON.stringify([c.id, c.version])}>{c.name} · v{c.version}</option>)}
+        <option value="" disabled>Selecionar</option>{catalog.map((c) => <option key={`${c.id}:${c.version}`} value={JSON.stringify([c.id, c.version])}>{c.name}{c.overall !== undefined ? ` · ${c.overall}` : ""} · v{c.version}</option>)}
       </select></label>
+      {selected?.assetKey && <CharacterPreview assetKey={selected.assetKey} team={self?.team ?? "A"} />}
+      {selected?.abilityName && <p>Habilidade: {selected.abilityName} · efeito em breve.</p>}
       <label>Equipe/posição <select disabled={room.status !== "lobby"} value={self ? `${self.team}:${self.slot}` : ""} onChange={(e) => { const [team, slot] = e.target.value.split(":"); void command("setTeam", { team, slot: Number(slot) }); }}>
         {(["A", "B"] as const).flatMap((team) => (room.mode === "1v1" ? [0] : [0, 1]).map((slot) => <option key={`${team}:${slot}`} value={`${team}:${slot}`} disabled={room.members.some((m) => m.userId !== userId && m.team === team && m.slot === slot)}>{team}/{slot + 1}</option>))}
       </select></label>

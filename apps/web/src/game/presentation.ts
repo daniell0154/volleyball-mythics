@@ -5,7 +5,7 @@ export interface SceneSnapshot {
   readonly phase: string;
   readonly score: { readonly A: number; readonly B: number };
   readonly ball: Position;
-  readonly athletes: readonly { readonly id: string; readonly team: "A" | "B"; readonly position: Position }[];
+  readonly athletes: readonly { readonly id: string; readonly team: "A" | "B"; readonly position: Position; readonly assetKey?: string }[];
 }
 export interface SceneAdapter {
   update(snapshot: SceneSnapshot): void;

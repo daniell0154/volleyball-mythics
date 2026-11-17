@@ -125,7 +125,7 @@ export interface RoomState {
   status: "lobby" | "active" | "suspended";
   members: RoomMember[];
 }
-export interface CatalogEntry { id: string; version: number; name: string }
+export interface CatalogEntry { id: string; version: number; name: string; assetKey?: string; overall?: number; abilityName?: string }
 export interface Vector3 { readonly x: number; readonly y: number; readonly z: number }
 export interface MatchSnapshot {
   matchId: string;
@@ -134,7 +134,7 @@ export interface MatchSnapshot {
   score: Readonly<Record<Team, number>>;
   serverTime: number;
   lastProcessedSeq: Readonly<Record<string, number>>;
-  athletes: readonly { id: string; team: Team; position: Vector3 }[];
+  athletes: readonly { id: string; team: Team; position: Vector3; assetKey?: string }[];
   ball: Vector3;
   cooldowns: Readonly<Record<string, number>>;
 }

@@ -13,6 +13,7 @@ Envelope cliente: protocolVersion=1, type, requestId, payload. Input inclui seq 
 Comandos: createRoom(mode), joinRoom(code), selectCharacter(id,version), setTeam(team,slot), ready(value), start, input, leave, rematchVote.
 Resposta: ack(requestId,result) ou error(requestId,code); eventos roomState, snapshot, point, matchEnded.
 Snapshot: matchId, tick, phase, score, serverTime, lastProcessedSeq por jogador, atletas, bola, cooldowns.
+Catálogo pode incluir overall, assetKey e abilityName para apresentação. Atletas no snapshot podem incluir assetKey, capturado da revisão selecionada ao iniciar. Ausência mantém placeholder compatível. Chaves `procedural:v1:male|female:seed` descrevem visual ficcional determinístico, sem efeitos de habilidade ou execução de código remoto.
 Na etapa 004, fase é countdown/serving/rally/disconnectedSuspension; pontuação permanece 0 e cooldowns vazios até 005/006 integrarem regras de partida e habilidades. Cliente interpola snapshots por 100 ms e envia intenções até 50/s (abaixo do limite 60/s). Movimento sem novo input expira em 15 ticks; ações discretas são consumidas uma vez. Nenhum ponto ou resultado é fabricado pelo protótipo de transporte.
 Servidor valida JWT, associação à sala, fase, versão, schema, tamanho (máximo 8 KiB), frequência (60 inputs/s; 10 comandos/s por sessão). Rejeita seq repetido/antigo.
 Simulação inicial 60 ticks/s; snapshots 20/s; interpolação visual 100 ms, sem rollback inicialmente. Tuning exige registro de medição.
