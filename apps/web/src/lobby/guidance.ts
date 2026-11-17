@@ -10,6 +10,7 @@ export function lobbyGuidance(room:RoomState){
  return{required,missing,canStart,message};
 }
 export function commandMessage(code:string){
+ if(code==="client_update_required")return "Esta sala usa bots. Atualize a página para entrar com a versão atual do jogo.";
  if(code==="mode_unavailable")return "O modo 1v1 foi removido. Atualize a página para criar uma sala 2v2 online.";
  const messages:Record<string,string>={room_full:"Esta sala já está cheia.",room_not_found:"Sala não encontrada. Confira o código do convite.",forbidden:"Você não pode fazer essa alteração. Somente o criador inicia a partida.",invalid_state:"A sala precisa estar completa, com atleta escolhido e todos prontos.",rate_limited:"Muitas ações seguidas. Aguarde um instante e tente novamente.",invalid_message:"Não foi possível usar essa opção. Confira os dados e tente novamente."};
  return messages[code]??"Não foi possível concluir a ação. Verifique sua conexão e tente novamente.";

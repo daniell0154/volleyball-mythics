@@ -11,8 +11,8 @@ export function parseEnvelope(raw: string): ClientMessage | null {
   const p = message.payload;
   let valid = false;
   switch (message.type) {
-    case "createRoom": valid = keys(p, ["mode"]) && ["1v1", "2v2"].includes(String(p.mode)); break;
-    case "joinRoom": valid = keys(p, ["code"]) && typeof p.code === "string" && /^[A-Z2-9]{6}$/.test(p.code); break;
+    case "createRoom": valid = (keys(p, ["mode"]) && ["1v1", "2v2"].includes(String(p.mode))) || (keys(p,["mode","matchKind","humanSlots","difficulty"])&&p.mode==="2v2"&&p.matchKind==="vsBots"&&(p.humanSlots===1||p.humanSlots===2)&&["easy","normal","hard"].includes(String(p.difficulty))); break;
+    case "joinRoom": valid = (keys(p, ["code"])||(keys(p,["code","acceptBots"])&&p.acceptBots===true)) && typeof p.code === "string" && /^[A-Z2-9]{6}$/.test(p.code); break;
     case "selectCharacter": valid = keys(p, ["characterId", "version"]) && text(p.characterId, 128) && Number.isSafeInteger(p.version) && Number(p.version) > 0; break;
     case "setTeam": valid = keys(p, ["team", "slot"]) && ["A", "B"].includes(String(p.team)) && (p.slot === 0 || p.slot === 1); break;
     case "ready": valid = keys(p, ["ready"]) && typeof p.ready === "boolean"; break;

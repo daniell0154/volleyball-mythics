@@ -27,6 +27,8 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
   const catalogGeneration=useRef(0);
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
+  const [entryMode,setEntryMode]=useState<"humans"|"solo"|"coop">("humans");
+  const [difficulty,setDifficulty]=useState<"easy"|"normal"|"hard">("normal");
   const [code, setCode] = useState(new URLSearchParams(location.search).get("room")?.toUpperCase() ?? "");
   const [error, setError] = useState("");
   const [commandError,setCommandError]=useState<{action:string;message:string}|null>(null);
@@ -104,18 +106,20 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
     {reconnectStatus && <p className="notice" role="status">{reconnectStatus}</p>}
     {!room?<div className="entry-grid"><div className="entry-copy">
       <div className="eyebrow">Vôlei 3D · 2v2 online · Primeiro a 6</div><h1>A quadra<br/>é de vocês.</h1><p className="lead">Escolha seu atleta e chame mais três pessoas para o próximo rally.</p>
-      <form className="entry-form panel" onSubmit={event=>{event.preventDefault();void enter("createRoom",{mode:"2v2"});}}>
+      <form className="entry-form panel" onSubmit={event=>{event.preventDefault();void enter("createRoom",entryMode==="humans"?{mode:"2v2"}:{mode:"2v2",matchKind:"vsBots",humanSlots:entryMode==="solo"?1:2,difficulty});}}>
        <label>Seu apelido<input autoComplete="nickname" value={name} minLength={2} maxLength={24} onChange={event=>setName(event.target.value)} required placeholder="Como você quer ser chamado?"/></label>
-       <p className="helper">2v2 online · Dois jogadores por equipe. Compartilhe o convite para completar os quatro lugares.</p>
+       <div className="button-row" role="group" aria-label="Modo de jogo"><button type="button" aria-pressed={entryMode==="humans"} onClick={()=>setEntryMode("humans")}>2v2 online</button><button type="button" aria-pressed={entryMode==="solo"} onClick={()=>setEntryMode("solo")}>Solo contra bots</button><button type="button" aria-pressed={entryMode==="coop"} onClick={()=>setEntryMode("coop")}>Dupla contra bots</button></div>
+       <p className="helper">{entryMode==="humans"?"2v2 online · Dois jogadores por equipe. Compartilhe o convite para completar os quatro lugares.":entryMode==="solo"?"Você e um parceiro bot contra dois bots. Exige conexão com o servidor.":"Convide um amigo: vocês dois contra dois bots. Exige conexão com o servidor."}</p>
+       {entryMode!=="humans"&&<label>Dificuldade dos bots<select aria-label="Dificuldade dos bots" value={difficulty} onChange={e=>setDifficulty(e.target.value as typeof difficulty)}><option value="easy">Fácil</option><option value="normal">Normal</option><option value="hard">Difícil</option></select></label>}
        <button className="primary wide" disabled={busy||Boolean(pending)||name.trim().length<2} type="submit">{busy?"Entrando…":"Criar sala"}</button>
        {commandError?.action==="createRoom"&&<p className="notice error" role="alert">{commandError.message}</p>}
        <div className="divider">ou entre com um convite</div>
-       <div className="join-row"><label>Código da sala<input value={code} maxLength={6} onChange={event=>setCode(event.target.value.toUpperCase())} placeholder="6 caracteres"/></label><button type="button" disabled={busy||Boolean(pending)||name.trim().length<2||!/^[A-Z2-9]{6}$/.test(code)} onClick={()=>void enter("joinRoom",{code})}>Entrar</button></div>
+       <div className="join-row"><label>Código da sala<input value={code} maxLength={6} onChange={event=>setCode(event.target.value.toUpperCase())} placeholder="6 caracteres"/></label><button type="button" disabled={busy||Boolean(pending)||name.trim().length<2||!/^[A-Z2-9]{6}$/.test(code)} onClick={()=>void enter("joinRoom",{code,acceptBots:true})}>Entrar</button></div>
        {commandError?.action==="joinRoom"&&<p className="notice error" role="alert">{commandError.message}</p>}
        <p className="helper">Você joga como visitante. Seu apelido deve ter de 2 a 24 caracteres.</p>{connected&&<span className="connected-label">Conectado como {name}</span>}
       </form>
     </div><CharacterShowcase catalog={catalog} status={catalogStatus} selectedKey={featuredKey} onSelect={character=>setFeaturedKey(characterKey(character))} onRetry={()=>void loadCatalog()}/></div>:room.status==="lobby"?<RoomLobby room={room} userId={userId} catalog={catalog} catalogStatus={catalogStatus} onRetry={()=>void loadCatalog()} command={command} pending={pending} error={commandError}/>:<div>
-      <p className="helper">Sala {room.code} · {room.mode}</p>
+      <p className="helper">Sala {room.code} · {room.mode}{room.matchKind==="vsBots"?" · Contra bots · "+(room.difficulty==="easy"?"Fácil":room.difficulty==="hard"?"Difícil":"Normal"):" · Quatro humanos"}</p>
       <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
       {commandError&&<p className="notice error" role="alert">{commandError.message}</p>}
       {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}

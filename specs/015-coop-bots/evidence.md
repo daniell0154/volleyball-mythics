@@ -16,5 +16,13 @@ Helpers de identidade mantidos no servidor, pois pacote protocol era somente tip
 
 Servidor 48/48 passou, incluindo determinismo de 1200 ticks com mesmos seeds/inputs, limites espaciais, memória de observação, suspensão/descarte, políticas sem alterar atributos, payload de resultado e regressões históricas/rede. Typecheck passou. Carga real e calibração são T4. Gate funcional T2 aprovado.
 
+## 015-T3
+
+Entrada mantém 2v2 online e oferece solo/dupla contra bots com fácil/normal/difícil antes da criação. Servidor aloca atores, seed e slots, seleciona personagens publicados e deixa bots prontos automaticamente. Coop reserva A1 para segundo humano; solo ocupa A1 com bot. Nenhum bot é inserido em sala humana. joinRoom exige acceptBots em salas novas, bloqueando cliente antigo antes de associação; parser recusa identidade/seed/controller arbitrários. Alteração de lado proibida quando contraria composição humana/bot.
+
+Somente humanos votam; resultados versus bots levam identidade/política para RPC própria. Último humano sair remove sala/runtime; desconexões mantêm janela 20/40s e limpeza posterior. Testes de salas solo/coop, capacidade, cliente incompatível, prontidão/votos, seed de revanche e limpeza passaram: servidor51/51, web26/26, typecheck/build. UI identifica bots e dificuldade no lobby e jogo, sem mudança de atributos para simular nível. Capturas locais do lobby inspecionadas; percurso completo no navegador e carga são T4. Gate funcional T3 aprovado.
+
+Proprietário informou ter aplicado todas as migrations no Supabase e criado a conta administrativa. Registrado como relato, não como execução/validação remota realizada pelo implementador.
+
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 

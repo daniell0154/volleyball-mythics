@@ -6,6 +6,6 @@ export function ResultPanel({ result, team, userId, onVote }: { result: MatchEnd
     <p className="result-score">{result.score.A} × {result.score.B}</p><p>{result.reason === "forfeit" ? "Abandono ou desconexão" : result.reason === "server_failure" ? "Sem vencedor" : "Primeiro a seis pontos"}</p>
     <p role="status">{save}</p>
     <p>Votos para revanche: {result.rematchVotes.length}</p>
-    <button className="primary" disabled={result.rematchVotes.includes(userId)} onClick={onVote}>{result.rematchVotes.includes(userId) ? "Aguardando os outros jogadores" : "Quero revanche"}</button><p className="helper">A revanche começa quando todos os participantes votarem.</p>
+    <button className="primary" disabled={result.rematchVotes.includes(userId)} onClick={onVote}>{result.rematchVotes.includes(userId) ? "Aguardando os outros jogadores" : "Quero revanche"}</button><p className="helper">A revanche começa quando todos os jogadores humanos votarem. Bots não precisam votar.</p>
   </section>;
 }
