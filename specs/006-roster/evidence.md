@@ -15,7 +15,7 @@ Base: branch `feat/006-roster`, partindo de `main` em `c912c9c` (PR #7 da 005 in
 - Requisito: overall calculado no domínio como arredondamento da média dos sete atributos; revisões identificadas por `id:version`, imutáveis e fixadas durante partidas.
 - Cenário: valida fichas com médias 85/77, rejeita overall divergente, campos de atributo ausentes/adicionais, revisão duplicada e tentativa de alterar uma revisão publicada; substitui catálogo habilitado e confirma que a revisão antiga permanece consultável. O servidor agora valida as linhas lidas do banco por esse catálogo antes de distribuí-las; runtime já copia atributos e visual da revisão ao iniciar.
 - Comando: `npm run test --workspace @volleyball-mythics/domain`.
-- Resultado: build do pacote domínio e 17/17 testes passaram, incluindo arredondamento, sete chaves exatas, imutabilidade e consulta de revisão após remoção do catálogo habilitado. O servidor mantém atributos e visual em cópia da revisão ao iniciar uma partida; cobertura de partida e build conjunto registrada no gate final da spec.
+- Resultado: build do pacote domínio e 17/17 testes passaram na execução da tarefa, incluindo arredondamento, sete chaves exatas, imutabilidade e consulta de revisão após remoção do catálogo habilitado. Uma correção de cobertura acrescentou asserção explícita de revisão duplicada; a repetição passou com 18/18. O servidor mantém atributos e visual em cópia da revisão ao iniciar uma partida; cobertura de partida e build conjunto registrada no gate final da spec.
 - Gate: aprovado.
 
 ## 006-T3 — Contrato de habilidades

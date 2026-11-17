@@ -10,6 +10,7 @@ test('character revisions validate exact rounded overall and keep published revi
   assert.equal(validateCharacterRevision(samuel).overall,85);
   const catalog=new VersionedCharacterCatalog();
   assert.equal(catalog.replaceEnabled([samuel])[0].version,1);
+  assert.throws(()=>catalog.replaceEnabled([samuel,{...samuel}]),/duplicate character revision/);
   assert.equal(catalog.get('samuel',1).assetKey,samuel.assetKey);
   catalog.replaceEnabled([]);
   assert.equal(catalog.get('samuel',1).version,1);
