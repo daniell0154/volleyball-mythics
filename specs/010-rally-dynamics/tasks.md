@@ -1,7 +1,8 @@
 # Tarefas — 010
 Todas referenciam R10; executar em ordem. Cada tarefa depende da anterior e das dependências do plan.md.
 
-- [ ] 010-T1 — Instrumentar e medir
+- [x] 010-T1 — Instrumentar e medir
+  - Baseline técnico: 20 rallies por modo em fixtures controladas; não substitui playtest humano da T4.
   - Destinos: packages/domain, apps/server/src/runtime/matches.ts, apps/web/src/input, apps/web/src/game; docs/benchmarks.
   - Entrega/aceite: Capturar 20 rallies por modo com parâmetros atuais; medir duração, contatos, devoluções e ações recusadas por alcance. Registrar ambiente, skill dos participantes e distribuição, sem salvar tokens ou inputs indefinidamente.
 

@@ -32,6 +32,7 @@ async function main() {
   runtime.onEnded = (match) => { reconnect.clear(match.room.roomId); results.finish(match); lifecycle.ended(match.room); };
   runtime.onPoint = (room, snapshot) => app.broadcast(room, "point", snapshot);
   runtime.onAction = (userId, message) => app.sendTo(userId, "actionFeedback", { message });
+  if (process.env.RALLY_TELEMETRY === "1") runtime.onRallyMeasured = (measurement) => console.info(JSON.stringify({ type: "rallyMeasurement", ...measurement }));
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
