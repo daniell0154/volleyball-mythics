@@ -21,7 +21,7 @@ Base: branch `feat/007-release`, criada sobre `main` após merge da PR #8 (commi
 ## 007-T3 — UX e navegadores
 
 - Implementação: placar/fase/equipe em texto, botões com rótulos e teclas, região de status/alerta, fallback informativo quando WebGL falha, controle de qualidade textual e volume de sinais de ponto ajustável com preferência local. O escopo da versão de tese foi atualizado conforme confirmação do proprietário: Samuel e Caio são iniciais; o elenco pode crescer depois.
-- Cenários/comando: `node .test-build/007-smoke.cjs` abriu Chrome e Edge desktop; ambos renderizaram um canvas, mostraram instruções de teclado e não tiveram erros JS. Com `--disable-webgl`, Chrome exibiu o resumo textual de fallback da demonstração.
+- Cenários/comando: `node .test-build/007-smoke.cjs` abriu Chrome e Edge desktop; ambos renderizaram um canvas, mostraram instruções de teclado e terminaram com console limpo. O smoke encontrou nós textuais inválidos no contêiner RN Web e uma requisição automática de favicon 404; os elementos foram corrigidos para HTML semântico e favicon inline. Repetido após a correção: console limpo nos dois navegadores. Com `--disable-webgl`, Chrome exibiu o resumo textual de fallback da demonstração.
 - Navegadores/versões: Chrome 157.0.8103.79 e Edge 157.0.4341.60 passaram smoke. Firefox não está instalado; Safari requer macOS e não foi executado. O fallback de partida online e o controle de volume com uma sessão conectada não foram exercitados no browser.
 - Limites: smoke não substitui benchmark prolongado nem atesta as versões estáveis em outros sistemas. Não declarar compatibilidade de Firefox/Safari até execução e registro.
 - Gate: parcial; manter T3 aberta para Firefox/Safari e validação online.

@@ -11,8 +11,8 @@
 
 | Navegador | Versão | Resultado |
 | --- | --- | --- |
-| Chrome desktop (Windows) | 157.0.8103.79 | Smoke da demonstração: canvas único, instruções de teclado e zero erros JavaScript. |
-| Edge desktop (Windows) | 157.0.4341.60 | Smoke da demonstração: canvas único, instruções de teclado e zero erros JavaScript. |
+| Chrome desktop (Windows) | 157.0.8103.79 | Smoke da demonstração: canvas único, instruções de teclado e console limpo. |
+| Edge desktop (Windows) | 157.0.4341.60 | Smoke da demonstração: canvas único, instruções de teclado e console limpo. |
 | Firefox desktop | — | Não instalado neste ambiente; pendente. |
 | Safari desktop | — | Indisponível neste Windows; pendente em macOS. |
 
