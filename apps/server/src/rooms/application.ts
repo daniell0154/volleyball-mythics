@@ -10,6 +10,10 @@ export class RoomApplication {
     input?(room: RoomState, userId: string, input: InputPayload): void;
     suspend?(room: RoomState): void;
     remove?(roomId: string): void;
+    reconnect?(room: RoomState, userId: string): void;
+    abandon?(room: RoomState, userId: string): void;
+    rematch?(room: RoomState, userId: string): void;
+    finishedDisconnect?(room: RoomState): void;
   } = {}) {}
   refreshCatalog(catalog: readonly CatalogEntry[]): void {
     this.catalog = catalog;
@@ -24,19 +28,25 @@ export class RoomApplication {
   }
   connect(session: Session): void {
     this.sessions.set(session.userId, session); session.send("catalog", this.catalog);
+    let room: RoomState;
+    try { room = this.rooms.roomFor(session.userId); }
+    catch { session.send("roomState", null); return; }
+    const member = room.members.find((m) => m.userId === session.userId)!;
+    member.connected = true; this.hooks.reconnect?.(room, session.userId); this.changed(room);
   }
   broadcast(room: RoomState, type: string, payload: unknown): void {
     for (const member of room.members) this.sessions.get(member.userId)?.send(type, payload);
   }
+  sendTo(userId: string, type: string, payload: unknown): void { this.sessions.get(userId)?.send(type, payload); }
   private changed(room: RoomState): void { this.broadcast(room, "roomState", room); }
   disconnect(session: Session): void {
     this.sessions.delete(session.userId);
     let room: RoomState; try { room = this.rooms.roomFor(session.userId); } catch { return; }
     if (room.status === "lobby") { const remaining = this.rooms.leave(session.userId); if (remaining) this.changed(remaining); }
+    else if (room.status === "finished") { const member = room.members.find((m) => m.userId === session.userId); if (member) member.connected = false; this.hooks.finishedDisconnect?.(room); this.changed(room); }
     else {
       const member = room.members.find((m) => m.userId === session.userId)!; member.connected = false;
       room.status = "suspended"; this.hooks.suspend?.(room); this.changed(room);
-      if (room.members.every((m) => !m.connected)) { this.rooms.destroy(room); this.hooks.remove?.(room.roomId); }
     }
   }
   command(session: Session, message: ClientMessage): void {
@@ -47,6 +57,14 @@ export class RoomApplication {
       else {
         room = this.rooms.roomFor(session.userId);
         const member = room.members.find((m) => m.userId === session.userId)!;
+        if (message.type === "rematchVote" && room.status === "finished" && this.hooks.rematch) {
+          this.hooks.rematch(room, session.userId); session.send("ack", { requestId: message.requestId, result: null }); return;
+        }
+        if (message.type === "leave" && room.status !== "lobby" && room.status !== "finished") this.hooks.abandon?.(room, session.userId);
+        if (message.type === "leave" && room.status === "finished") {
+          const remaining = this.rooms.leave(session.userId); session.send("roomState", null); if (remaining) this.changed(remaining); else this.hooks.remove?.(room.roomId);
+          session.send("ack", { requestId: message.requestId, result: null }); return;
+        }
         if (message.type === "input") {
           if (room.status !== "active" || !this.hooks.input) throw new RoomError("invalid_state");
           this.hooks.input(room, session.userId, message.payload);

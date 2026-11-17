@@ -5,7 +5,8 @@ export interface FinalMatchResult {
   matchId: string;
   mode: MatchMode;
   score: MatchResult["score"];
-  winner: NonNullable<MatchResult["winner"]>;
+  winner: MatchResult["winner"];
+  status?: "finished" | "cancelled";
   reason: NonNullable<MatchResult["reason"]>;
   rulesVersion: number;
   startedAt: string;
@@ -20,10 +21,11 @@ export function createResultsRepository(url: string, serviceSecret: string) {
   });
 
   return {
-    async persist(result: FinalMatchResult): Promise<void> {
-      const { error } = await client.rpc("persist_match_result", {
+    async persist(result: FinalMatchResult, signal?: AbortSignal): Promise<void> {
+      const request = client.rpc(result.status === "cancelled" ? "persist_cancelled_match_result" : "persist_match_result", {
         p_result: { ...result, players: result.players },
       });
+      const { error } = await (signal ? request.abortSignal(signal) : request);
       if (error) throw error;
     },
   };

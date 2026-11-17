@@ -5,12 +5,13 @@ export interface SceneSnapshot {
   readonly phase: string;
   readonly score: { readonly A: number; readonly B: number };
   readonly ball: Position;
-  readonly athletes: readonly { readonly id: string; readonly team: "A" | "B"; readonly position: Position }[];
+  readonly athletes: readonly { readonly id: string; readonly team: "A" | "B"; readonly position: Position; readonly assetKey?: string }[];
 }
 export interface SceneAdapter {
   update(snapshot: SceneSnapshot): void;
   resize(width: number, height: number): void;
   setQuality(quality: "low" | "high"): void;
+  setFollowPlayer?(playerId: string | null): void;
   dispose(): void;
 }
 export type SceneFactory = (host: HTMLElement) => SceneAdapter;

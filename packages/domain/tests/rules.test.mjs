@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { applyContact, createBallContactState, resolveGround, serveTimeoutPoint } from "../dist/index.js";
 
 test("line is in; ball outside awards the point opposite the last touch", () => {
-  assert.equal(resolveGround({ x: 4.5, z: 9 }, "A"), "B");
+  assert.equal(resolveGround({ x: 4.5, z: 9 }, "A"), "A");
+  assert.equal(resolveGround({ x: 0, z: -4 }, "A"), "B");
+  assert.equal(resolveGround({ x: 0, z: 4 }, "B"), "A");
   assert.equal(resolveGround({ x: 4.5001, z: 0 }, "A"), "B");
   assert.equal(resolveGround({ x: 0, z: -9.0001 }, "B"), "A");
 });

@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { createCamera, fitCamera } from "./camera.js";
+import { createCamera, fitCamera, followCamera } from "./camera.js";
+import { createAvatar, disposeAvatar } from "./avatar.js";
 import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
 export function createScene(host: HTMLElement): SceneAdapter {
@@ -30,8 +31,10 @@ export function createScene(host: HTMLElement): SceneAdapter {
   box(2, 3, 0.1, "#584b44", 0, 1.5, -16.4);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: "#fff1bd" }));
   scene.add(ball);
-  const athletes = new Map<string, THREE.Mesh>();
+  const athletes = new Map<string, { model: THREE.Object3D; assetKey: string; team: string }>();
   let disposed = false;
+  let followId: string | null = null;
+  let lastFrame = performance.now();
   const resize = (width: number, height: number) => {
     if (disposed || width <= 0 || height <= 0) return;
     fitCamera(camera, width, height); renderer.setSize(width, height);
@@ -40,18 +43,30 @@ export function createScene(host: HTMLElement): SceneAdapter {
   return {
     update(snapshot: SceneSnapshot) {
       if (disposed) return;
+      const now = performance.now();
+      const followed = snapshot.athletes.find((a) => a.id === followId);
+      if (followed) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
+      lastFrame = now;
       ball.position.copy(snapshot.ball);
       const ids = new Set(snapshot.athletes.map((athlete) => athlete.id));
-      for (const [id, mesh] of athletes) if (!ids.has(id)) {
-        scene.remove(mesh); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); athletes.delete(id);
+      for (const [id, entry] of athletes) if (!ids.has(id)) {
+        scene.remove(entry.model); disposeAvatar(entry.model); athletes.delete(id);
       }
       for (const athlete of snapshot.athletes) {
-        let mesh = athletes.get(athlete.id);
-        if (!mesh) { mesh = box(0.65, 1.8, 0.65, athlete.team === "A" ? "#154c8a" : "#b94338", 0, 0, 0); athletes.set(athlete.id, mesh); }
-        mesh.position.set(athlete.position.x, athlete.position.y + 0.9, athlete.position.z);
+        const assetKey = athlete.assetKey ?? "";
+        let entry = athletes.get(athlete.id);
+        if (entry && (entry.assetKey !== assetKey || entry.team !== athlete.team)) { scene.remove(entry.model); disposeAvatar(entry.model); athletes.delete(athlete.id); entry = undefined; }
+        if (!entry) {
+          let model: THREE.Object3D;
+          try { model = createAvatar(assetKey, athlete.team); }
+          catch { model = box(0.65, 1.8, 0.65, athlete.team === "A" ? "#154c8a" : "#b94338", 0, 0, 0); model.userData.placeholder = true; }
+          scene.add(model); entry = { model, assetKey, team: athlete.team }; athletes.set(athlete.id, entry);
+        }
+        entry.model.position.set(athlete.position.x, athlete.position.y + (entry.model.userData.placeholder ? 0.9 : 0), athlete.position.z);
       }
       renderer.render(scene, camera);
     }, resize,
+    setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false; },
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },
     dispose() {
       if (disposed) return;

@@ -122,21 +122,32 @@ export interface RoomState {
   code: string;
   mode: MatchMode;
   ownerId: string;
-  status: "lobby" | "active" | "suspended";
+  status: "lobby" | "active" | "suspended" | "finished";
   members: RoomMember[];
 }
-export interface CatalogEntry { id: string; version: number; name: string }
+export interface CatalogEntry { id: string; version: number; name: string; assetKey?: string; overall?: number; abilityName?: string; attributes?: CharacterAttributes }
 export interface Vector3 { readonly x: number; readonly y: number; readonly z: number }
 export interface MatchSnapshot {
   matchId: string;
   tick: number;
-  phase: "countdown" | "serving" | "rally" | "disconnectedSuspension";
+  phase: "countdown" | "serving" | "rally" | "point" | "finished" | "cancelled" | "disconnectedSuspension";
   score: Readonly<Record<Team, number>>;
   serverTime: number;
   lastProcessedSeq: Readonly<Record<string, number>>;
-  athletes: readonly { id: string; team: Team; position: Vector3 }[];
+  athletes: readonly { id: string; team: Team; position: Vector3; assetKey?: string }[];
   ball: Vector3;
   cooldowns: Readonly<Record<string, number>>;
+  servingSide?: Team;
+  servingSlot?: 0 | 1;
+  secondsRemaining?: number;
+  winner?: Team | null;
+  reason?: MatchReason | null;
+  pointReason?: string;
+}
+export interface MatchEnded {
+  matchId: string; score: Readonly<Record<Team, number>>; winner: Team | null;
+  reason: MatchReason; persistence: "pending" | "saved" | "failed" | "not_required";
+  rematchVotes: readonly string[];
 }
 
 export type ServerResponse<T> =

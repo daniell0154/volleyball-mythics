@@ -29,7 +29,7 @@ test('real sockets create/join/select/ready/start and receive authorized snapsho
   for(const client of [a,b])await client.request('selectCharacter',{characterId:'test-only',version:1});
   for(const client of [a,b])await client.request('ready',{ready:true});
   assert.equal((await b.request('start')).payload.code,'forbidden');assert.equal((await a.request('start')).type,'ack');
-  runtime.advance(3000);await waitFor(()=>a.messages.filter(m=>m.type==='snapshot').length===60&&b.messages.filter(m=>m.type==='snapshot').length===60);
+  runtime.advance(3000);await waitFor(()=>a.messages.filter(m=>m.type==='snapshot').length===61&&b.messages.filter(m=>m.type==='snapshot').length===61);
   assert.equal(c.messages.filter(m=>m.type==='snapshot').length,0);
   await a.request('input',{seq:2,moveX:1,moveZ:0,actions:[]});await a.request('input',{seq:1,moveX:-1,moveZ:0,actions:[]});runtime.advance(50);
   await waitFor(()=>a.messages.some(m=>m.type==='snapshot'&&m.payload.lastProcessedSeq.a===2));
