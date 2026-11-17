@@ -1,0 +1,38 @@
+{
+  "task": "009-T4",
+  "wallStartedAt": "2026-11-17T13:23:13.206Z",
+  "durationSeconds": 900,
+  "rooms": 10,
+  "players": 40,
+  "simulationHz": 60,
+  "runtimeTickP95Ms": 0.9233,
+  "runtimeTickMaxMs": 69.9564,
+  "scheduleLagP95Ms": 14.563,
+  "simulationCalls": 54000,
+  "roundsRestarted": 310,
+  "tickCounts": [
+    745,
+    745,
+    745,
+    745,
+    745,
+    745,
+    745,
+    745,
+    745,
+    745
+  ],
+  "snapshots": 180530,
+  "visualActionsObserved": 3260,
+  "snapshotFanoutMessages": 722120,
+  "snapshotBytesFannedOut": 569032720,
+  "thresholdMs": 16.7,
+  "passed": true,
+  "environment": {
+    "platform": "win32 10.0.26200",
+    "node": "v22.14.0",
+    "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+    "logicalCores": 8,
+    "memoryGiB": 15.7
+  }
+}

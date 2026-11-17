@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-11-17T13:28:45.049Z",
+  "browser": "157.0.8103.79",
+  "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+  "os": "Windows 11 Pro",
+  "gpu": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "width": 1280,
+  "height": 720,
+  "dpr": 1,
+  "quality": "low",
+  "scenario": "four athletic avatars with locomotion, jumps and seven confirmed gestures; Vite/headless; synthetic snapshots",
+  "durationMs": 300012.99999999965,
+  "frames": 18009,
+  "p95Ms": 16.89999999999418,
+  "maxMs": 49.799999999999955,
+  "hidden": false,
+  "errors": [],
+  "baselineP95Ms": 16.900000000001455,
+  "regressionPercent": -4.305444889496357e-11,
+  "pass": true
+}

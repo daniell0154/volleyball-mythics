@@ -38,7 +38,7 @@ test('four 2v2 clients keep one authoritative score under a 150ms RTT / 30ms jit
     for (let i = 0; i < 4; i++) {
       const rng = random(i + 13);
       const client = { id: `latency-${i}`, rng, socket: new WebSocket(`ws://127.0.0.1:${transport.http.address().port}/socket`, { origin: 'http://localhost:5173' }),
-        waiters: new Map(), latest: null, sequence: 0, outboundDue: 0, inboundDue: 0, sentLatency: [], receivedLatency: [], actions: null };
+        waiters: new Map(), latest: null, sequence: 0, outboundDue: 0, inboundDue: 0, sentLatency: [], receivedLatency: [], actions: new Map() };
       client.send = (type, payload, id = `${client.id}-${++requestId.value}`) => {
         const delay = latency(client.rng); client.sentLatency.push(delay);
         client.outboundDue = Math.max(client.outboundDue, performance.now() + delay);
@@ -54,7 +54,10 @@ test('four 2v2 clients keep one authoritative score under a 150ms RTT / 30ms jit
         setTimeout(() => {
           const pendingId = message.payload?.requestId;
           if (pendingId && client.waiters.has(pendingId)) { const resolve = client.waiters.get(pendingId); client.waiters.delete(pendingId); resolve(message); }
-          if (message.type === 'snapshot') client.latest = message.payload;
+          if (message.type === 'snapshot') {
+            client.latest = message.payload;
+            for (const action of message.payload.visualActions ?? []) client.actions.set(action.id,action);
+          }
         }, Math.max(0, client.inboundDue - performance.now()));
       });
       await once(client.socket, 'open'); clients.push(client);
@@ -90,6 +93,9 @@ test('four 2v2 clients keep one authoritative score under a 150ms RTT / 30ms jit
     await sleep(300);
     const scores = clients.map((client) => `${client.latest.score.A}:${client.latest.score.B}`);
     assert.equal(new Set(scores).size, 1, `clients disagree after delivery settles: ${scores.join(',')}`);
+    const serveIds=clients.map(client=>[...client.actions.values()].find(action=>action.kind==='serve')?.id);
+    assert.ok(serveIds.every(id=>Number.isInteger(id)), 'all four clients recover the accepted serve under latency');
+    assert.equal(new Set(serveIds).size,1,'repeated snapshot history identifies one shared occurrence');
     const allDelays = clients.flatMap((client) => [...client.sentLatency, ...client.receivedLatency]);
     assert.ok(allDelays.every((delay) => delay >= 60 && delay <= 90));
     runtime.cancelForShutdown();

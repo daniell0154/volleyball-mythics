@@ -13,7 +13,7 @@ Todas referenciam R09; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Implementar saque, recepção, levantamento, ataque, bloqueio, bronca e reação de Caio. Estado visual distingue ação recusada de confirmada; contato visual fica a até um snapshot (50 ms na configuração atual) do contato na timeline interpolada.
 
-- [ ] 009-T4 — Rede e ciclo de vida
+- [x] 009-T4 — Rede e ciclo de vida
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Eventos repetidos não repetem golpes; perdas/transições rápidas se recuperam via estado durável ou janela limitada de eventos nos snapshots. Reconexão busca pose vigente sem repetir sons/efeitos antigos. Verificar 30/60/120 FPS, RTT 150 ms/jitter 30 ms e orçamento de render.
 

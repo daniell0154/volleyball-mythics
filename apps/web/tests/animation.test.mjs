@@ -4,6 +4,7 @@ import {AvatarAnimator} from '../.test-build/scene/animateAvatar.js';
 import {ACTION_POSES} from '../.test-build/scene/animateAvatar.js';
 import {createAthleticAvatar} from '../.test-build/scene/athleticAvatar.js';
 import {disposeAvatar} from '../.test-build/scene/avatar.js';
+import {SnapshotBuffer} from '../.test-build/network/interpolation.js';
 const key='procedural:v1:male:2626328580';
 function simulate(fps){
  const model=createAthleticAvatar(key,'A'),animator=new AvatarAnimator(model);
@@ -49,4 +50,22 @@ test('suspension freezes joints and resume keeps animation time without restarti
  assert.equal(hip.rotation.x,before);
  animator.update({tick:63,phase:'rally'}, {...athlete,position:{x:3,y:.3,z:0}});
  assert.notEqual(hip.rotation.x,before);disposeAvatar(model);
+});
+
+test('contact appears within 50ms of the interpolated ball at 30/60/120 FPS, despite a lost snapshot',()=>{
+ for(const fps of [30,60,120]){
+  const buffer=new SnapshotBuffer();
+  const action={id:1,actorId:'a',kind:'serve',tick:4,facing:0};
+  const frame=(tick)=>({matchId:'one',tick,serverTime:1000+tick/60*1000,phase:'rally',score:{A:0,B:0},ball:{x:tick,y:1,z:0},athletes:[{id:'a',team:'A',position:{x:0,y:0,z:0}}],lastProcessedSeq:{},cooldowns:{}});
+  buffer.push(frame(0),0);
+  // Frame 3 is lost; frame 6 carries the accepted action in its bounded history.
+  buffer.push({...frame(6),visualActions:[action]},100);
+  let contact;
+  for(let step=0;step<=20;step++){
+   const sample=buffer.sample(100+step*1000/fps);
+   if(sample.visualActions?.length){contact=sample;break;}
+  }
+  assert.ok(contact);assert.ok((contact.renderTick-action.tick)/60*1000<=50+1e-8);
+  assert.equal(contact.ball.x,contact.renderTick);
+ }
 });

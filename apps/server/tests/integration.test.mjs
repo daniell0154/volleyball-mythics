@@ -37,5 +37,6 @@ test('real sockets create/join/select/ready/start and receive authorized snapsho
   assert.ok(snapshot.athletes.find(p=>p.id==='a').position.x>0);assert.equal(snapshot.athletes.find(p=>p.id==='b').position.x,0);
   await a.request('input',{seq:3,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);
   await waitFor(()=>b.messages.some(m=>m.type==='snapshot'&&m.payload.phase==='rally'));
-  b.socket.close();await waitFor(()=>room.status==='suspended');assert.equal(a.messages.some(m=>m.type==='snapshot'&&m.payload.phase==='disconnectedSuspension'),true);
+  b.socket.close();await waitFor(()=>room.status==='suspended'&&a.messages.some(m=>m.type==='snapshot'&&m.payload.phase==='disconnectedSuspension'));
+  assert.equal(a.messages.some(m=>m.type==='snapshot'&&m.payload.phase==='disconnectedSuspension'),true);
 });

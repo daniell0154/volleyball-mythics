@@ -1,0 +1,34 @@
+<!doctype html><html lang="pt-BR"><meta charset="UTF-8"><title>009 · Animações</title>
+<style>body{margin:0;padding:20px;background:#101d2b;color:#f4f6fa;font:16px system-ui}h1{font-size:24px;margin:0}p{color:#bfd0dd}.views{display:flex;gap:16px}#preview{width:380px;height:540px}#court{width:800px;height:540px}canvas{display:block}button,select{padding:10px;font:inherit}strong{color:#f2cf83}</style>
+<h1>009 · Revisão de animações</h1><p>Modelo em detalhe e cena real com quatro atletas. Sequência sintética de ações confirmadas, sem determinar resultado online.</p>
+<label>Gesto <select id="action"><option value="auto">Sequência automática</option></select></label> <button id="pause">Pausar apresentação</button> <strong id="label"></strong>
+<div class="views"><div id="preview"></div><div id="court"></div></div>
+<p>Idle, passos, salto/queda e recuperação. Cada ciclo mostra contato confirmado e retorno; nenhum som é disparado por esta ferramenta.</p>
+<script type="module">
+import * as THREE from 'three';
+import {createPresentationAvatar} from '/apps/web/src/scene/avatarManifest.ts';
+import {AvatarAnimator,ACTION_POSES} from '/apps/web/src/scene/animateAvatar.ts';
+import {createScene} from '/apps/web/src/scene/createScene.ts';
+const kinds=Object.keys(ACTION_POSES),names={serve:'Saque',receive:'Recepção',set:'Levantamento',attack:'Ataque',block:'Bloqueio',rant:'Bronca',freePoint:'Foi sem querer'};
+for(const kind of kinds){const option=document.createElement('option');option.value=kind;option.textContent=names[kind];document.querySelector('#action').append(option);}
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(380,540);document.querySelector('#preview').append(renderer.domElement);
+const stage=new THREE.Scene();stage.background=new THREE.Color('#1c3043');stage.add(new THREE.HemisphereLight(0xffffff,0x435366,3));
+const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(3,5,4);stage.add(light);
+const camera=new THREE.PerspectiveCamera(35,380/540,.1,100);camera.position.set(2,1.6,4);camera.lookAt(0,1,0);
+const key='procedural:v1:male:2626328580',model=createPresentationAvatar(key,'A'),animator=new AvatarAnimator(model);stage.add(model);
+const court=createScene(document.querySelector('#court'));court.setQuality('low');
+let paused=false,start=performance.now(),last=0,offset=0;
+document.querySelector('#pause').onclick=()=>{paused=!paused;document.querySelector('#pause').textContent=paused?'Retomar apresentação':'Pausar apresentação';if(!paused){offset=last;start=performance.now();}};
+window.reviewAt=(seconds)=>{
+ const tick=seconds*60,cycle=Math.floor(seconds/2),selected=document.querySelector('#action').value;
+ const kind=selected==='auto'?kinds[cycle%kinds.length]:selected;
+ const y=Math.max(0,Math.sin(seconds*Math.PI)*.7);
+ const athletes=[0,1,2,3].map((i)=>({id:'demo-'+i,team:i<2?'A':'B',assetKey:i%2?'procedural:v1:male:2016838844':key,position:{x:(i%2?2:-2)+Math.sin(seconds)*.4,y:i===0?y:0,z:i<2?-5:5}}));
+ const action={id:cycle+1,actorId:'demo-0',kind,tick:cycle*120,facing:0};
+ const frame={matchId:'animation-review',tick:Math.floor(tick),renderTick:tick,phase:'rally',score:{A:0,B:0},ball:{x:-2,y:1.4+y,z:-4.2},athletes,visualActions:[action]};
+ model.position.y=y;animator.update(frame,athletes[0]);renderer.render(stage,camera);court.update(frame);
+ document.querySelector('#label').textContent=names[kind]+' · contato → recuperação';
+};
+window.reviewAt(0);
+if(!new URLSearchParams(location.search).has('manual')){function draw(now){if(!paused){last=offset+(now-start)/1000;window.reviewAt(last);}requestAnimationFrame(draw);}requestAnimationFrame(draw);}
+</script></html>
