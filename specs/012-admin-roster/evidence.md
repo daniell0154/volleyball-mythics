@@ -22,3 +22,9 @@ Rota /admin com chunk sob demanda, login Supabase por email/senha e storageKey s
 
 Chrome 157.0.8103.79 em 1440x1100: formulário/preenchimento/save/publicação/preview passou, captura 012-admin.png; nome acessível do seletor corrigido após primeiro ensaio. Harness 012-admin.cjs usa RPC/migrations reais no PGlite e autenticação exclusiva de fixture; não valida login Supabase remoto. Web 23/23 passou antes do teste adicional de avatar, tipos e build completo passaram. Runner web inicialmente recebeu EPERM do sandbox e passou fora dele. Avisos conhecidos RN Web/use client e chunk 3D >500kB preservados. Gate funcional T3 aprovado; revisão do proprietário na T4.
 
+## 012-T4 — validação técnica executada, aceite pendente
+
+`node docs/acceptance/012-admin.cjs`: passou, relatório 012-results.json. Dois contextos com personagem recém-publicado iniciaram partida pelo transporte/runtime reais; editar/publicar v2 e desativar preservou atributos (saque 90), visual e seleção v1 da partida ativa. Catálogo habilitado deixou de oferecer o personagem. Preview e jogo sem exceções JS, capturas 012-admin.png/012-match.png. Banco de teste em memória com migrations e RPC reais; auth e refresh de catálogo controlados pelo harness, limites em 012-admin.md.
+
+Web 24/24 passou com teste do namespace de avatar dinâmico, além de 40/40 do servidor e SQL T1/T2. Typecheck dos workspaces, build completo e git diff --check passaram na integração final. Não foram aplicadas migrations no Supabase remoto nem provisionada conta do proprietário: checkout sem .env (Test-Path .env = False). Bootstrap e operação documentados, sem inventar conta ou publicar fixtures. T4 permanece pendente da revisão do proprietário e validação Auth/RPC remota. Abrir PR draft com limites explícitos; nenhuma aprovação visual inferida do smoke. Próxima spec será 013 somente após aceite/integração da 012.
+

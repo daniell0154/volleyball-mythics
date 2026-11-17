@@ -1,5 +1,5 @@
 # Administração do elenco
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T3 implementadas e verificadas localmente. T4 com percurso integrado local aprovado; revisão do proprietário e validação Auth/RPC no ambiente Supabase configurado pendentes.
 Requisito R12. Dependência: 011 integrada.
 
 ## Aceitação
