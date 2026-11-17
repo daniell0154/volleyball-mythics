@@ -12,19 +12,23 @@ function scenario(side,index,rtt,defending=true,fullMatch=false){
  runtime.advance(3000);m.athletes.find(a=>a.team===side&&a.slot===0).position.x=zone;
  const history=[],queue=[];let firstFlight=null,firstReturn=null,serveTick=null,reachableTicks=0;const trace=[];
  for(let tick=0;tick<(fullMatch?18000:2400)&&!m.ended;tick++){
-  const snapshot=runtime.snapshot(m);history.push(structuredClone(snapshot));
+  const snapshot={...runtime.snapshot(m),fixtureContacts:{...m.contacts}};history.push(structuredClone(snapshot));
   if(tick%3===0&&index===0&&rtt===0&&!fullMatch)trace.push(snapshot);
-  const down=Math.round((rtt/2)/16.667),observed=history[Math.max(0,history.length-1-down)]||snapshot;
+  const down=Math.round((rtt/2)/16.667),observedIndex=Math.max(0,history.length-1-down-12),observed=history[observedIndex]||snapshot;
   if(tick%12===0){
-   const ball=observed.ball,eligible=m.athletes.filter(a=>a.team!==(side)&&a.id!==m.contacts.lastPlayerId);
-   const nearest=eligible.reduce((best,a)=>!best||Math.hypot(a.position.x-ball.x,a.position.z-ball.z)<Math.hypot(best.position.x-ball.x,best.position.z-ball.z)?a:best,null);
+   const ball=observed.ball,previous=history[Math.max(0,observedIndex-3)]?.ball??ball,dt=3/60;
+   const velocity={x:(ball.x-previous.x)/dt,y:(ball.y-previous.y)/dt,z:(ball.z-previous.z)/dt};
+   const discriminant=velocity.y**2+2*9.81*(ball.y-1.6),flight=discriminant>0?Math.max(0,Math.min(2.5,(velocity.y+Math.sqrt(discriminant))/9.81)):0;
+   // Intercept estimated only from two delayed observations and known gravity.
+   const target={x:ball.x+velocity.x*flight,z:ball.z+velocity.z*flight};
+   const eligible=m.athletes.filter(a=>(defending==='both'?a.team===(target.z<0?'A':'B'):a.team!==side)&&a.id!==observed.fixtureContacts.lastPlayerId);
+   const nearest=eligible.reduce((best,a)=>!best||Math.hypot(a.position.x-target.x,a.position.z-target.z)<Math.hypot(best.position.x-target.x,best.position.z-target.z)?a:best,null);
    for(const a of m.athletes){
     const direction=a.team==='A'?1:-1,actions=[];let dx=0,dz=0;
     if(m.state.phase==='serving'&&a.team===m.state.servingSide&&a.slot===m.state.servingSlot)actions.push('serve');
-    if(defending&&a.team!==side&&a.id===nearest?.id&&m.state.phase==='rally'){
-     // Position pursuit from delayed observed ball, never a future landing oracle.
-     dx=ball.x-a.position.x;dz=ball.z-a.position.z;
-     if(ball.y<2.8)actions.push('receive');
+    if(defending&&(defending==='both'||a.team!==side)&&a.id===nearest?.id&&m.state.phase==='rally'&&m.phaseTicks<900){
+     dx=target.x-a.position.x;dz=target.z-a.position.z;
+     actions.push(observed.fixtureContacts.lastTouchSide===a.team?(observed.fixtureContacts.touches>=2?'attack':'set'):'receive');
     }
     const length=Math.hypot(dx,dz),jitter=rtt?[-2,0,2][tick/12%3]:0;
     queue.push({at:tick+Math.max(0,down+jitter),a:a.id,p:{seq:++seq,moveX:length>.15?dx/Math.max(length,1):0,moveZ:length>.15?dz/Math.max(length,1):0,actions}});
@@ -46,8 +50,9 @@ function scenario(side,index,rtt,defending=true,fullMatch=false){
 }
 for(const rtt of [0,150])for(const side of ['A','B'])for(let i=0;i<40;i++)rows.push(scenario(side,i,rtt));
 const inactive=['A','B'].map(side=>scenario(side,0,0,false));
+const bothActive=Array.from({length:40},(_,i)=>scenario(i%2?'B':'A',i,i%2?150:0,'both'));
 const matches=Array.from({length:20},(_,i)=>scenario(i%2?'B':'A',i,150,true,true));
 const percentile=(xs,p)=>[...xs].sort((a,b)=>a-b)[Math.ceil(xs.length*p)-1]??0;
 const summary=[0,150].flatMap(rtt=>['A','B'].map(side=>{const sample=rows.filter(r=>r.side===side&&r.rtt===rtt);return{side,rtt,samples:sample.length,returnRate:sample.filter(r=>r.returnedServe).length/sample.length,medianContacts:percentile(sample.map(r=>r.contactsAfterServe),.5),medianDuration:percentile(sample.map(r=>r.durationSeconds),.5),rangeRejections:sample.reduce((n,r)=>n+r.rangeRejections,0)};}));
-const report={date:new Date().toISOString(),rulesVersion:version,environment:{node:process.version,cpu:os.cpus()[0].model,os:os.version()},fixture:'2v2, 200ms pursuit from delayed ball observations; one defending team, serving team stays still; both teams serve when entitled; test-only, not humans or product bots. RTT shim delays observation/input, jitter +-33ms.',summary,serveOnlyMatchWinRate:matches.filter(m=>m.serveOnlyWon).length/20,inactive,rows,matches};
+const report={date:new Date().toISOString(),rulesVersion:version,environment:{node:process.version,cpu:os.cpus()[0].model,os:os.version()},fixture:'2v2, 200ms pursuit from delayed ball observations; receive/set/attack by accepted touch count; one defending team, serving team stays still; separate both-active series. Both teams serve when entitled; test-only, not humans or product bots. RTT shim delays observation/input, jitter +-33ms.',summary,bothActiveMedianContacts:percentile(bothActive.map(r=>r.contactsAfterServe),.5),bothActive,serveOnlyMatchWinRate:matches.filter(m=>m.serveOnlyWon).length/20,inactive,rows,matches};
 await writeFile(`docs/benchmarks/014-profile-${version}.json`,JSON.stringify(report,null,2)+'\n');await writeFile(`docs/benchmarks/014-traces-${version}.json`,JSON.stringify(traces)+'\n');console.log(JSON.stringify({version,summary,serveOnlyMatchWinRate:report.serveOnlyMatchWinRate}));

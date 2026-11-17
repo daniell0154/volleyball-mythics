@@ -16,7 +16,7 @@ export function parseEnvelope(raw: string): ClientMessage | null {
     case "selectCharacter": valid = keys(p, ["characterId", "version"]) && text(p.characterId, 128) && Number.isSafeInteger(p.version) && Number(p.version) > 0; break;
     case "setTeam": valid = keys(p, ["team", "slot"]) && ["A", "B"].includes(String(p.team)) && (p.slot === 0 || p.slot === 1); break;
     case "ready": valid = keys(p, ["ready"]) && typeof p.ready === "boolean"; break;
-    case "input": valid = keys(p, ["seq", "moveX", "moveZ", "actions"]) && Number.isSafeInteger(p.seq) && Number(p.seq) > 0
+    case "input": valid = (keys(p, ["seq", "moveX", "moveZ", "actions"]) || (keys(p,["seq","moveX","moveZ","actions","aim"]) && object(p.aim) && keys(p.aim,["x","z"]) && typeof p.aim.x==="number" && typeof p.aim.z==="number" && Number.isFinite(p.aim.x) && Number.isFinite(p.aim.z) && Math.hypot(p.aim.x,p.aim.z)<=1)) && Number.isSafeInteger(p.seq) && Number(p.seq) > 0
       && typeof p.moveX === "number" && Number.isFinite(p.moveX) && Math.abs(p.moveX) <= 1
       && typeof p.moveZ === "number" && Number.isFinite(p.moveZ) && Math.abs(p.moveZ) <= 1
       && Array.isArray(p.actions) && p.actions.length <= 6 && new Set(p.actions).size === p.actions.length

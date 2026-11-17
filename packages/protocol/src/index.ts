@@ -77,6 +77,7 @@ export interface ReadyPayload {
 }
 
 export interface InputPayload {
+  aim?: { x: number; z: number };
   seq: number;
   moveX: number;
   moveZ: number;
@@ -137,6 +138,7 @@ export interface VisualAction {
   readonly facing: number;
 }
 export interface MatchSnapshot {
+  readonly rulesVersion?: number;
   matchId: string;
   tick: number;
   phase: "countdown" | "serving" | "rally" | "point" | "finished" | "cancelled" | "disconnectedSuspension";

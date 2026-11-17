@@ -146,12 +146,13 @@ export class MatchRuntime {
     if (match.state.phase === "serving") {
       if (!input.actions.includes("serve")) return;
       if (athlete.team !== match.state.servingSide || athlete.slot !== match.state.servingSlot) { this.onAction(athlete.id, "Aguarde sua vez de sacar."); return; }
+      if(match.rallyProfile.version===4&&athlete.position.z*direction>-5){this.onAction(athlete.id,"Recue para o fundo da quadra antes de sacar.");return;}
       match.state = transition(match.state, { type: "SERVE_HIT" }); match.phaseTicks = 0;
       match.contacts = { ...createBallContactState(match.room.mode), lastTouchSide: athlete.team, lastPlayerId: athlete.id };
       this.visual(match, athlete, "serve");
       match.metrics.serve(match.tick);
       const position = { ...athlete.position, y: athlete.position.y + 1.25 };
-      match.ball = { position, velocity: rallyVelocity(match.rallyProfile,"serve",position,athlete.position,direction,athlete.attributes), grounded: false };
+      match.ball = { position, velocity: rallyVelocity(match.rallyProfile,"serve",position,athlete.position,direction,athlete.attributes,undefined,input.aim), grounded: false };
       match.contactRecovery.set(athlete.id,match.tick+match.rallyProfile.recoveryTicks);
       match.touching.add(athlete.id); this.onAction(athlete.id, "Saque!"); return;
     }
@@ -170,7 +171,7 @@ export class MatchRuntime {
     this.visual(match, athlete, isBlock ? "block" : action);
     this.onAction(athlete.id, isBlock ? "Bloqueio!" : action === "attack" ? "Ataque!" : action === "set" ? "Levantamento!" : "Recepção!");
     const teammate = match.athletes.find((other) => other.team === athlete.team && other.id !== athlete.id);
-    match.ball = { position: { ...match.ball.position }, velocity: rallyVelocity(match.rallyProfile,isBlock?"block":action,match.ball.position,athlete.position,direction,athlete.attributes,teammate?.position), grounded: false };
+    match.ball = { position: { ...match.ball.position }, velocity: rallyVelocity(match.rallyProfile,isBlock?"block":action,match.ball.position,athlete.position,direction,athlete.attributes,teammate?.position,input.aim), grounded: false };
   }
   private useAbility(match: RunningMatch, athlete: Athlete): void {
     const ability = athlete.ability;
@@ -211,7 +212,7 @@ export class MatchRuntime {
   snapshot(match: RunningMatch): MatchSnapshot {
     const phase = match.suspended ? "disconnectedSuspension" : match.state.phase;
     const secondsRemaining = match.suspended ? 0 : match.state.phase === "countdown" ? Math.max(0, 3 - match.phaseTicks / 60) : match.state.phase === "serving" ? Math.max(0, 8 - match.phaseTicks / 60) : match.state.phase === "point" ? Math.max(0, 2 - match.phaseTicks / 60) : 0;
-    return { matchId: match.state.matchId, tick: match.tick, phase: phase as MatchSnapshot["phase"], score: { ...match.state.score }, serverTime: this.now(),
+    return { matchId: match.state.matchId, rulesVersion:match.state.rulesVersion, tick: match.tick, phase: phase as MatchSnapshot["phase"], score: { ...match.state.score }, serverTime: this.now(),
       visualActions: match.visualActions.filter((action) => match.tick - action.tick <= 120).map((action) => ({ ...action })),
       lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position }, ...(a.assetKey ? { assetKey: a.assetKey } : {}) })), ball: { ...match.ball.position }, cooldowns: Object.fromEntries([...match.abilityCooldowns].filter(([, expiry]) => expiry > match.tick).map(([id, expiry]) => [id, (expiry - match.tick) / 60])),
       servingSide: match.state.servingSide, servingSlot: match.state.servingSlot, secondsRemaining, winner: match.winner, reason: match.reason, pointReason: match.pointReason };
