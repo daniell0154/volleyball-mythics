@@ -36,6 +36,6 @@ export function Game({ createScene }: { createScene: SceneFactory }) {
     </View>
     {error && <Text role="alert" style={{ color: "#ffceab" }}>{error}</Text>}
     <div ref={host} aria-label="Quadra escolar 3D com bola e quatro atletas" style={{ width: "100%", height: "min(72vh, 720px)", minHeight: 280 }} />
-    <Text style={{ color: "#b9d9e8" }}>WASD mover · Espaço saltar · J receber · K levantar · L atacar/sacar · U especial. Entradas em demonstração; não controlam os atletas sintéticos.</Text>
+    <Text style={{ color: "#b9d9e8" }}>Controles de teclado ainda não implementados. Esta cena reproduz uma trajetória sintética.</Text>
   </View>;
 }

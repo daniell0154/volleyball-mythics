@@ -1,5 +1,5 @@
 # Spike 3D escolar
-Status: especificado, não implementado.
+Status: implementação parcial em feat/003-render; T1 concluída, T2 aguarda aceite visual; gate 3D pendente.
 Requisito R03: Jogador vê quadra escolar externa e acompanha a bola.
 
 ## Aceitação
