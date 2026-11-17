@@ -3,9 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": { "typecheck": "tsc --noEmit" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "npm run build --workspace @volleyball-mythics/domain && tsc --outDir dist",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "start": "node --env-file-if-exists=../../.env dist/main.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",
-    "@volleyball-mythics/protocol": "*"
+    "@volleyball-mythics/domain": "^0.1.0",
+    "@volleyball-mythics/protocol": "*",
+    "ws": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2"
   }
 }

@@ -8,10 +8,12 @@ MatchPlayer: matchId, userId, team (A|B), slot (0|1), characterId, characterVers
 MatchResult: matchId como chave idempotente, payload final e hash. Repetição idêntica retorna sucesso; conflito retorna erro.
 Sala é estado em memória do servidor: roomId, code, mode, members, ownerId, ready, status. Código expira quando sala fecha; código não substitui autenticação.
 ## Rede
+Handshake de transporte: primeiro frame textual `auth` com envelope v1, requestId e payload `{accessToken}`; não aceita comandos antes de validar JWT no Supabase. Responde ack com userId derivado do Auth. Token nunca aparece em URL/logs. Prazo de autenticação 5 s, mensagem máxima 8 KiB, sessão fecha ao expirar. Apenas uma conexão ativa por identidade; renovar conexão com novo token após expiração. Origin deve estar na allowlist do servidor. Este handshake não modifica os comandos de jogo abaixo.
 Envelope cliente: protocolVersion=1, type, requestId, payload. Input inclui seq monotônico, moveX/moveZ [-1,1], ações discretas. Nunca aceitar userId, score, posição ou cooldown como autoridade.
 Comandos: createRoom(mode), joinRoom(code), selectCharacter(id,version), setTeam(team,slot), ready(value), start, input, leave, rematchVote.
 Resposta: ack(requestId,result) ou error(requestId,code); eventos roomState, snapshot, point, matchEnded.
 Snapshot: matchId, tick, phase, score, serverTime, lastProcessedSeq por jogador, atletas, bola, cooldowns.
+Na etapa 004, fase é countdown/serving/rally/disconnectedSuspension; pontuação permanece 0 e cooldowns vazios até 005/006 integrarem regras de partida e habilidades. Cliente interpola snapshots por 100 ms e envia intenções até 50/s (abaixo do limite 60/s). Movimento sem novo input expira em 15 ticks; ações discretas são consumidas uma vez. Nenhum ponto ou resultado é fabricado pelo protótipo de transporte.
 Servidor valida JWT, associação à sala, fase, versão, schema, tamanho (máximo 8 KiB), frequência (60 inputs/s; 10 comandos/s por sessão). Rejeita seq repetido/antigo.
 Simulação inicial 60 ticks/s; snapshots 20/s; interpolação visual 100 ms, sem rollback inicialmente. Tuning exige registro de medição.
 Estados: lobby → countdown → serving → rally → point → serving; sexto ponto → finished. disconnectedSuspension retorna à fase anterior; falha servidor → cancelled.
