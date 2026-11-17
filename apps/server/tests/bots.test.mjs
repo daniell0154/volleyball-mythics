@@ -13,6 +13,11 @@ test('difficulty changes policy and metadata, never attributes or physical range
  assert.ok(BOT_POLICIES.easy.reactionTicks>BOT_POLICIES.normal.reactionTicks);assert.ok(BOT_POLICIES.normal.reactionTicks>BOT_POLICIES.hard.reactionTicks);assert.ok(BOT_POLICIES.easy.error>BOT_POLICIES.normal.error);
  const a=setup('easy'),b=setup('hard');assert.deepEqual(a.runtime.get(a.room.roomId).athletes.map(p=>p.attributes),b.runtime.get(b.room.roomId).athletes.map(p=>p.attributes));assert.equal(a.runtime.get(a.room.roomId).rallyProfile,b.runtime.get(b.room.roomId).rallyProfile);
 });
+test('partner never poaches own serve while the delayed observation still shows serving',()=>{
+ const s=setup();s.runtime.advance(3000);const m=s.runtime.get(s.room.roomId);m.athletes[0].position.x=3;
+ s.runtime.submit(s.room,'human',{seq:1,moveX:0,moveZ:0,actions:['serve']});s.runtime.advance(1000);
+ assert.equal(m.contacts.lastTouchSide,'A');assert.equal(m.contacts.touches,0);assert.equal(m.visualActions.filter(a=>a.kind==='receive'&&m.athletes.find(p=>p.id===a.actorId)?.team==='A').length,0);
+});
 test('bot results carry participant identities and policy while legacy result shapes stay compatible',async()=>{
  const s=setup();let saved;const results=new MatchResults({persist:async p=>{saved=p;}},()=>{});s.runtime.onEnded=m=>results.finish(m);s.runtime.finish(s.room,'B','forfeit');await results.queue.tick();assert.equal(saved.matchKind,'vsBots');assert.equal(saved.botSeed,123);assert.equal(saved.players.length,4);assert.equal(saved.players.filter(p=>p.controller==='bot'&&!p.userId).length,3);
 });

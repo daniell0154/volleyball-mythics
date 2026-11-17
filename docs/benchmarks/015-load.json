@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-17T19:16:54.129Z",
+  "durationMs": 900030.8232,
+  "requestedDurationMs": 900000,
+  "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+  "node": "v22.14.0",
+  "scenario": "10 solo vsBots rooms / 30 bots plus 10 idle four-human rooms, real wall clock, snapshots counted without serialization/network",
+  "samples": 31348,
+  "p95Ms": 1.521199999988312,
+  "maxMs": 185.56160000001546,
+  "humanP95Ms": 0.30549999998766,
+  "snapshots": 179080,
+  "restarts": 220,
+  "memory": [
+    {
+      "elapsedMs": 17.59819999999999,
+      "heapMiB": 5.477684020996094
+    },
+    {
+      "elapsedMs": 60033.761099999996,
+      "heapMiB": 9.987373352050781
+    },
+    {
+      "elapsedMs": 120046.37759999999,
+      "heapMiB": 14.98065185546875
+    },
+    {
+      "elapsedMs": 180062.67930000002,
+      "heapMiB": 13.828521728515625
+    },
+    {
+      "elapsedMs": 240084.1319,
+      "heapMiB": 14.11773681640625
+    },
+    {
+      "elapsedMs": 300100.28270000004,
+      "heapMiB": 7.730247497558594
+    },
+    {
+      "elapsedMs": 360103.12450000003,
+      "heapMiB": 12.771751403808594
+    },
+    {
+      "elapsedMs": 420107.3704,
+      "heapMiB": 17.64360809326172
+    },
+    {
+      "elapsedMs": 480132.7485,
+      "heapMiB": 17.93476104736328
+    },
+    {
+      "elapsedMs": 540153.8251,
+      "heapMiB": 21.313209533691406
+    },
+    {
+      "elapsedMs": 600236.5248,
+      "heapMiB": 21.15711212158203
+    },
+    {
+      "elapsedMs": 660248.7432,
+      "heapMiB": 15.87530517578125
+    },
+    {
+      "elapsedMs": 720276.3242,
+      "heapMiB": 18.35285186767578
+    },
+    {
+      "elapsedMs": 780280.9953000001,
+      "heapMiB": 19.0736083984375
+    },
+    {
+      "elapsedMs": 840281.9678,
+      "heapMiB": 20.06267547607422
+    }
+  ],
+  "maximumHistory": 64,
+  "remainingMatches": 0,
+  "pass": true
+}

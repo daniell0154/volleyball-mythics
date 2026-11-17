@@ -1,5 +1,5 @@
 # 2v2 contra bots com dificuldade
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T4 implementadas e verificadas localmente; gate técnico delegado pelo proprietário, sem alegação de playtest humano.
 Requisito R15. Dependência: 014 integrada.
 
 ## Aceitação
@@ -13,4 +13,6 @@ Requisito R15. Dependência: 014 integrada.
 - Medir dez salas 2v2 contra bots por quinze minutos: tick p95 <=16,7ms, memória e descarte estáveis; comparar com online humano. Persistência idempotente, reconexão e revanche cobertos.
 
 Gate: tarefas completas, evidências reproduzíveis e aceite do proprietário nos critérios de experiência. Mudanças de metas exigem decisão registrada antes do fechamento.
+
+O proprietário autorizou continuar todas as specs, criar PRs e mergear cada uma antes da seguinte sem novas aprovações. Nesta entrega, gate por métricas, testes e inspeção visual; confirmação humana de diversão é posterior, não alegada. Carga de 15min cobre o runtime/IA, seguida de regressão de 60s após correção constante de observação de fase/saque; resultados e distinção em evidence.md. Critérios de tick/memória, ordenação não estrita das dificuldades e defesa contra só-saque passaram.
 

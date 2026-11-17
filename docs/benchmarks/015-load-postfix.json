@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-17T19:20:23.590Z",
+  "durationMs": 60009.9076,
+  "requestedDurationMs": 60000,
+  "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+  "node": "v22.14.0",
+  "scenario": "10 solo vsBots rooms / 30 bots plus 10 idle four-human rooms, real wall clock, snapshots counted without serialization/network",
+  "samples": 1978,
+  "p95Ms": 3.1077000000004773,
+  "maxMs": 85.01490000000194,
+  "humanP95Ms": 0.7036999999982072,
+  "snapshots": 11960,
+  "restarts": 10,
+  "memory": [
+    {
+      "elapsedMs": 30.853800000000007,
+      "heapMiB": 5.4949493408203125
+    }
+  ],
+  "maximumHistory": 64,
+  "remainingMatches": 0,
+  "pass": true
+}

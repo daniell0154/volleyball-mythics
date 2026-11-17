@@ -1,0 +1,1194 @@
+{
+  "date": "2026-11-17T19:19:26.722Z",
+  "policyVersion": 1,
+  "agent": "fixed easy-policy test agent A (400ms/error1.8m), identical seeds/attributes/alternating first serve in every difficulty; B production bots. A normal-policy mirror produced censored long rallies and is not used for ranking. Not human difficulty.",
+  "summary": [
+    {
+      "difficulty": "easy",
+      "matches": 20,
+      "botWins": 10,
+      "completed": 20
+    },
+    {
+      "difficulty": "normal",
+      "matches": 20,
+      "botWins": 20,
+      "completed": 20
+    },
+    {
+      "difficulty": "hard",
+      "matches": 20,
+      "botWins": 20,
+      "completed": 20
+    }
+  ],
+  "rows": [
+    {
+      "difficulty": "easy",
+      "index": 0,
+      "seed": 1000,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 1,
+      "seed": 1001,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 2,
+      "seed": 1002,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 3,
+      "seed": 1003,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 4,
+      "seed": 1004,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 5,
+      "seed": 1005,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 6,
+      "seed": 1006,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 7,
+      "seed": 1007,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 8,
+      "seed": 1008,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 9,
+      "seed": 1009,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 10,
+      "seed": 1010,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 11,
+      "seed": 1011,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 12,
+      "seed": 1012,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 13,
+      "seed": 1013,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 14,
+      "seed": 1014,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 15,
+      "seed": 1015,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 16,
+      "seed": 1016,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 17,
+      "seed": 1017,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "easy",
+      "index": 18,
+      "seed": 1018,
+      "firstServe": "A",
+      "winner": "A",
+      "ended": true,
+      "score": {
+        "A": 6,
+        "B": 0
+      },
+      "ticks": 1841
+    },
+    {
+      "difficulty": "easy",
+      "index": 19,
+      "seed": 1019,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2784
+    },
+    {
+      "difficulty": "normal",
+      "index": 0,
+      "seed": 1000,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 1,
+      "seed": 1001,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 2,
+      "seed": 1002,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 3,
+      "seed": 1003,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 4,
+      "seed": 1004,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 5,
+      "seed": 1005,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 6,
+      "seed": 1006,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 7,
+      "seed": 1007,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 8,
+      "seed": 1008,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 9,
+      "seed": 1009,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 10,
+      "seed": 1010,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 11,
+      "seed": 1011,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 12,
+      "seed": 1012,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 13,
+      "seed": 1013,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 14,
+      "seed": 1014,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 15,
+      "seed": 1015,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 16,
+      "seed": 1016,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 17,
+      "seed": 1017,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "normal",
+      "index": 18,
+      "seed": 1018,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2904
+    },
+    {
+      "difficulty": "normal",
+      "index": 19,
+      "seed": 1019,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2664
+    },
+    {
+      "difficulty": "hard",
+      "index": 0,
+      "seed": 1000,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 1,
+      "seed": 1001,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 2,
+      "seed": 1002,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 3,
+      "seed": 1003,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 4,
+      "seed": 1004,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 5,
+      "seed": 1005,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 6,
+      "seed": 1006,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 7,
+      "seed": 1007,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 8,
+      "seed": 1008,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 9,
+      "seed": 1009,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 10,
+      "seed": 1010,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 11,
+      "seed": 1011,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 12,
+      "seed": 1012,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 13,
+      "seed": 1013,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 14,
+      "seed": 1014,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 15,
+      "seed": 1015,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 16,
+      "seed": 1016,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 17,
+      "seed": 1017,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    },
+    {
+      "difficulty": "hard",
+      "index": 18,
+      "seed": 1018,
+      "firstServe": "A",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2688
+    },
+    {
+      "difficulty": "hard",
+      "index": 19,
+      "seed": 1019,
+      "firstServe": "B",
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "ticks": 2472
+    }
+  ],
+  "serveOnly": [
+    {
+      "seed": 123,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 124,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 125,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 126,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 127,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 128,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 129,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 130,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 131,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 132,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 133,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 134,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 135,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 136,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 137,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 138,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 139,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 140,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 141,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    },
+    {
+      "seed": 142,
+      "winner": "B",
+      "ended": true,
+      "score": {
+        "A": 0,
+        "B": 6
+      }
+    }
+  ],
+  "serveOnlyHumanWinRate": 0,
+  "normalServeReturns": [
+    {
+      "seed": 123,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 124,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 125,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 126,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 127,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 128,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 129,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 130,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 131,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 132,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 133,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 134,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 135,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 136,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 137,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 138,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 139,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 140,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 141,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 142,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 143,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 144,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 145,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 146,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 147,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 148,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 149,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 150,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 151,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 152,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 153,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 154,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 155,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 156,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 157,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 158,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 159,
+      "attribute": 25,
+      "returned": true
+    },
+    {
+      "seed": 160,
+      "attribute": 75,
+      "returned": true
+    },
+    {
+      "seed": 161,
+      "attribute": 100,
+      "returned": true
+    },
+    {
+      "seed": 162,
+      "attribute": 25,
+      "returned": true
+    }
+  ],
+  "normalServeReturnRate": 1,
+  "ordered": true
+}

@@ -24,5 +24,17 @@ Somente humanos votam; resultados versus bots levam identidade/política para RP
 
 Proprietário informou ter aplicado todas as migrations no Supabase e criado a conta administrativa. Registrado como relato, não como execução/validação remota realizada pelo implementador.
 
+## 015-T4
+
+Calibração real de 20 partidas por nível contra agente fixo imperfeito (400ms/erro1,8m), mesmos seeds e primeiro saque alternado: fácil10/20, normal20/20, difícil20/20; todas terminaram. Normal/difícil saturam esse adversário, portanto sem alegação de separação estatística entre eles; reação/erro distintos comprovados por código/teste. Espelho de políticas normal produziu partidas longas censuradas e não foi usado para inventar vitórias. Ataques/saques ganharam escolha de espaço a partir de posições observadas atrasadas, mantendo aim legal e atributos iguais.
+
+Teste adicional expôs parceiro interceptando saque próprio em observação ainda de serving. Corrigido o guarda de fase e serveSide; teste unitário cobre o caso. 40 saques com atributos25/75/100 e zonas de partida: normal retornou100% após correção, versus67,5% na medição que detectou o bug; 0/20 vitórias do humano que só saca/fica parado. Relatório 015-calibration.json com cada amostra e descrição do agente.
+
+Carga de 900030ms reais, dez salas solo/30 bots + dez salas humanas ociosas: p951,5212ms (limite16,7), máximo185,5616ms, humano p950,3055ms; 31.348 callbacks,179.080 snapshots sem serialização,220 reinícios. Histórico<=64, runtime vazio após descarte, heap amostrado5,48–21,31MiB com quedas por GC. Essa execução precede o guarda constante de fase/saque; motor e estruturas limitadas são os mesmos. Regressão após correção,60009ms: p953,1077ms, máximo85,0149ms, histórico64 e zero partidas após descarte. Não chamar a regressão de60s de ensaio final de15min; gate aceita ensaio prolongado do motor + teste focado da correção, sem nova complexidade/estrutura de memória. Workload concorrente no Windows, sem garantia WAN/capacidade de produção. Relatórios load.json/load-postfix.json.
+
+Chrome157, Windows, viewport1440x1100: solo1humano+3bots e coop2+2 chegaram a0x6 por pontos e revanche nova/zerada preservando seed/dificuldade; somente humanos votaram. Bot IDs sem userId e ações aceitas observadas, zero exceções JS. Primeiro teste coop interrompido por hot reload durante edição foi descartado; nova execução isolou o canal HMR sem bloquear estilos. Scripts/capturas/results.json em docs/acceptance/015-*. Inspeção visual do implementador, sem alegar humano jogando.
+
+SQL T1, servidor52/52, web26/26, typecheck/build e diff check passaram. Migration007 é necessária; proprietário reportou aplicação, mas validação Auth/RPC remota não foi executada daqui. Guia em 015-validation.md. Gate T4 técnico aprovado conforme delegação; PR/merge da015 antes de iniciar016.
+
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 
