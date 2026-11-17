@@ -5,7 +5,7 @@ Todas referenciam R09; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Especificar ação aceita com identidade, tipo, tick inicial e identificador de ocorrência. Compatibilidade com protocolo v1 deve ser decidida antes do código; leitores toleram ausência. Não confiar em animação enviada pelo cliente.
 
-- [ ] 009-T2 — Locomoção e saltos
+- [x] 009-T2 — Locomoção e saltos
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Idle, deslocamento, salto, queda e aterrissagem com blends; orientação acompanha movimento/ação. Usar delta temporal, não número de frames. Pausa por desconexão congela poses e retomada não reinicia golpes.
 
