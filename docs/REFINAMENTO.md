@@ -1,4 +1,9 @@
 # Revisão e decisões de escopo
+## Evolução solicitada em 2026-11-17 — planejamento 012–016
+
+O proprietário solicitou admin para personagens, remoção do 1v1 e da demonstração pública, 2v2 online/contra bots, partida ocupando o site com controles internos inferiores, correção da vantagem do saque, inspiração em Just Volleyball e melhor visão da bola. [Novo plano](MELHORIAS-012-016.md) define sequência, critérios e padrões propostos. As restrições abaixo de 1v1 e ausência de bots descrevem o MVP anterior; serão substituídas nas specs 013/015, preservando histórico. Não alterar contrato ativo antes das implementações/migrações. Preview de personagem permanece, e bots continuam no servidor por padrão.
+
+## Base histórica do MVP
 O plano anterior capturava o produto, mas não era executável sem decisões adicionais: backend em aberto, regras incompletas, pausa incompatível com jogo online, ausência de contratos, critérios vagos de desempenho e falta de persistência idempotente.
 
 Este refinamento substitui decisões conflitantes de PLANEJAMENTO.md. Apenas requisitos explicitamente pedidos são confirmados; os demais são padrões propostos para implementação, reversíveis mediante atualização das specs.

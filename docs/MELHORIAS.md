@@ -1,4 +1,5 @@
 # Evolução do Volleyball Mythics
+Continuação planejada: [ciclo 012–016](MELHORIAS-012-016.md), incluindo admin, foco 2v2, bots, inspiração em Just Volleyball, equilíbrio do saque, visibilidade da bola e partida ocupando o site. As exclusões de bots e administração neste documento pertencem ao ciclo 008–011, não limitam o novo pedido.
 Status: proposta de implementação. Base: main 4202c6c, após PR #9. Pedido do proprietário: personagens melhor modelados, jogo mais dinâmico e animações. Este documento e as specs não representam funcionalidades já entregues.
 
 ## Referência inspecionada

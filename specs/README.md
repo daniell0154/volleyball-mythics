@@ -1,4 +1,6 @@
 # Ordem de execução SDD
+Novo ciclo solicitado em 2026-11-17: **012 admin do elenco → 013 somente 2v2/remover demo → 014 gameplay, saque e visibilidade da bola → 015 bots/dificuldade → 016 partida em tela inteira**. Ler [plano do ciclo](../docs/MELHORIAS-012-016.md) e [contratos futuros](future-contracts-012-016.md). São planos, não funcionalidades implementadas. Antes de executar 012, confirmar 011 integrada em main; cada seguinte exige a anterior integrada. Just Volleyball é referência de gameplay da 014. O pedido de criar estes planos não inicia suas implementações.
+
 Ler constitution → REFINAMENTO → contracts → spec/plan/tasks da feature.
 Sequência: 001 dados → 002 domínio → 003 3D → 004 salas/rede → 005 1v1 → 006 2v2/habilidades → 007 beta.
 Novo ciclo de melhorias planejado: 008 modelos articulados → 009 animações → 010 dinâmica do rally → 011 apresentação. Direção, referência Happy Hoops e metas propostas em [docs/MELHORIAS.md](../docs/MELHORIAS.md). Estas specs são planejamento, não implementação concluída.

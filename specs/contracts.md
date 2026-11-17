@@ -1,4 +1,5 @@
 # Contratos compartilhados v1
+Este arquivo descreve o contrato ativo. Mudanças planejadas para administração, somente 2v2, direção de ações e bots estão em [contratos futuros 012–016](future-contracts-012-016.md); não estão implementadas e serão incorporadas aqui junto às respectivas migrations/código.
 ## Dados
 IDs UUID. Horários persistidos UTC; simulação usa tick inteiro.
 Character: id, version, name, attributes {serve,receive,set,attack,block,speed,jump}, overall derivado, abilityId, abilityConfig, assetKey, enabled. Revisões imutáveis; partida fixa versão.
