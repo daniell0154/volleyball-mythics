@@ -1,0 +1,21 @@
+{
+  "baseCommit": "d318ab8",
+  "timestamp": "2026-11-17T12:38:06.465Z",
+  "browser": "157.0.8103.79",
+  "os": "Windows 11 Pro",
+  "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+  "ramGiB": 15.68770980834961,
+  "gpu": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "width": 1280,
+  "height": 720,
+  "dpr": 1,
+  "quality": "low",
+  "mode": "Vite dev, headless, synthetic rally, four current v1 avatars, no network",
+  "durationMs": 300016.1999999996,
+  "frames": 18013,
+  "p95Ms": 16.800000000017462,
+  "maxMs": 34.099999999998545,
+  "hidden": false,
+  "errors": [],
+  "pass": true
+}
