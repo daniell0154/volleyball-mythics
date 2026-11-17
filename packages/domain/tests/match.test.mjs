@@ -60,3 +60,19 @@ test("2v2 serving slot stays on a scoring streak and rotates separately for each
   match = transition(match, { type: "RALLY_POINT", pointId: "b2", scoringSide: "B" });
   assert.deepEqual([match.servingSide, match.servingSlot], ["B", 1]);
 });
+
+test("2v2 uses the same first-to-six 6–5 finish rule", () => {
+  let match = createMatch("m-2v2-final", "2v2");
+  match = transition(match, { type: "START" });
+  match = transition(match, { type: "COUNTDOWN_FINISHED" });
+  for (let i = 0; i < 10; i++) {
+    match = transition(match, { type: "SERVE_HIT" });
+    match = transition(match, { type: "RALLY_POINT", pointId: `2v2-${i}`, scoringSide: i % 2 === 0 ? "A" : "B" });
+    if (match.phase === "point") match = transition(match, { type: "POINT_DELAY_FINISHED" });
+  }
+  assert.deepEqual(match.score, { A: 5, B: 5 });
+  match = transition(match, { type: "SERVE_HIT" });
+  match = transition(match, { type: "RALLY_POINT", pointId: "2v2-winner", scoringSide: "A" });
+  assert.deepEqual(match.score, { A: 6, B: 5 });
+  assert.equal(match.phase, "finished");
+});

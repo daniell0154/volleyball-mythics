@@ -1,7 +1,7 @@
 # Tarefas — Qualidade e beta web
 Todas referenciam R07; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 007-T1 — Matriz funcional e rede
+- [x] 007-T1 — Matriz funcional e rede
   - Destinos: docs/acceptance.
   - Aceite/verificação: 1v1/2v2, 6–5, abandono, reconexão, token expirado, spam, duplicação de resultado e reinício servidor cancelando partida.
 
