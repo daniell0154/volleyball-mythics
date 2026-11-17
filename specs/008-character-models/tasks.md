@@ -1,8 +1,8 @@
 # Tarefas — 008
 Todas referenciam R08; executar em ordem. Cada tarefa depende da anterior e das dependências do plan.md.
 
-- [ ] 008-T1 — Direção visual e baseline
-  - Progresso: prancha e estudo em docs/art/008-direction.md; aprovação visual do proprietário pendente.
+- [x] 008-T1 — Direção visual e baseline
+  - Aceite: proprietário autorizou seguir no estilo Happy Hoops; proporções atléticas, cabeça menor e membros contínuos substituem o estudo arredondado inicial.
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Registrar vistas frontal/lateral e câmera de jogo de Samuel/Caio; definir silhuetas, proporções e paleta. Capturar baseline de quatro atletas e obter aceite da direção antes de produzir ambos.
 

@@ -25,4 +25,4 @@ O script abre Chrome instalado em Windows, captura as nove vistas e mede cinco m
 
 ## Gate
 
-T1 permanece pendente até aprovação visual explícita. T2–T4 dependem desse aceite; este estudo não muda o renderer do jogo, catálogo ou física. O baseline serve para comparação posterior, não prova desempenho dos modelos propostos.
+O proprietário aprovou seguir no estilo Happy Hoops. Direção final autorizada: proporções atléticas, cabeça menor, tronco afunilado, membros contínuos e uniforme esportivo. A faixa inferior da prancha registra o estudo anterior, substituído por esta decisão. O baseline permanece válido para comparação de custo. A autorização permite produzir ambos; reconhecimento visual dos resultados finais pertence à T4.
