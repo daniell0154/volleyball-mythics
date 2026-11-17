@@ -1,7 +1,7 @@
 # Tarefas — Spike 3D escolar
 Todas referenciam R03; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 003-T1 — Montar UI e adaptador de cena
+- [x] 003-T1 — Montar UI e adaptador de cena
   - Destinos: apps/web/src/game.
   - Aceite/verificação: UI não importa física nem decide pontuação; adapter consome snapshots sintéticos.
 
