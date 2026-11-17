@@ -52,7 +52,10 @@ export class RoomApplication {
   command(session: Session, message: ClientMessage): void {
     try {
       let room: RoomState;
-      if (message.type === "createRoom") room = this.rooms.create(session.userId, message.payload.mode);
+      if (message.type === "createRoom") {
+        if (message.payload.mode !== "2v2") throw new RoomError("mode_unavailable");
+        room = this.rooms.create(session.userId, "2v2");
+      }
       else if (message.type === "joinRoom") room = this.rooms.join(session.userId, message.payload.code);
       else {
         room = this.rooms.roomFor(session.userId);

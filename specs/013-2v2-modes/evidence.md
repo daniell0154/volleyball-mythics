@@ -8,3 +8,9 @@ Mapeamento por rg nos consumidores de 1v1, createRoom, Demo e Game. Decisão em 
 
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 
+## 013-T2
+
+RoomApplication rejeita criação 1v1 com mode_unavailable antes de criar sala; protocolo v1 preservado, mensagem no cliente orienta atualizar para 2v2. Entrada sem seletor de modo envia sempre 2v2 e explica quatro humanos. Integração de sockets migrada para quatro jogadores mais um visitante recusado por lotação; verifica que pedido legado não cria sala e visitante não recebe snapshots. Fixtures de simulação/histórico mantêm 1v1 internamente; nenhuma migration destrutiva.
+
+Servidor 40/40 passou, incluindo proprietário/prontidão/slots/personagens repetidos, snapshots/input em quatro sessões e RTT 150ms/jitter 30ms. Ambiente Node/Windows local; sem WAN ou Supabase remoto. Gate funcional T2 aprovado; UX completa na T4.
+

@@ -12,5 +12,6 @@ test('guidance explains incomplete/selection/readiness and accepts repeated char
 test('invite retains route but never carries existing query/hash data',()=>{
  assert.equal(inviteUrl('ABCDEF','https://game.test/play?unrelated=value#fragment'),'https://game.test/play?room=ABCDEF');
  assert.match(commandMessage('room_full'),/cheia/);
+ assert.match(commandMessage('mode_unavailable'),/1v1.*Atualize.*2v2/);
  assert.ok(!commandMessage('internal_debug_error').includes('internal_debug_error'));
 });
