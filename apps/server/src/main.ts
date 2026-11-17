@@ -5,6 +5,8 @@ import { RoomApplication } from "./rooms/application.js";
 import { MatchRuntime } from "./runtime/matches.js";
 import { fileURLToPath } from "node:url";
 import { ReconnectController } from "./reconnect/controller.js";
+import { createResultsRepository } from "./persistence/results.js";
+import { MatchResults } from "./results/coordinator.js";
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -14,8 +16,12 @@ async function main() {
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes);
   const reconnect = new ReconnectController(runtime, (room, type, payload) => app.broadcast(room, type, payload));
+  const results = new MatchResults(process.env.SUPABASE_SECRET_KEY ? createResultsRepository(url, process.env.SUPABASE_SECRET_KEY) : { persist: async () => { throw new Error("server_result_secret_missing"); } },
+    (room, type, payload) => app.broadcast(room, type, payload), Date.now, (matchId) => console.error(`result_persistence_failed matchId=${matchId}`));
   const app = new RoomApplication([], { start: (room) => runtime.start(room), input: (room, userId, input) => runtime.submit(room, userId, input), suspend: (room) => reconnect.disconnect(room),
-    reconnect: (room) => reconnect.reconnect(room), abandon: (room, userId) => reconnect.abandon(room, userId), remove: (roomId) => { runtime.remove(roomId); reconnect.clear(roomId); } });
+    reconnect: (room) => { reconnect.reconnect(room); results.restore(room); }, abandon: (room, userId) => reconnect.abandon(room, userId), remove: (roomId) => { runtime.remove(roomId); reconnect.clear(roomId); results.clear(roomId); } });
+  runtime.onEnded = (match) => { reconnect.clear(match.room.roomId); results.finish(match); };
+  runtime.onPoint = (room, snapshot) => app.broadcast(room, "point", snapshot);
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
@@ -36,7 +42,7 @@ async function main() {
   const host = process.env.HOST ?? (process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
   transport.http.listen(port, host, () => console.log(`Servidor iniciado em ${host}:${port}`));
   let previous = performance.now();
-  const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); runtime.advance(Math.min(100, now - previous)); previous = now; }, 5);
+  const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); runtime.advance(Math.min(100, now - previous)); void results.queue.tick(); previous = now; }, 5);
   const close = () => { clearInterval(ticker); void transport.close(); };
   process.once("SIGINT", close); process.once("SIGTERM", close);
 }

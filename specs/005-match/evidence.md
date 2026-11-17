@@ -19,3 +19,12 @@ Base main com 004 e serviço único integrados (38f2718). Por pedido explícito,
 - Suite servidor: 19 testes passaram, incluindo retorno em 19 s, expiração 20 s, orçamento 19+19+2 s, ambos ausentes, retorno tardio e abandono. Typecheck passou.
 - Edge real/Supabase real em dois contexts: socket do jogador A foi encerrado pelo harness; simulação suspendeu, cliente reconectou automaticamente, houve contagem e retomada. Alternar demonstração não parou ticks. Partida terminou 6–5 igual nos clientes, sem erros JS; guests de teste removidos.
 - Gate T2 aprovado. A gravação de cancelamento exige a nova migration da tarefa T3; ela não é simulada como vitória.
+
+## 005-T3 — Resultado persistido e retry
+
+- Resultado vem exclusivamente do servidor; tela mostra vitória/derrota/cancelamento e estado pending/saved/failed. Payload final é copiado e imutável para retries idempotentes; fila aplica backoff até 30 s, timeout/abort por tentativa 5 s e deadline total 5 minutos. Esgotamento emite falha operacional sem fabricar sucesso ou vencedor.
+- Persistência normal reutiliza RPC transacional de 001. Nova migration 202611160004_persist_cancelled_result.sql adiciona RPC restrita a service_role para status cancelled/winner null, preservando a função de partidas normais. Nunca concede seis pontos em abandono.
+- Suite servidor: 22 testes passaram, incluindo falha transitória seguida de sucesso com payload idêntico, deadline virtual de 300000 ms sem sucesso falso e retry pendente após liberação da sala. Typecheck passou. Não se alega espera real de cinco minutos nesse teste de relógio injetado.
+- Edge em dois contexts + Supabase real: partida 0–0→6–5 e ambos exibiram Resultado salvo após RPC real; testes também mantiveram reconexão/câmera. Guests e somente os registros da partida de teste foram removidos após verificação.
+- Pendência de ambiente explícita: dry run sem escrita da RPC de cancelamento retornou PGRST202 (função ainda não aplicada). Arquivo SQL foi disponibilizado e sua aplicação solicitada ao proprietário; validação remota de cancelled deve ser feita após aplicação, sem bloquear o código/retry das demais situações. Não foi usada nenhuma técnica para executar DDL por API administrativa indevida.
+- Gate de código/retry/resultado normal aprovado; deploy completo exige a migration e validação de cancelamento. Esta condição será mantida explícita na PR.

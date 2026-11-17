@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import type { CatalogEntry, ClientMessage, RoomState, MatchSnapshot } from "@volleyball-mythics/protocol";
+import type { CatalogEntry, ClientMessage, RoomState, MatchSnapshot, MatchEnded } from "@volleyball-mythics/protocol";
 import { createWebSupabaseClient, saveGuestProfile } from "../auth/client.js";
 import { RoomConnection } from "../network/connection.js";
 import { OnlineMatch } from "../game/OnlineMatch.js";
 import { gameServerUrl } from "../network/serverUrl.js";
 import { CharacterPreview } from "../scene/CharacterPreview.js";
+import { ResultPanel } from "../results/ResultPanel.js";
 
 export function Lobby() {
   const connection = useRef<RoomConnection | null>(null);
@@ -26,6 +27,7 @@ export function Lobby() {
   const [connected, setConnected] = useState(false);
   const [reconnectStatus, setReconnectStatus] = useState("");
   const [snapshot, setSnapshot] = useState<MatchSnapshot | null>(null);
+  const [result, setResult] = useState<MatchEnded | null>(null);
   useEffect(() => () => { alive.current = false; manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }, []);
   const scheduleRetry = () => {
     if (manualClose.current || !alive.current || !roomRef.current || retryTimer.current !== undefined) return;
@@ -51,6 +53,11 @@ export function Lobby() {
         if (type === "roomState") { roomRef.current = payload as RoomState | null; setRoom(roomRef.current); if (!payload) setSnapshot(null); }
         if (type === "catalog") setCatalog(payload as CatalogEntry[]);
         if (type === "snapshot") setSnapshot(payload as MatchSnapshot);
+        if (type === "matchEnded") setResult(payload as MatchEnded);
+        if (type === "resultSaveState") {
+          const saved = payload as { matchId: string; persistence: MatchEnded["persistence"] };
+          setResult((current) => current?.matchId === saved.matchId ? { ...current, persistence: saved.persistence } : current);
+        }
         if (type === "reconnectState") {
           const status = payload as { remainingSeconds: { A: number; B: number }; resumeSeconds: number | null };
           setReconnectStatus(status.resumeSeconds !== null ? `Retomando em ${status.resumeSeconds}s` : roomRef.current?.status === "suspended" ? `Aguardando reconexão · A ${status.remainingSeconds.A}s / B ${status.remainingSeconds.B}s` : "");
@@ -102,6 +109,7 @@ export function Lobby() {
       {room.ownerId === userId && <button disabled={room.status !== "lobby"} onClick={() => command("start")}>Iniciar</button>}
       <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
       {room.status !== "lobby" && connected && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} />}
+      {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} />}
     </div>}
     {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
   </section>;

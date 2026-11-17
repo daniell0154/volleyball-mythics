@@ -9,7 +9,7 @@ Todas referenciam R05; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/server/src/reconnect.
   - Aceite/verificação: Retorno em 19s retoma; após limite perde; ambos ausentes cancela; menu não pausa.
 
-- [ ] 005-T3 — Finalização persistente
+- [x] 005-T3 — Finalização persistente
   - Destinos: apps/server/src/results.
   - Aceite/verificação: Indisponibilidade DB gera estado salvamento pendente e retry por 5min; vencedor visual vem do servidor; esgotamento registra falha operacional sem resultado falso.
 
