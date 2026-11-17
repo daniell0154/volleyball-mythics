@@ -9,5 +9,5 @@ export const AVATAR_MANIFEST = Object.freeze({
 
 export function createPresentationAvatar(assetKey: string, team: "A" | "B") {
   const revision = AVATAR_MANIFEST[assetKey as keyof typeof AVATAR_MANIFEST];
-  return revision === "athletic-v2" ? createAthleticAvatar(assetKey, team) : createAvatar(assetKey, team);
+  return revision === "athletic-v2" || assetKey.startsWith("procedural:athletic-v2:") ? createAthleticAvatar(assetKey, team) : createAvatar(assetKey, team);
 }

@@ -1,5 +1,5 @@
 # Administração do elenco
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T4 concluídas com testes locais e aprovação do proprietário. Configuração/validação Auth/RPC remota no Supabase adiada explicitamente pelo proprietário.
 Requisito R12. Dependência: 011 integrada.
 
 ## Aceitação
@@ -10,4 +10,6 @@ Requisito R12. Dependência: 011 integrada.
 - Auditar autor/data/operação/versões sem tokens. Testar escrita direta não autorizada, payload inválido, publicação concorrente, desativação e partida já iniciada. Elenco real é fornecido pelo proprietário; fixtures só em teste.
 
 Gate: tarefas completas, evidências reproduzíveis e aceite do proprietário nos critérios de experiência. Mudanças de metas exigem decisão registrada antes do fechamento.
+
+Aceite final: após receber os resultados e limites, o proprietário informou “aprovado, depois eu configuro no supabase. so me passa o que eu preciso subir.” O gate desta entrega usa evidências locais e essa aprovação; provisionamento da conta, aplicação de migrations e validação Auth/RPC remota permanecem etapas de configuração posteriores, sem alegação de execução. Instruções em docs/admin/012-operations.md; gates de publicação da 007 continuam independentes.
 

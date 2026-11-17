@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-17T17:08:19.046Z",
+  "browser": "157.0.8103.79",
+  "sql": "PGlite, real migrations/RPC",
+  "auth": "fixture only, not remote Supabase",
+  "createdPublishedPlayed": true,
+  "revisedDisabled": true,
+  "activeMatchPinned": true,
+  "errors": []
+}
