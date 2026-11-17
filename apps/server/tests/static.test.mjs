@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { once } from 'node:events';
+import { createTransport } from '../dist/network/server.js';
+test('one service serves HTML/assets with safe MIME, HEAD and missing-asset errors',async t=>{
+  const temp=await mkdtemp(join(tmpdir(),'volleyball-static-'));const dist=join(temp,'dist');await mkdir(join(dist,'assets'),{recursive:true});
+  await writeFile(join(dist,'index.html'),'<!doctype html><title>Game</title>');await writeFile(join(dist,'assets','game.js'),'export const game = true;');await writeFile(join(temp,'secret.txt'),'must-not-leak');await writeFile(join(dist,'.env'),'must-not-leak');
+  const app=createTransport({staticDirectory:dist,origins:[],verify:async()=>{throw Error('unused')},onCommand(){}});
+  app.http.listen(0,'127.0.0.1');await once(app.http,'listening');t.after(async()=>{await app.close();await rm(temp,{recursive:true,force:true});});
+  const base=`http://127.0.0.1:${app.http.address().port}`;
+  const root=await fetch(base+'/?room=ABCDEF');assert.equal(root.status,200);assert.match(root.headers.get('content-type'),/text\/html/);assert.match(await root.text(),/Game/);assert.equal(root.headers.get('cache-control'),'no-cache');
+  const js=await fetch(base+'/assets/game.js');assert.match(js.headers.get('content-type'),/javascript/);assert.match(js.headers.get('cache-control'),/immutable/);
+  assert.equal((await fetch(base+'/assets/missing.js')).status,404);
+  assert.equal((await fetch(base+'/.env')).status,404);
+  assert.equal((await fetch(base+'/%2e%2e%2fsecret.txt')).status,404);
+  assert.equal((await fetch(base+'/',{method:'HEAD'})).status,200);assert.equal(await (await fetch(base+'/',{method:'HEAD'})).text(),'');
+  assert.equal((await fetch(base+'/',{method:'POST'})).status,405);assert.equal(await (await fetch(base+'/healthz')).text(),'ok');
+});

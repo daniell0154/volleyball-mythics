@@ -3,6 +3,7 @@ import { createSupabaseVerifier } from "./network/auth.js";
 import { createTransport } from "./network/server.js";
 import { RoomApplication } from "./rooms/application.js";
 import { MatchRuntime } from "./runtime/matches.js";
+import { fileURLToPath } from "node:url";
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -20,6 +21,7 @@ async function main() {
     app.refreshCatalog(data);
     return identity;
   },
+    staticDirectory: fileURLToPath(new URL("../../web/dist/", import.meta.url)),
     origins: (process.env.ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173").split(",").map((s) => s.trim()),
     onConnect: (session) => app.connect(session), onCommand: (session, message) => app.command(session, message), onDisconnect: (session) => app.disconnect(session) });
   const port = Number(process.env.PORT ?? 3001);
