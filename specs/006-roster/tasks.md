@@ -5,7 +5,7 @@ Todas referenciam R06; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/server/src/match, apps/web/src/lobby.
   - Aceite/verificação: Dois por equipe, slots exclusivos e todos sincronizados; saque alterna conforme contrato.
 
-- [ ] 006-T2 — Overall e catálogo versionado
+- [x] 006-T2 — Overall e catálogo versionado
   - Destinos: packages/domain/src/characters.
   - Aceite/verificação: Média arredondada de sete atributos; partida em curso mantém versão ao atualizar catálogo.
 
