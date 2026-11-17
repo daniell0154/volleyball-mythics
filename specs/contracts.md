@@ -8,6 +8,7 @@ MatchPlayer: matchId, userId, team (A|B), slot (0|1), characterId, characterVers
 MatchResult: matchId como chave idempotente, payload final e hash. Repetição idêntica retorna sucesso; conflito retorna erro.
 Sala é estado em memória do servidor: roomId, code, mode, members, ownerId, ready, status. Código expira quando sala fecha; código não substitui autenticação.
 ## Rede
+Handshake de transporte: primeiro frame textual `auth` com envelope v1, requestId e payload `{accessToken}`; não aceita comandos antes de validar JWT no Supabase. Responde ack com userId derivado do Auth. Token nunca aparece em URL/logs. Prazo de autenticação 5 s, mensagem máxima 8 KiB, sessão fecha ao expirar. Apenas uma conexão ativa por identidade; renovar conexão com novo token após expiração. Origin deve estar na allowlist do servidor. Este handshake não modifica os comandos de jogo abaixo.
 Envelope cliente: protocolVersion=1, type, requestId, payload. Input inclui seq monotônico, moveX/moveZ [-1,1], ações discretas. Nunca aceitar userId, score, posição ou cooldown como autoridade.
 Comandos: createRoom(mode), joinRoom(code), selectCharacter(id,version), setTeam(team,slot), ready(value), start, input, leave, rematchVote.
 Resposta: ack(requestId,result) ou error(requestId,code); eventos roomState, snapshot, point, matchEnded.

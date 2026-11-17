@@ -1,7 +1,7 @@
 # Tarefas — Salas e transporte
 Todas referenciam R04; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 004-T1 — Autenticar socket e validar envelope
+- [x] 004-T1 — Autenticar socket e validar envelope
   - Destinos: apps/server/src/network.
   - Aceite/verificação: Token inválido/expirado e payload excessivo rejeitados; não logar tokens.
 
