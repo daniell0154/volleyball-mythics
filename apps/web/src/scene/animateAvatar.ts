@@ -1,5 +1,16 @@
 import type * as THREE from "three";
 import type { SceneSnapshot, Position } from "../game/presentation.js";
+import type { VisualActionKind } from "@volleyball-mythics/protocol";
+
+export const ACTION_POSES: Record<VisualActionKind, { duration: number; joints: Record<string, number> }> = {
+  serve: { duration: 30, joints: { rightShoulder: -1.2, rightElbow: -.1, leftShoulder: -.65, spine: -.08 } },
+  receive: { duration: 24, joints: { leftShoulder: -1.0, rightShoulder: -1.0, leftElbow: -.02, rightElbow: -.02, spine: .14 } },
+  set: { duration: 30, joints: { leftShoulder: -2.5, rightShoulder: -2.5, leftElbow: -.5, rightElbow: -.5, head: -.12 } },
+  attack: { duration: 30, joints: { rightShoulder: -1.5, rightElbow: -.06, leftShoulder: -2.3, spine: .15 } },
+  block: { duration: 24, joints: { leftShoulder: -3.05, rightShoulder: -3.05, leftElbow: -.04, rightElbow: -.04 } },
+  rant: { duration: 54, joints: { rightShoulder: -1.4, rightElbow: -.8, head: .15, spine: .10 } },
+  freePoint: { duration: 54, joints: { leftShoulder: -2.3, rightShoulder: -2.3, leftElbow: -1.5, rightElbow: -1.5, head: .30, spine: .18 } },
+};
 
 export class AvatarAnimator {
   private joints = new Map<string, { node: THREE.Object3D; x: number; y: number; z: number }>();
@@ -47,10 +58,22 @@ export class AvatarAnimator {
       targets.leftKnee=falling ? .35 : .65;targets.rightKnee=falling ? .35 : .65;
       targets.leftShoulder=falling ? -.35 : -.8;targets.rightShoulder=falling ? -.35 : -.8;
     }
+    // Contact is the start tick, not a locally predicted future hit.
+    let action: NonNullable<SceneSnapshot["visualActions"]>[number] | undefined;
+    for (const candidate of frame.visualActions ?? []) {
+      if (candidate.actorId !== athlete.id || candidate.tick > tick || tick-candidate.tick >= ACTION_POSES[candidate.kind].duration) continue;
+      if (!action || candidate.id > action.id) action = candidate;
+    }
+    const gesture = action ? ACTION_POSES[action.kind] : undefined;
+    const progress = action && gesture ? (tick-action.tick)/gesture.duration : 1;
+    const weight = 1-progress*progress*(3-2*progress);
+    if (action) this.model.rotation.y = action.facing;
     const blend = this.tick === undefined ? 1 : 1-Math.exp(-dt*20);
     for (const [name,joint] of this.joints) {
       const target = targets[name] ?? joint.x;
-      joint.node.rotation.x += (target-joint.node.rotation.x)*blend;
+      const contact = gesture?.joints[name];
+      if (contact !== undefined) joint.node.rotation.x = target + (contact-target)*weight;
+      else joint.node.rotation.x += (target-joint.node.rotation.x)*blend;
     }
     this.previous={...athlete.position};this.tick=tick;this.airborne=inAir;
   }

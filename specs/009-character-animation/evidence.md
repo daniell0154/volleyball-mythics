@@ -11,3 +11,8 @@ Testes: servidor 35/35 e web 12/12 passaram. Cobertos saque ilegítimo, tentativ
 
 AvatarAnimator usa pivôs do rig e tempo interpolado; alterna passos, braços, orientação, salto/queda e amortecimento de aterrissagem. Não move a raiz. Suspensão e fim congelam pose; troca de matchId descarta controladores. Corrigida aceitação da retomada no mesmo tick congelado em SnapshotBuffer.
 Suíte web 15/15 passou: consistência de passo em 30/60/120 FPS (diferença de rotação <0,13 rad), raiz imóvel, suspensão/retomada e renderTick interpolado junto da bola. Frames repetidos não avançam a pose. Gate funcional aprovado; revisão visual e medição integrada pertencem à T4.
+
+## 009-T3 — Golpes e especiais
+
+Sete poses confirmadas: saque, recepção, levantamento, ataque, bloqueio, bronca e reação de Caio. Contato no tick inicial e recuperação suave em 24–54 ticks. Ações de ambos os snapshots são combinadas/filtradas no mesmo renderTick da bola, sem apresentar o contato antes da confirmação.
+Web 17/17 e servidor 35/35 passaram: pose no tick de contato, timeline fracionária, repetição sem restart, modelo recriado na mesma idade do gesto, bronca com cooldown sem nova ocorrência e reação de Caio após validação. A primeira execução do teste de timeline usava horários incorretos; corrigido o cenário, não a fórmula de interpolação. Gate funcional aprovado, apresentação em vídeo e custo seguem na T4.

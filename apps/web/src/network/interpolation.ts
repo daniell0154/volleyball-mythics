@@ -18,7 +18,9 @@ export class SnapshotBuffer {
         const duration = next.serverTime - previous.serverTime;
         const t = duration > 0 ? Math.max(0, Math.min(1, (target - previous.serverTime) / duration)) : 1;
         const renderTick = previous.tick + (next.tick - previous.tick) * t;
-        return { ...previous, renderTick, ball: blend(previous.ball, next.ball, t), athletes: previous.athletes.map((athlete) => {
+        const visualActions = [...new Map([...(previous.visualActions ?? []), ...(next.visualActions ?? [])]
+          .map((action) => [action.id, action])).values()].filter((action) => action.tick <= renderTick && renderTick - action.tick <= 120).slice(-32);
+        return { ...previous, renderTick, visualActions, ball: blend(previous.ball, next.ball, t), athletes: previous.athletes.map((athlete) => {
           const other = next.athletes.find((a) => a.id === athlete.id);
           return other ? { ...athlete, position: blend(athlete.position, other.position, t) } : athlete;
         }) };

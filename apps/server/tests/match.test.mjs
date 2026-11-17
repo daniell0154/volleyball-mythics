@@ -36,9 +36,12 @@ test('teammate ability applies one bounded debuff, ignores spam during cooldown,
  const match=runtime.get(room.roomId);match.ball={position:{x:0,y:10000,z:0},velocity:{x:0,y:0,z:0},grounded:false};
  runtime.submit(room,'a',{seq:2,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
  const expires=match.activeEffects.get('b').expiresAtTick;assert.equal(match.activeEffects.get('b').multiplier,.85);
+ assert.equal(runtime.snapshot(match).visualActions.at(-1).kind,'rant');
+ const visualId=runtime.snapshot(match).visualActions.at(-1).id;
  assert.ok(match.abilityCooldowns.get('a')>match.tick);
  runtime.submit(room,'a',{seq:3,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
  assert.equal(match.activeEffects.get('b').expiresAtTick,expires);
+ assert.equal(runtime.snapshot(match).visualActions.at(-1).id,visualId);
  runtime.advance(5000);assert.equal(match.activeEffects.has('b'),false);
  match.activeEffects.set('b',{expiresAtTick:match.tick+500,multiplier:.85,attributes:['speed']});runtime.finish(room,'A','forfeit');
  assert.equal(match.activeEffects.size,0);
@@ -52,5 +55,6 @@ test('free point ability requires range and resolves at most one opponent point 
  match.ball={position:{x:caio.position.x,y:caio.position.y+1.1,z:caio.position.z},velocity:{x:0,y:0,z:0},grounded:false};
  runtime.submit(room,'a',{seq:3,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
  assert.deepEqual(match.state.score,{A:0,B:1});assert.equal(match.state.phase,'point');assert.ok(match.abilityCooldowns.get('a')>match.tick);
+ assert.equal(runtime.snapshot(match).visualActions.at(-1).kind,'freePoint');
  runtime.advance(20);assert.deepEqual(match.state.score,{A:0,B:1});
 });

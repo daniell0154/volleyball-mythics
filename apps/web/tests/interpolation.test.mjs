@@ -17,3 +17,15 @@ test('resume at the same frozen tick is accepted after a wall-clock pause',()=>{
  buffer.push(frame(60,21000,0),20000);
  assert.equal(buffer.sample(20000).phase,'rally');assert.equal(buffer.sample(20000).renderTick,60);
 });
+
+test('action and ball share fractional render tick, including an event recovered from the next snapshot',()=>{
+ const buffer=new SnapshotBuffer(),action={id:1,actorId:'a',kind:'receive',tick:5,facing:0};
+ buffer.push(frame(3,1000,0),0);
+ buffer.push({...frame(6,1050,3),visualActions:[action]},50);
+ assert.equal(buffer.sample(125).renderTick,4.5);
+ assert.equal(buffer.sample(125).visualActions.length,0);
+ const contact=buffer.sample(134);
+ assert.ok(contact.renderTick>=5&&contact.renderTick-5<1);
+ assert.equal(contact.visualActions[0].id,1);
+ assert.ok(Math.abs(contact.ball.x-(contact.renderTick-3))<1e-9);
+});

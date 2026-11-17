@@ -9,7 +9,7 @@ Todas referenciam R09; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Idle, deslocamento, salto, queda e aterrissagem com blends; orientação acompanha movimento/ação. Usar delta temporal, não número de frames. Pausa por desconexão congela poses e retomada não reinicia golpes.
 
-- [ ] 009-T3 — Golpes e especiais
+- [x] 009-T3 — Golpes e especiais
   - Destinos: apps/web/src/scene, apps/web/src/network, apps/server/src/runtime, packages/protocol.
   - Entrega/aceite: Implementar saque, recepção, levantamento, ataque, bloqueio, bronca e reação de Caio. Estado visual distingue ação recusada de confirmada; contato visual fica a até um snapshot (50 ms na configuração atual) do contato na timeline interpolada.
 
