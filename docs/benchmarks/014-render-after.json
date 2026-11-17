@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-17T18:01:27.713Z",
+  "label": "after",
+  "browser": "157.0.8103.79",
+  "cpu": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+  "os": "Windows 11 Pro",
+  "width": 1280,
+  "height": 720,
+  "dpr": 1,
+  "quality": "low",
+  "scenario": "four athletes, same captured v3 rally, stable camera, headless Vite replay",
+  "durationMs": 300005.49999999965,
+  "frames": 17978,
+  "p95Ms": 16.800000000017462,
+  "maxMs": 99.89999999999418,
+  "hidden": false,
+  "errors": [],
+  "regressionPercent": 0,
+  "pass": true
+}

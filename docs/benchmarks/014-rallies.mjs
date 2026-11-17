@@ -39,8 +39,8 @@ function scenario(side,index,rtt,defending=true,fullMatch=false){
   if(serveTick===null&&m.state.phase==='rally')serveTick=tick;
   if(serveTick!==null&&firstFlight===null&&m.ball.grounded)firstFlight=(tick-serveTick)/60;
   const returnEvent=m.visualActions.find(a=>a.kind==='receive'&&m.athletes.find(p=>p.id===a.actorId)?.team!==side);
-  if(returnEvent&&firstReturn===null)firstReturn=(tick-serveTick)/60;
-  if(m.state.phase==='rally'&&m.athletes.some(a=>a.team!==side&&Math.hypot(a.position.x-m.ball.position.x,a.position.y+1.1-m.ball.position.y,a.position.z-m.ball.position.z)<2.3))reachableTicks++;
+  if(returnEvent&&firstReturn===null){firstReturn=(tick-serveTick)/60;firstFlight??=firstReturn;}
+  if(firstReturn===null&&m.state.phase==='rally'&&m.athletes.some(a=>a.team!==side&&Math.hypot(a.position.x-m.ball.position.x,a.position.y+1.1-m.ball.position.y,a.position.z-m.ball.position.z)<2.3))reachableTicks++;
   if(summary&&!fullMatch)break;
  }
  if(fullMatch){if(!m.ended)throw Error('match timed out');return {side,index,rtt,winner:m.winner,serveOnlyWon:m.winner===side,score:m.state.score};}
@@ -54,5 +54,5 @@ const bothActive=Array.from({length:40},(_,i)=>scenario(i%2?'B':'A',i,i%2?150:0,
 const matches=Array.from({length:20},(_,i)=>scenario(i%2?'B':'A',i,150,true,true));
 const percentile=(xs,p)=>[...xs].sort((a,b)=>a-b)[Math.ceil(xs.length*p)-1]??0;
 const summary=[0,150].flatMap(rtt=>['A','B'].map(side=>{const sample=rows.filter(r=>r.side===side&&r.rtt===rtt);return{side,rtt,samples:sample.length,returnRate:sample.filter(r=>r.returnedServe).length/sample.length,medianContacts:percentile(sample.map(r=>r.contactsAfterServe),.5),medianDuration:percentile(sample.map(r=>r.durationSeconds),.5),rangeRejections:sample.reduce((n,r)=>n+r.rangeRejections,0)};}));
-const report={date:new Date().toISOString(),rulesVersion:version,environment:{node:process.version,cpu:os.cpus()[0].model,os:os.version()},fixture:'2v2, 200ms pursuit from delayed ball observations; receive/set/attack by accepted touch count; one defending team, serving team stays still; separate both-active series. Both teams serve when entitled; test-only, not humans or product bots. RTT shim delays observation/input, jitter +-33ms.',summary,bothActiveMedianContacts:percentile(bothActive.map(r=>r.contactsAfterServe),.5),bothActive,serveOnlyMatchWinRate:matches.filter(m=>m.serveOnlyWon).length/20,inactive,rows,matches};
+const report={date:new Date().toISOString(),rulesVersion:version,environment:{node:process.version,cpu:os.cpus()[0].model,os:os.version()},fixture:'2v2, observations delayed by 200ms reaction plus RTT/2, input delayed RTT/2 with jitter +-33ms. Interception estimated from two past ball observations and gravity; receive/set/attack from delayed accepted contacts. One defending team, serving team stays still; separate both-active series. Stops attempting hits after 15s per rally, so long-rally durations are censored. Both teams serve when entitled. Deterministic index schedule, UUIDs not used in decisions. Test-only, not humans or product bots.',summary,bothActiveMedianContacts:percentile(bothActive.map(r=>r.contactsAfterServe),.5),bothActive,serveOnlyMatchWinRate:matches.filter(m=>m.serveOnlyWon).length/20,inactive,rows,matches};
 await writeFile(`docs/benchmarks/014-profile-${version}.json`,JSON.stringify(report,null,2)+'\n');await writeFile(`docs/benchmarks/014-traces-${version}.json`,JSON.stringify(traces)+'\n');console.log(JSON.stringify({version,summary,serveOnlyMatchWinRate:report.serveOnlyMatchWinRate}));

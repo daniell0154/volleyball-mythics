@@ -1,6 +1,6 @@
 # Contrato 014 — candidato e legibilidade
 
-Base: 013 integrada em edc3b9c. Regras 1/2/3 imutáveis; nova revisão 4 é candidata, fixada por partida. Padrão de produção continua 3 até comparação e aprovação humana da T4. Configuração explícita RALLY_RULES_VERSION=4 permite ensaio; não é comando público nem alteração de partidas existentes.
+Base: 013 integrada em edc3b9c. Regras 1/2/3 imutáveis; revisão 4 fixada por partida e promovida após gate técnico T4 e delegação do proprietário. Padrão de novas partidas é 4; RALLY_RULES_VERSION=3 permite rollback para novas partidas, sem mudar partidas existentes. Não é comando público. Playtest humano posterior registrado como limitação.
 
 Input v1 ganha aim opcional {x,z}, números finitos com norma <=1. x é lateral no mundo; z escolhe profundidade relativa ao lado/ação. Sem aim equivale ao destino padrão do perfil; regras 1–3 ignoram a extensão. Parser rejeita pares incompletos, NaN, excesso de magnitude, posição/destino arbitrário ou campos desconhecidos. Antigos leitores mantêm suporte; snapshots podem anunciar rulesVersion opcional para mostrar os controles apenas no candidato. Servidor calcula destino limitado à área legal e trajetória, mantendo alcance, separação e consumo único de ação.
 

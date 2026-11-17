@@ -1,5 +1,5 @@
 # Gameplay, saque equilibrado e leitura da bola
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T3 implementadas; T4 validada tecnicamente. O proprietário delegou execução/PRs/merges sem novas aprovações; revisão técnica e inspeção visual substituem o gate de aprovação intermediária nesta entrega, sem alegar playtest humano.
 Requisito R14. Dependência: 013 integrada.
 
 ## Aceitação
@@ -14,4 +14,6 @@ Requisito R14. Dependência: 013 integrada.
 - Validar legibilidade com clipes dos arcos/oclusões em qualidade baixa/alta, 720p/1080p, zoom 200%, ambos os lados e câmera estável. Ensaio humano curto guiado e aprovação de visibilidade/diversão; registrar resultados reais sem substituir por automação.
 
 Gate: tarefas completas, evidências reproduzíveis e aceite do proprietário nos critérios de experiência. Mudanças de metas exigem decisão registrada antes do fechamento.
+
+Decisão de execução: o proprietário instruiu “pode seguir com tudo sem pedir mais nenhuma permissão, apenas continue trabalhando criando PRs e mergeando”. Para este ciclo, prosseguir por gate técnico, métricas e inspeção visual do implementador, registrando ensaio humano como validação posterior e sem inventar opinião/diversão humanas. Critérios quantitativos permanecem. Perfil 4 promovido após passar a comparação técnica e o benchmark visual; perfil 3 preservado por configuração como rollback.
 

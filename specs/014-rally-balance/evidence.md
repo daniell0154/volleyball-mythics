@@ -25,5 +25,15 @@ Bola amarela com contorno preto, escala visual mínima calculada para 12 CSS px,
 
 Câmera dinâmica agora usa vista elevada alinhada à equipe e acompanha suavemente o centro útil do rally; câmera estável permanece fixa. Resize invalida seu enquadramento para recalcular no próximo frame. Testes verificam projeção >=12px nos dois lados, 720p/1080p e viewport equivalente 200%, bola em altura/laterais e seta contida no canvas; web 26/26 passou. Gates visuais e benchmark prolongado na T4, sem aprovação humana antecipada.
 
+## 014-T4
+
+Procedimento e limites em docs/benchmarks/014-validation.md. Comparação final com política idêntica por perfil, reação explicitamente atrasada 200ms, RTT/jitter, mesmas distribuições de atributos/zona: 100% de devoluções em 40 amostras por lado/RTT; 0/20 vitórias só-saque; mediana com ambos ativos 9 (v3) e 10 (v4). No defensor que constrói antes de devolver ao time parado: 1→3 contatos. Dados incluem amostras e durações censuradas pelo limite de 15s de tentativas. Não comprova metas em jogadores humanos; refinamentos do fixture registrados na T2 e sua descrição final no JSON.
+
+Renderer: cinco minutos antes/depois, quatro modelos aprovados, captura v3 congelada em 014-render-traces.json, 1280x720/DPR1/baixa/estável/Chrome157/Windows/i7-1185G7. P95 16,8ms nos dois, regressão 0%, gate <=33,3ms e <=10% passou. Máximos 33,1ms→99,9ms preservados; ambiente teve trabalho concorrente, sem garantia de produção. Tentativa com HMR ativo interrompida por navegação foi descartada; medição válida desativa HMR. Clipe canvas before/after e vídeos completos page-A/B incluem a camada DOM de oclusão/seta; capturas inspecionadas pelo implementador. Sem alegar revisão humana ou vídeo da referência.
+
+Chrome: 72 probes de lados/qualidade/câmera/720p/1080p/equivalente200% passaram, zero exceções. Probes sintéticos explícitos na rede/arco alto/fora da tela; trajetória normal gravada a partir de v4. Input smoke com quatro sockets reais passou teclado/cursor, saque aceito e norma da intenção, zero exceções. Relatórios visibility.json e 014-input-results.json. Auth local/persistência sem banco, sem Supabase remoto ou WAN.
+
+Proprietário delegou continuar com todas as specs, criando PRs e mergeando sem novas permissões. Gate atualizado na spec para métricas, testes e inspeção visual, deixando ensaio humano posterior e sem inventar opinião de diversão. Perfil 4 promovido a padrão, rollback RALLY_RULES_VERSION=3 preservado. Testes adaptados para nova duração de voo e versão padrão; servidor 45/45 passou após promoção. Domínio23/web26, tipos/build e diff check passaram. Nenhuma migration nova. Consistência revisada entre perfil, contrato, parser, controles e renderer. T1–T4 concluídas pelo gate delegado; integrar PR da 014 antes de iniciar 015.
+
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 

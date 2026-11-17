@@ -29,7 +29,7 @@ export class MatchRuntime {
     private resolveAttributes: (id: string, version: number) => CharacterAttributes | undefined = () => undefined,
     private resolveAbility: (id: string, version: number) => { id: string; config: unknown } | undefined = () => undefined,
     private allowDevelopmentFixture = process.env.NODE_ENV === "development",
-    private defaultRulesVersion = 3) { rallyProfile(defaultRulesVersion); }
+    private defaultRulesVersion = 4) { rallyProfile(defaultRulesVersion); }
   start(room: RoomState): void {
     const athletes: Athlete[] = room.members.map((member) => {
       const key = member.character ? this.resolveAsset(member.character.id, member.character.version) : undefined;

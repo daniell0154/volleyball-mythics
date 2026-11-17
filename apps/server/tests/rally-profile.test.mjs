@@ -5,9 +5,9 @@ import {RoomRegistry} from '../dist/rooms/registry.js';
 test('running matches pin rules revision and recovery rejects immediate repeat contact',()=>{
  const registry=new RoomRegistry(),room=registry.create('a','1v1');registry.join('b',room.code);
  const runtime=new MatchRuntime(()=>{});runtime.start(room);runtime.advance(3000);
- const match=runtime.get(room.roomId);assert.equal(match.state.rulesVersion,3);
+ const match=runtime.get(room.roomId);assert.equal(match.state.rulesVersion,4);
  runtime.defaultRulesVersion=1;
- assert.equal(match.rallyProfile.version,3);
+ assert.equal(match.rallyProfile.version,4);
  runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(20);
  match.touching.clear();match.ball={position:{x:0,y:1.1,z:-6},velocity:{x:0,y:0,z:0},grounded:false};
  runtime.submit(room,'a',{seq:2,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);
