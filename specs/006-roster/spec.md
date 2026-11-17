@@ -1,5 +1,5 @@
 # 2v2 e habilidades
-Status: especificado, não implementado.
+Status: implementada para o elenco inicial confirmado pelo proprietário (Samuel e Caio). Personagens adicionais serão incluídos em etapas futuras; o elenco final continua sendo gate de lançamento da 007.
 Requisito R06: Quatro jogadores usam elenco definido pelo proprietário.
 
 ## Aceitação

@@ -8,6 +8,7 @@ import { ReconnectController } from "./reconnect/controller.js";
 import { createResultsRepository } from "./persistence/results.js";
 import { MatchResults } from "./results/coordinator.js";
 import { MatchLifecycle } from "./lifecycle/matches.js";
+import { VersionedCharacterCatalog } from "@volleyball-mythics/domain";
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -15,9 +16,11 @@ async function main() {
   if (!url || !publicKey) throw new Error("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env da raiz.");
   const port = Number(process.env.PORT ?? 3001);
   if (!Number.isSafeInteger(port) || port <= 0 || port > 65535) throw new Error("PORT inválida");
+  const characterCatalog = new VersionedCharacterCatalog();
   const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
-    (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes);
+    (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes,
+    (id, version) => { const character = app.catalog.find((c) => c.id === id && c.version === version); return character?.abilityId && character.abilityConfig ? { id: character.abilityId, config: character.abilityConfig } : undefined; });
   const reconnect = new ReconnectController(runtime, (room, type, payload) => app.broadcast(room, type, payload));
   const results = new MatchResults(process.env.SUPABASE_SECRET_KEY ? createResultsRepository(url, process.env.SUPABASE_SECRET_KEY) : { persist: async () => { throw new Error("server_result_secret_missing"); } },
     (room, type, payload) => app.broadcast(room, type, payload), Date.now, (matchId) => console.error(`result_persistence_failed matchId=${matchId}`));
@@ -34,11 +37,15 @@ async function main() {
     const identity = await verifyIdentity(token);
     // Read through authenticated RLS using this guest's token, never a service secret.
     const database = createClient(url, publicKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
-    const { data, error } = await database.from("characters").select("id,version,name,overall,asset_key,ability_config,serve,receive,set_skill,attack,block,speed,jump").eq("enabled", true);
+    const { data, error } = await database.from("characters").select("id,version,name,overall,asset_key,ability_id,ability_config,serve,receive,set_skill,attack,block,speed,jump").eq("enabled", true);
     if (error || !data) throw new Error("unauthorized");
-    app.refreshCatalog(data.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, assetKey: c.asset_key,
+    const revisions = characterCatalog.replaceEnabled(data.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, assetKey: c.asset_key,
       attributes: { serve: c.serve, receive: c.receive, set: c.set_skill, attack: c.attack, block: c.block, speed: c.speed, jump: c.jump },
-      ...(typeof c.ability_config?.name === "string" ? { abilityName: c.ability_config.name } : {}) })));
+      abilityId: c.ability_id, abilityConfig: c.ability_config
+      })));
+    app.refreshCatalog(revisions.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, ...(c.assetKey ? { assetKey: c.assetKey } : {}), attributes: c.attributes,
+      ...(c.abilityId ? { abilityId: c.abilityId } : {}), ...(c.abilityConfig ? { abilityConfig: c.abilityConfig } : {}),
+      ...(typeof c.abilityConfig?.name === "string" ? { abilityName: c.abilityConfig.name } : {}) })));
     return identity;
   },
     staticDirectory: fileURLToPath(new URL("../../web/dist/", import.meta.url)),

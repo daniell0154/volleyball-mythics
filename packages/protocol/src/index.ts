@@ -125,7 +125,7 @@ export interface RoomState {
   status: "lobby" | "active" | "suspended" | "finished";
   members: RoomMember[];
 }
-export interface CatalogEntry { id: string; version: number; name: string; assetKey?: string; overall?: number; abilityName?: string; attributes?: CharacterAttributes }
+export interface CatalogEntry { id: string; version: number; name: string; assetKey?: string; overall?: number; abilityId?: string; abilityConfig?: Readonly<Record<string, unknown>>; abilityName?: string; attributes?: CharacterAttributes }
 export interface Vector3 { readonly x: number; readonly y: number; readonly z: number }
 export interface MatchSnapshot {
   matchId: string;

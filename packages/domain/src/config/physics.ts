@@ -67,6 +67,10 @@ export function ballConfigFromRules(config: GameRulesConfig): BallConfig {
 }
 
 export function validateCharacterAttributes(attributes: CharacterAttributes): CharacterAttributes {
+  const expected = ["serve", "receive", "set", "attack", "block", "speed", "jump"];
+  if (!attributes || typeof attributes !== "object" || Array.isArray(attributes) || expected.some((key) => !Object.hasOwn(attributes, key)) || Object.keys(attributes).some((key) => !expected.includes(key))) {
+    throw new Error("character attributes must contain exactly the seven supported fields");
+  }
   const values = Object.values(attributes);
   if (values.length !== 7 || values.some((value) => !Number.isInteger(value) || value < 1 || value > 100)) {
     throw new Error("all seven character attributes must be integers in [1, 100]");

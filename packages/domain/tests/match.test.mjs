@@ -39,3 +39,24 @@ test("only valid phase events transition and finished match is terminal", () => 
   let finished = { ...match, phase: "finished", score: { A: 6, B: 0 } };
   assert.equal(transition(finished, { type: "CANCEL" }).phase, "finished");
 });
+
+test("2v2 serving slot stays on a scoring streak and rotates separately for each team", () => {
+  let match = createMatch("m-2v2-serve", "2v2");
+  match = transition(match, { type: "START" });
+  match = transition(match, { type: "COUNTDOWN_FINISHED" });
+  assert.deepEqual([match.servingSide, match.servingSlot], ["A", 0]);
+  match = transition(match, { type: "RALLY_POINT", pointId: "a1", scoringSide: "A" });
+  match = transition(match, { type: "POINT_DELAY_FINISHED" });
+  assert.deepEqual([match.servingSide, match.servingSlot], ["A", 0]);
+  match = transition(match, { type: "SERVE_HIT" });
+  match = transition(match, { type: "RALLY_POINT", pointId: "b1", scoringSide: "B" });
+  assert.deepEqual([match.servingSide, match.servingSlot], ["B", 0]);
+  match = transition(match, { type: "POINT_DELAY_FINISHED" });
+  match = transition(match, { type: "SERVE_HIT" });
+  match = transition(match, { type: "RALLY_POINT", pointId: "a2", scoringSide: "A" });
+  assert.deepEqual([match.servingSide, match.servingSlot], ["A", 1]);
+  match = transition(match, { type: "POINT_DELAY_FINISHED" });
+  match = transition(match, { type: "SERVE_HIT" });
+  match = transition(match, { type: "RALLY_POINT", pointId: "b2", scoringSide: "B" });
+  assert.deepEqual([match.servingSide, match.servingSlot], ["B", 1]);
+});

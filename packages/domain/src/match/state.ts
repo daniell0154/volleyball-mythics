@@ -9,6 +9,7 @@ export interface MatchState {
   readonly score: Readonly<Record<Side, number>>;
   readonly servingSide: Side;
   readonly servingSlot: 0 | 1;
+  readonly nextServingSlot: Readonly<Record<Side, 0 | 1>>;
   readonly rallyId: number;
   readonly lastScoringSide: Side | null;
   readonly appliedPointIds: readonly string[];
@@ -28,7 +29,7 @@ export function createMatch(matchId: string, mode: Mode, rulesVersion = 1): Matc
   if (!Number.isInteger(rulesVersion) || rulesVersion < 1) throw new Error("rulesVersion must be positive");
   return {
     matchId, mode, phase: "lobby", score: { A: 0, B: 0 }, servingSide: "A",
-    servingSlot: 0, rallyId: 0, lastScoringSide: null, appliedPointIds: [], rulesVersion,
+    servingSlot: 0, nextServingSlot: { A: 1, B: 0 }, rallyId: 0, lastScoringSide: null, appliedPointIds: [], rulesVersion,
   };
 }
 
@@ -51,9 +52,13 @@ export function transition(state: MatchState, event: MatchEvent): MatchState {
       const score = { ...state.score, [event.scoringSide]: state.score[event.scoringSide] + 1 };
       const won = score[event.scoringSide] === 6;
       const regainedServe = event.scoringSide !== state.servingSide;
+      const servingSlot = regainedServe && state.mode === "2v2" ? state.nextServingSlot[event.scoringSide] : state.servingSlot;
       return {
         ...state, score, phase: won ? "finished" : "point", servingSide: event.scoringSide,
-        servingSlot: regainedServe && state.mode === "2v2" ? (state.servingSlot === 0 ? 1 : 0) : state.servingSlot,
+        servingSlot,
+        nextServingSlot: regainedServe && state.mode === "2v2"
+          ? { ...state.nextServingSlot, [event.scoringSide]: servingSlot === 0 ? 1 : 0 }
+          : state.nextServingSlot,
         lastScoringSide: event.scoringSide, appliedPointIds: [...state.appliedPointIds, event.pointId],
       };
     }
