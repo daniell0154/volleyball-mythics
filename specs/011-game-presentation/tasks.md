@@ -14,7 +14,7 @@ Todas referenciam R11; executar em ordem. Cada tarefa depende da anterior e das 
   - Entrega/aceite: Placar/fase central, sacador, jogador local e recarga legíveis; instruções mudam conforme fase. Marcador local com forma/texto. HUD não bloqueia bola/rede; volume e qualidade acessíveis, reduzir movimento sem mudar física.
 
 - [ ] 011-T4 — Aceite do percurso
-  - Retomada: não iniciada por pedido explícito do proprietário para parar ao concluir T3.
+  - Retomada autorizada pelo proprietário em 2026-11-17. Harness e evidências em docs/acceptance/011-journey.md; marcar somente após resolver as pendências e obter aprovação visual.
   - Destinos: apps/web/src/main.tsx, lobby, scene/CharacterPreview.tsx, game/OnlineMatch.tsx, results; docs/acceptance.
   - Entrega/aceite: Completar criar/entrar, selecionar, pronto, jogar, resultado e revanche com teclado. Cobrir catálogo com pelo menos cinco fixtures só em teste, nomes longos, WebGL indisponível e zoom 200%. Registrar versões Chrome/Edge/Firefox/Safari e pendências reais, além de contraste mínimo 4,5:1 para texto normal.
 

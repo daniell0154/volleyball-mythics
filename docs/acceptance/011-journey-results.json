@@ -1,0 +1,222 @@
+{
+  "date": "2026-11-17T16:25:23.462Z",
+  "platform": "win32",
+  "browsers": [
+    {
+      "name": "Chrome",
+      "version": "157.0.8103.79",
+      "journeys": [
+        {
+          "mode": "1v1",
+          "layout": "1440 CSS px / DPR 1",
+          "keyboard": true,
+          "checks": [
+            "entry-long-name",
+            {
+              "contrast": "entry-long-name",
+              "minimum": 8.13,
+              "textNodes": 40
+            },
+            "lobby-long-name",
+            {
+              "contrast": "lobby-long-name",
+              "minimum": 8.13,
+              "textNodes": 52
+            },
+            "match-options",
+            {
+              "contrast": "match-options",
+              "minimum": 8.78,
+              "textNodes": 27
+            },
+            "result",
+            {
+              "contrast": "result",
+              "minimum": 8.13,
+              "textNodes": 31
+            },
+            "rematch",
+            {
+              "contrast": "rematch",
+              "minimum": 8.78,
+              "textNodes": 24
+            }
+          ],
+          "audioGraph": {
+            "gainAt100": 0.08,
+            "mutedPointSilent": true,
+            "physicalOutputVerified": false
+          },
+          "result": {
+            "A": 6,
+            "B": 5
+          },
+          "rematch": true,
+          "errors": []
+        },
+        {
+          "mode": "2v2",
+          "layout": "720 CSS px / DPR 2 (200% equivalent)",
+          "keyboard": true,
+          "checks": [
+            "entry-long-name",
+            {
+              "contrast": "entry-long-name",
+              "minimum": 8.13,
+              "textNodes": 40
+            },
+            "lobby-long-name",
+            {
+              "contrast": "lobby-long-name",
+              "minimum": 8.13,
+              "textNodes": 60
+            },
+            "match-options",
+            {
+              "contrast": "match-options",
+              "minimum": 8.78,
+              "textNodes": 24
+            },
+            "result",
+            {
+              "contrast": "result",
+              "minimum": 8.13,
+              "textNodes": 31
+            },
+            "rematch",
+            {
+              "contrast": "rematch",
+              "minimum": 8.78,
+              "textNodes": 24
+            }
+          ],
+          "audioGraph": {
+            "gainAt100": 0.08,
+            "mutedPointSilent": true,
+            "physicalOutputVerified": false
+          },
+          "result": {
+            "A": 6,
+            "B": 5
+          },
+          "rematch": true,
+          "errors": []
+        }
+      ],
+      "webgl": {
+        "preview": true,
+        "match": true,
+        "actionsDisabled": true,
+        "keyboardExit": true
+      }
+    },
+    {
+      "name": "Edge",
+      "version": "157.0.4341.60",
+      "journeys": [
+        {
+          "mode": "1v1",
+          "layout": "1440 CSS px / DPR 1",
+          "keyboard": true,
+          "checks": [
+            "entry-long-name",
+            {
+              "contrast": "entry-long-name",
+              "minimum": 8.13,
+              "textNodes": 40
+            },
+            "lobby-long-name",
+            {
+              "contrast": "lobby-long-name",
+              "minimum": 8.13,
+              "textNodes": 52
+            },
+            "match-options",
+            {
+              "contrast": "match-options",
+              "minimum": 8.78,
+              "textNodes": 24
+            },
+            "result",
+            {
+              "contrast": "result",
+              "minimum": 8.13,
+              "textNodes": 31
+            },
+            "rematch",
+            {
+              "contrast": "rematch",
+              "minimum": 8.78,
+              "textNodes": 24
+            }
+          ],
+          "audioGraph": {
+            "gainAt100": 0.08,
+            "mutedPointSilent": true,
+            "physicalOutputVerified": false
+          },
+          "result": {
+            "A": 6,
+            "B": 5
+          },
+          "rematch": true,
+          "errors": []
+        },
+        {
+          "mode": "2v2",
+          "layout": "720 CSS px / DPR 2 (200% equivalent)",
+          "keyboard": true,
+          "checks": [
+            "entry-long-name",
+            {
+              "contrast": "entry-long-name",
+              "minimum": 8.13,
+              "textNodes": 40
+            },
+            "lobby-long-name",
+            {
+              "contrast": "lobby-long-name",
+              "minimum": 8.13,
+              "textNodes": 60
+            },
+            "match-options",
+            {
+              "contrast": "match-options",
+              "minimum": 8.78,
+              "textNodes": 24
+            },
+            "result",
+            {
+              "contrast": "result",
+              "minimum": 8.13,
+              "textNodes": 31
+            },
+            "rematch",
+            {
+              "contrast": "rematch",
+              "minimum": 8.78,
+              "textNodes": 24
+            }
+          ],
+          "audioGraph": {
+            "gainAt100": 0.08,
+            "mutedPointSilent": true,
+            "physicalOutputVerified": false
+          },
+          "result": {
+            "A": 6,
+            "B": 5
+          },
+          "rematch": true,
+          "errors": []
+        }
+      ],
+      "webgl": {
+        "preview": true,
+        "match": true,
+        "actionsDisabled": true,
+        "keyboardExit": true
+      }
+    }
+  ]
+}

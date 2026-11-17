@@ -1,5 +1,5 @@
 # Entrada com elenco e HUD contextual
-Status: T1–T3 implementadas e verificadas. Trabalho interrompido por pedido do proprietário após T3; T4 ainda não iniciada.
+Status: T1–T3 implementadas e verificadas. T4 com percurso automatizado 1v1/2v2 aprovado em Chrome/Edge; gate final aberto para revisão visual e verificações manuais documentadas.
 Requisito R11: entrada com elenco e hud contextual para a versão de tese.
 
 ## Escopo e referência

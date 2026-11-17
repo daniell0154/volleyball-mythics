@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-17T16:32:06.640Z",
+  "name": "Chrome",
+  "version": "157.0.8103.79",
+  "nativeZoom": "200%",
+  "metrics": {
+    "width": 709,
+    "outerWidth": 1440,
+    "dpr": 2,
+    "scrollWidth": 709
+  },
+  "longName": true,
+  "horizontalOverflow": false,
+  "scope": "Entry and catalog; full journey uses equivalent viewport/DPR.",
+  "edge": "Native settings control unavailable to this automation; manual verification pending."
+}

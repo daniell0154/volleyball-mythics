@@ -21,6 +21,24 @@ Marcador local combina anéis, triângulo e texto VOCÊ, sem depender apenas da 
 Web 23/23 passou, incluindo instruções por fase/slot e enquadramento fixo da quadra dos dois lados. Smoke Chrome com duas sessões: HUD, slider mudo, alternância da câmera, canvas único e saque por teclado passaram; zero exceções JS. Captura 011-match.png. O smoke valida controle de volume, não saída audível; checagem completa de áudio, zoom, browsers e percurso fica para T4.
 Build web passou com chunks separados de preview, cena, partida e demonstração. Mantém os avisos de use client do RN Web e de chunk 3D >500 kB; não é medição de performance de renderer. Gate funcional T3 aprovado.
 
-## Ponto de retomada
+## Histórico de retomada
 
 Proprietário solicitou parar ao concluir T3: “quando finalizar a t3 pare o seu work. Continuaremos depois.” T4 não foi iniciada. Retomar na mesma branch/PR: percurso completo por teclado até resultado/revanche, cinco fixtures/nome longo, WebGL indisponível, zoom 200%, contraste >=4,5:1 e matriz de versões/pendências reais dos browsers, além da aprovação visual final.
+
+Em 2026-11-17, o proprietário solicitou continuar a spec 011. T4 retomada na mesma branch e PR #14; o registro acima descreve a parada anterior, não um bloqueio atual.
+
+## 011-T4 — Aceite do percurso (gate final aberto)
+
+Harness reproduzível em docs/acceptance/011-journey.cjs e procedimento/limites em docs/acceptance/011-journey.md. Exercita a apresentação real com gateway guest isolado, cinco fixtures exclusivas de teste e transporte/simulação/ciclo de resultado e revanche reais. Tab/Enter, Espaço, Home/End e L são usados para criar/entrar, selecionar, marcar pronto, iniciar, configurar áudio/imagem, sacar e votar. Nenhum clique, foco programático ou injeção de pontos. Inatividade após o saque permite concluir por timeouts normais até seis; não é playtest humano de rallies.
+
+Correção encontrada pela inspeção: nomes longos comprimiam o marcador de posição no lobby, quebrando A1 em duas linhas. `.slot-number` agora impede encolhimento/quebra. Não altera física, renderer, contratos ou autenticação de produção.
+
+Regressões executadas nesta retomada: web 23/23, typecheck de todos os workspaces e build completo passaram. Build web repetido após o ajuste CSS passou; git diff --check passou. Permanecem os avisos conhecidos de diretivas use client do RN Web e chunk 3D acima de 500 kB. Sem nova medição de performance, carga ou reconexão; evidências anteriores não foram apresentadas como se fossem novas.
+
+Ambiente: Windows 11/kernel 10.0.26200, i7-1185G7, 16 GiB RAM; Chrome/Edge instalados via Playwright headless. Uma execução preliminar foi interrompida ao atualizar o harness; a seguinte perdeu o processo do navegador durante o 2v2. Não contadas como aprovação. Reexecução final reduz viewports das sessões auxiliares e registra resultados reais no JSON.
+
+Execução final `node docs/acceptance/011-journey.cjs`: passou em Chrome 157.0.8103.79 e Edge 157.0.4341.60. Quatro percursos (1v1/2v2 em cada browser), todos até 6×5 por pontos, novo matchId/placar zero após unanimidade de votos, zero exceções JS. Cinco entradas/nome longo e layout sem overflow horizontal verificados em entrada, lobby, opções, resultado e revanche. Texto HTML habilitado: contraste mínimo 8,13:1 (HUD/revanche mínimo 8,78:1), acima de 4,5:1 no escopo descrito no procedimento. Qualidade alta/baixa e câmera estável pelo teclado passaram. Web Audio gerou ganho 0,08 em 100% e nenhum novo sinal no ponto após silenciar. Fallback WebGL no preview/partida preservou diagnóstico/navegação e desabilitou ações; saída por teclado passou. Relatório completo em 011-journey-results.json; capturas finais feitas no Edge, exceto a captura específica de zoom no Chrome.
+
+Gate T4 ainda aberto para aprovação visual do proprietário e verificações manuais documentadas. Firefox/Safari ausentes e saída audível não comprovada são limitações reais, sem inferir aprovação desses cenários. Checklist permanece pendente; PR #14 continua draft. Revisão de consistência: spec/plan/tasks e contratos continuam alinhados; nenhum contrato ou conteúdo de elenco alterado. Não há próxima spec numerada neste ciclo após a 011; nova funcionalidade exige definição posterior. Sem merge/deploy.
+
+Zoom nativo: preferência inicial em arquivo não foi aplicada (DPR observado 1). A configuração pela página interna funcionou no Chrome: 200%, outerWidth 1440, innerWidth/scrollWidth 709 CSS px e DPR 2, nome longo sem overflow na entrada/catálogo. Registrado em 011-zoom.cjs, 011-zoom-results.json e 011-zoom-native-chrome.png. No Edge, o controle da página interna não ficou acessível à automação; checagem nativa permanece manual. Percurso completo usa layout equivalente a 200% (720 CSS px/DPR 2) nos dois navegadores; não apresentar equivalência como se fosse zoom nativo do percurso inteiro.
