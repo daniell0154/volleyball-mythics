@@ -1,4 +1,5 @@
 import type { ClientMessage } from "@volleyball-mythics/protocol";
+import { validateVisualActions } from "./visualActions.js";
 type Command = ClientMessage["type"];
 export class RoomConnection {
   private pending = new Map<string, { resolve(value: unknown): void; reject(error: Error): void; timeout: ReturnType<typeof setTimeout> }>();
@@ -17,7 +18,10 @@ export class RoomConnection {
           if (!request) return;
           clearTimeout(request.timeout); this.pending.delete(message.payload.requestId);
           if (message.type === "error") request.reject(new Error(message.payload.code)); else request.resolve(message.payload.result);
-        } else this.event(message.type, message.payload);
+        } else {
+          if (message.type === "snapshot") validateVisualActions(message.payload);
+          this.event(message.type, message.payload);
+        }
       } catch { this.socket.close(1002, "invalid_message"); }
     };
     this.socket.onclose = () => {
