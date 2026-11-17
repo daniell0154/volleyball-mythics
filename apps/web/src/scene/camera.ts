@@ -24,3 +24,8 @@ export function fitCamera(camera: PerspectiveCamera, width: number, height: numb
   camera.fov = MathUtils.radToDeg(2 * Math.atan(Math.tan(MathUtils.degToRad(24)) * Math.max(1, (16 / 9) / camera.aspect)));
   camera.updateProjectionMatrix();
 }
+
+export function fitStableCamera(camera:PerspectiveCamera,team:"A"|"B",width:number,height:number):void{
+  camera.position.set(0,22,team==="A"?-25:25);camera.lookAt(0,1,0);
+  camera.userData.following=false;fitCamera(camera,width,height);camera.updateMatrixWorld();
+}
