@@ -16,7 +16,7 @@ Ambiente: Windows, Node 26.13.1; dependências fixadas no package-lock.
 - Decoração existe somente no renderer; não altera colisões do domínio.
 - `npm.cmd run test --workspace @volleyball-mythics/web`: 1 teste passou. A projeção enquadra os extremos da quadra até 6,11 m de altura em 1280×720, 1920×1080 e 390×844; amostra 120 segundos de rally sintético com quatro atletas. Não é benchmark nem ensaio visual.
 - Regressão: 15/15 testes do domínio passaram; typecheck de todos os workspaces e build web passaram. Build emite avisos de diretivas use client do RN Web e bundle acima de 500 kB (~840 kB antes de gzip).
-- Gate pendente: sem ferramenta de navegador nesta sessão. Faltam inspeção visual do rally, recriação de cena e confirmação da liberação de recursos WebGL reais. T2 continua desmarcada; T3/T4 aguardam sua aprovação.
+- Validação visual informada pelo proprietário em 2026-11-16: executou o roteiro local e confirmou tudo funcionando corretamente (visibilidade, redimensionamento, qualidade e recriação de cena). T2 aprovada; testes adicionais de navegador e medição de T4 registrados abaixo.
 
 ## Reprodução e próximos aceites
 
