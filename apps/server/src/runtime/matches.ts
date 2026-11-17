@@ -23,7 +23,7 @@ export class MatchRuntime {
   onEnded: (match: RunningMatch) => void = () => {};
   onPoint: (room: RoomState, snapshot: MatchSnapshot) => void = () => {};
   onAction: (userId: string, message: string) => void = () => {};
-  onRallyMeasured: (measurement: RallyMeasurement) => void = () => {};
+  onRallyMeasured: (measurement: RallyMeasurement, room: RoomState) => void = () => {};
   constructor(private emit: (room: RoomState, snapshot: MatchSnapshot) => void, private now: () => number = Date.now,
     private resolveAsset: (id: string, version: number) => string | undefined = () => undefined,
     private resolveAttributes: (id: string, version: number) => CharacterAttributes | undefined = () => undefined,
@@ -83,7 +83,7 @@ export class MatchRuntime {
   private point(match: RunningMatch, winner: Team, reason: string): void {
     const state = transition(match.state, { type: "RALLY_POINT", pointId: `${match.state.matchId}:${match.state.rallyId}`, scoringSide: winner });
     if (state === match.state) return;
-    this.onRallyMeasured(match.metrics.finish(match.room.mode, match.state.rulesVersion, match.state.rallyId, match.tick, reason));
+    this.onRallyMeasured(match.metrics.finish(match.room.mode, match.state.rulesVersion, match.state.rallyId, match.tick, reason), match.room);
     match.state = state; match.phaseTicks = 0; match.pointReason = reason; match.pending.clear();
     this.onPoint(match.room, this.snapshot(match));
     if (state.phase === "finished") { match.winner = winner; match.reason = "points"; this.end(match); }

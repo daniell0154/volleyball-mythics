@@ -1,0 +1,27 @@
+{
+  "participantType": "human self-report",
+  "skill": "",
+  "opinion": "",
+  "timestamp": "2026-11-17T14:09:01.960Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "summaries": [
+    {
+      "mode": "1v1",
+      "rallies": 5,
+      "legalServes": 3,
+      "returnRate": 0.3333333333333333,
+      "medianContacts": 0,
+      "medianDurationSeconds": 1.7,
+      "targetMet": null
+    },
+    {
+      "mode": "2v2",
+      "rallies": 0,
+      "legalServes": 0,
+      "returnRate": 0,
+      "medianContacts": 0,
+      "medianDurationSeconds": 0,
+      "targetMet": null
+    }
+  ]
+}

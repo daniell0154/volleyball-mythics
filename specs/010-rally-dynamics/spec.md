@@ -1,5 +1,5 @@
 # Rallies dinâmicos e resposta de controle
-Status: proposta; não implementada.
+Status: T1–T3 implementadas; T4 técnica verificada e melhoria qualitativa aprovada pelo proprietário. A amostra humana de 20 rallies por modo ainda está pendente.
 Requisito R10: rallies dinâmicos e resposta de controle para a versão de tese.
 
 ## Escopo e referência
