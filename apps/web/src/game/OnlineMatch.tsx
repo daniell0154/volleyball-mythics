@@ -5,6 +5,7 @@ import type { RoomConnection } from "../network/connection.js";
 import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
 import { enableFeedbackSound, playFeedbackSound } from "./feedbackSound.js";
+import { inputIntent } from "./inputIntent.js";
 
 const phases: Record<string, string> = { countdown: "Prepare-se", serving: "Saque", rally: "Em jogo", point: "Ponto", finished: "Partida encerrada", cancelled: "Partida cancelada", disconnectedSuspension: "Aguardando reconexão" };
 export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string; abilityAvailable: boolean }) {
@@ -14,6 +15,12 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   const phase = useRef("");
   const lastScore = useRef("");
   const [error, setError] = useState("");
+  const [intent, setIntent] = useState<{ text: string; at: number } | null>(null);
+  useEffect(() => {
+    keyboard.current.onIntent = (code) => { const message = inputIntent(code, phase.current); if (message) setIntent({ text: message, at: performance.now() }); };
+    return () => { keyboard.current.onIntent = undefined; };
+  }, []);
+  useEffect(() => { if (!intent) return; const timer = setTimeout(() => setIntent(null), 1200); return () => clearTimeout(timer); }, [intent]);
   const [quality, setQuality] = useState<"low" | "high">("low");
   const [volume, setVolume] = useState(() => {
     let saved = 50;
@@ -77,6 +84,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     </div>
     <p>WASD move em relação à câmera. Clique na quadra para usar o teclado. Aproxime-se da bola para receber, levantar ou atacar; salte perto da rede e receba para bloquear.</p>
     {feedback && <p role="status">{feedback}</p>}
+    {intent && <p role="status">{intent.text}</p>}
     {error && <p role="alert">{error}</p>}
   </section>;
 }

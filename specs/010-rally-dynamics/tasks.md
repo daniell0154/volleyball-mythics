@@ -6,7 +6,7 @@ Todas referenciam R10; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: packages/domain, apps/server/src/runtime/matches.ts, apps/web/src/input, apps/web/src/game; docs/benchmarks.
   - Entrega/aceite: Capturar 20 rallies por modo com parâmetros atuais; medir duração, contatos, devoluções e ações recusadas por alcance. Registrar ambiente, skill dos participantes e distribuição, sem salvar tokens ou inputs indefinidamente.
 
-- [ ] 010-T2 — Clareza e resposta
+- [x] 010-T2 — Clareza e resposta
   - Destinos: packages/domain, apps/server/src/runtime/matches.ts, apps/web/src/input, apps/web/src/game; docs/benchmarks.
   - Entrega/aceite: Feedback imediato de intenção sem afirmar contato; contato/habilidade só após confirmação. Documentar prioridade quando múltiplas ações chegam no mesmo tick; impedir ações atrasadas e spam. Não mudar limite de rede para mascarar atraso.
 

@@ -9,3 +9,8 @@ Base: main d28744a (009 integrada). Branch feat/010-rally-dynamics. Lidos README
 - Resultado por modo: 60% dos saques devolvidos, mediana 1 contato após saque, duração mediana 3,133 s, p95 16,683 s, 30 recusas por alcance. Mecanismo simétrico produz mesmas estatísticas nos dois modos; não prova equivalência de dificuldade humana.
 - Relatório: docs/benchmarks/010-baseline.json, com todas as 40 linhas e ambiente. Teste dedicado de métricas passou (1/1); build servidor passou. Nenhum parâmetro foi alterado para medir o baseline.
 - Gate técnico T1 aprovado; experiência humana ainda não avaliada.
+
+## 010-T2 — Clareza e resposta
+
+Teclado e botões compartilham onIntent: texto solicitado/aguardando confirmação antes de amostrar/enviar. Sem antecipar animação, som de contato ou placar. Mensagem local expira em 1,2 s. Idade de ação na fila do servidor separada da idade do movimento, máxima 6 ticks, consumida uma vez; movimento posterior não renova ação antiga.
+Prioridade salto → habilidade → saque ou ataque > set > receive documentada em 010-controls.md/contratos. Sem mudança de limites de rede nem buffering de alcance. Web 19/19 e servidor 39/39 passaram (prioridade única, intenção antes de sample, repetição e fila antiga não renovada). Gate T2 aprovado.

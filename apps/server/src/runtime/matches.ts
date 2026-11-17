@@ -8,6 +8,7 @@ export interface RunningMatch {
   room: RoomState; state: MatchState; tick: number; phaseTicks: number; startedAt: string;
   athletes: Athlete[]; ball: BallState; contacts: BallContactState; touching: Set<string>;
   pending: Map<string, InputPayload>; receivedSeq: Record<string, number>; processedSeq: Record<string, number>; receivedTick: Record<string, number>;
+  actionReceivedTick: Record<string, number>;
   abilityCooldowns: Map<string, number>; activeEffects: Map<string, ActiveEffect>;
   visualActions: VisualAction[]; visualSequence: number;
   metrics: RallyMetrics; initialServingSide: Team;
@@ -38,7 +39,7 @@ export class MatchRuntime {
         position: { x: room.mode === "1v1" ? 0 : member.slot ? 2 : -2, y: 0, z: member.team === "A" ? -6 : 6 }, velocityY: 0 };
     });
     const match: RunningMatch = { room, state: transition(createMatch(randomUUID(), room.mode), { type: "START" }), tick: 0, phaseTicks: 0, startedAt: new Date(this.now()).toISOString(), athletes,
-      ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false }, contacts: createBallContactState(room.mode), touching: new Set(), pending: new Map(), receivedTick: {},
+      ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false }, contacts: createBallContactState(room.mode), touching: new Set(), pending: new Map(), receivedTick: {}, actionReceivedTick: {},
       receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), abilityCooldowns: new Map(), activeEffects: new Map(), visualActions: [], visualSequence: 0, metrics: new RallyMetrics(), initialServingSide: "A", suspended: false, pointReason: "", winner: null, reason: null, ended: false };
     this.matches.set(room.roomId, match); this.emit(room, this.snapshot(match));
   }
@@ -48,7 +49,10 @@ export class MatchRuntime {
     if (!match || match.ended || match.suspended || !Object.hasOwn(match.receivedSeq, userId) || input.seq <= match.receivedSeq[userId]!) return;
     match.receivedSeq[userId] = input.seq; match.receivedTick[userId] = match.tick;
     const previous = match.pending.get(userId);
-    match.pending.set(userId, { ...input, actions: !["serving", "rally"].includes(match.state.phase) ? [] : [...new Set([...(previous?.actions ?? []), ...input.actions])] });
+    const stillFresh = match.tick - (match.actionReceivedTick[userId] ?? -Infinity) <= 6;
+    const queued = stillFresh ? previous?.actions ?? [] : [];
+    if (input.actions.length && !queued.length) match.actionReceivedTick[userId] = match.tick;
+    match.pending.set(userId, { ...input, actions: !["serving", "rally"].includes(match.state.phase) ? [] : [...new Set([...queued, ...input.actions])] });
   }
   suspend(room: RoomState): void { const match = this.matches.get(room.roomId); if (match && !match.ended) { match.suspended = true; match.pending.clear(); this.emit(room, this.snapshot(match)); } }
   resume(room: RoomState): void { const match = this.matches.get(room.roomId); if (match && !match.ended) { match.suspended = false; match.pending.clear(); this.emit(room, this.snapshot(match)); } }
@@ -113,7 +117,7 @@ export class MatchRuntime {
         const speed = (DEFAULT_RULES.athleteSpeedMin + (athlete.attributes.speed - 1) / 99 * (DEFAULT_RULES.athleteSpeedMax - DEFAULT_RULES.athleteSpeedMin)) * speedMultiplier;
         athlete.position = moveAthlete(athlete.position, { x: input.moveX, z: input.moveZ }, speed, dt, { minX: -4.175, maxX: 4.175, minZ: athlete.team === "A" ? -8.675 : 0.325, maxZ: athlete.team === "A" ? -0.325 : 8.675 });
         if (input.actions.includes("jump") && athlete.position.y === 0) athlete.velocityY = 4 + (athlete.attributes.jump - 1) / 99 * 5;
-        this.action(match, athlete, input);
+        this.action(match, athlete, { ...input, actions: match.tick - (match.actionReceivedTick[athlete.id] ?? -Infinity) <= 6 ? input.actions : [] });
         match.pending.set(athlete.id, { ...input, actions: [] });
         if (match.state.phase === "point" || match.ended) return;
       }
@@ -132,7 +136,7 @@ export class MatchRuntime {
     }
   }
   private action(match: RunningMatch, athlete: Athlete, input: InputPayload): void {
-    if (input.actions.length) match.metrics.attempt(match.tick - (match.receivedTick[athlete.id] ?? match.tick));
+    if (input.actions.length) match.metrics.attempt(match.tick - (match.actionReceivedTick[athlete.id] ?? match.tick));
     if (input.actions.includes("ability")) { this.useAbility(match, athlete); if (match.state.phase === "point" || match.ended) return; }
     const direction = athlete.team === "A" ? 1 : -1;
     if (match.state.phase === "serving") {
