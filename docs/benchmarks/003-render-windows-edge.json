@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-11-17T01:24:23.859Z",
+  "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+  "ramGiB": 7.7299652099609375,
+  "os": "Windows 11 Home Single Language",
+  "browser": "157.0.4341.46",
+  "mode": "headless, default GPU, deviceScaleFactor=1, low quality, Vite dev",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A78) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "width": 1280,
+  "height": 720,
+  "durationMs": 300004.6999999881,
+  "frames": 17866,
+  "p95Ms": 17.10000000000582,
+  "maxMs": 133,
+  "averageMs": 16.791934400538302,
+  "hidden": false,
+  "errors": [],
+  "pass": true
+}

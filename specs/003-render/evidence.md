@@ -26,10 +26,20 @@ Ambiente: Windows, Node 26.13.1; dependências fixadas no package-lock.
 - Edge 157 real automatizado via Playwright: pressionadas todas as teclas, conferidos movimentos normalizados, serve/attack por fase e limpeza no blur; dez recriações mantiveram um único canvas. Nenhum erro JavaScript até o início da medição.
 - Gate T3 aprovado. A apresentação ainda usa snapshots sintéticos; controle efetivo dos atletas depende do servidor.
 
-## Reprodução e próximos aceites
+## 003-T4 — Medição e parâmetros (R03)
+
+- Ensaio executado em 2026-11-17 01:24 UTC (2026-11-16 local): Windows 11 Home Single Language, Intel Core i3-1115G4, 7,73 GiB RAM, Intel UHD Graphics via ANGLE/D3D11, Edge 157.0.4341.46 headless com GPU padrão, Playwright 1.65.1.
+- Quatro atletas, canvas 1280×720, pixel ratio 1, qualidade baixa, Vite dev. Duração 300004,7 ms; 17866 frames; média 16,792 ms; **p95 17,10 ms**; máximo 133 ms; aba visível para a API; nenhum erro JavaScript. Critério p95 <=33,3 ms aprovado. Equivale a ~59,55 fps médios; o máximo mostra que não há garantia de 60 fps constantes.
+- Teclado/blur e dez recriações testados no mesmo navegador antes da coleta; um único canvas permaneceu. Captura inspecionada: quadra, rede, escola, céu e atletas visíveis.
+- Relatório bruto: `docs/benchmarks/003-render-windows-edge.json`; roteiro e scripts em `docs/benchmarks/`. Não extrapolar o resultado headless deste computador para outros dispositivos.
+- Calibração técnica com domínio v1: trajetória (0,1,-8) m, velocidade (0,7,8) m/s cruza a rede sem colisão e aterrissa dentro do lado oposto em 92 ticks, ápice 3,439 m, z final 4,233 m. Mantidos os parâmetros v1; sensação de jogo e balanceamento serão refinados com rally autoritativo, sem criar elenco final.
+- Verificações finais: 4 testes web e 15 de domínio aprovados, typecheck dos workspaces e build web aprovados. Avisos de bundle e diretivas RN Web permanecem conhecidos.
+- Gate 003 aprovado para implementação de 004-online. Sem promessa de renderer mobile ou lançamento em hardware não medido.
+
+## Reprodução
 
 1. `npm.cmd ci` e `npm.cmd run dev --workspace @volleyball-mythics/web`. Abrir a URL local indicada pelo Vite.
 2. Conferir quadra inteira, bola, escola, céu e quatro placeholders. Redimensionar, alternar qualidade e recriar cena repetidamente; inspecionar contextos e recursos no navegador.
-3. Aprovar T2 antes de implementar teclado em T3. A cena atual não recebe comandos.
+3. Clicar na quadra e pressionar WASD, Espaço, J/K/L/U; conferir intenções e limpeza ao perder foco. Alternar fase para testar L em saque/rally. Os atletas sintéticos não são controlados.
 4. T4 exige hardware, GPU, SO, navegador/versão, resolução 1280×720 e qualidade registrados. Medir cinco minutos visíveis com quatro atletas; p95 <=33,3 ms, alvo 60 fps. Não usar o teste matemático como evidência de desempenho.
-5. Física v1 sem calibração: 60 Hz, gravidade 9,81, raio 0,11 m e rede 2,43 m. A trajetória sintética é exclusivamente visual. Não iniciar 004-online nem arte final enquanto o gate 003 estiver pendente.
+5. Executar o roteiro de `docs/benchmarks/README.md` para reproduzir a coleta e a trajetória física de referência. A animação sintética é exclusivamente visual.

@@ -1,5 +1,5 @@
 # Spike 3D escolar
-Status: implementação parcial em feat/003-render; T1 concluída, T2 aguarda aceite visual; gate 3D pendente.
+Status: implementado e validado no ambiente de referência; gate 003 aprovado. Renderer mobile e balanceamento final continuam fora desta entrega.
 Requisito R03: Jogador vê quadra escolar externa e acompanha a bola.
 
 ## Aceitação
