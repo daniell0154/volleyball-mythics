@@ -16,6 +16,7 @@ export interface SceneAdapter {
   resize(width: number, height: number): void;
   setQuality(quality: "low" | "high"): void;
   setFollowPlayer?(playerId: string | null): void;
+  setReducedMotion?(reduced: boolean): void;
   dispose(): void;
 }
 export type SceneFactory = (host: HTMLElement) => SceneAdapter;

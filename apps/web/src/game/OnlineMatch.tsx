@@ -6,15 +6,17 @@ import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
 import { enableFeedbackSound, playFeedbackSound } from "./feedbackSound.js";
 import { inputIntent } from "./inputIntent.js";
+import {MatchHud} from "./MatchHud.js";
 
-const phases: Record<string, string> = { countdown: "Prepare-se", serving: "Saque", rally: "Em jogo", point: "Ponto", finished: "Partida encerrada", cancelled: "Partida cancelada", disconnectedSuspension: "Aguardando reconexão" };
-export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string; abilityAvailable: boolean }) {
+export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable,characterName="Seu atleta" }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string; abilityAvailable: boolean;characterName?:string }) {
   const host = useRef<HTMLDivElement>(null);
   const buffer = useRef(new SnapshotBuffer());
   const keyboard = useRef(new KeyboardInput());
   const phase = useRef("");
   const lastScore = useRef("");
   const [error, setError] = useState("");
+  const [graphicsError,setGraphicsError]=useState("");
+  const [reducedMotion,setReducedMotion]=useState(()=>{try{const saved=localStorage.getItem("volleyball-mythics-reduced-motion");if(saved!==null)return saved==="true";}catch{}return matchMedia("(prefers-reduced-motion: reduce)").matches;});
   const [intent, setIntent] = useState<{ text: string; at: number } | null>(null);
   useEffect(() => {
     keyboard.current.onIntent = (code) => { const message = inputIntent(code, phase.current); if (message) setIntent({ text: message, at: performance.now() }); };
@@ -42,8 +44,8 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     if (!host.current) return;
     const target = host.current;
     let scene: ReturnType<typeof createScene>;
-    try { scene = createScene(target); } catch { setError("WebGL indisponível"); return; }
-    scene.setQuality(quality); scene.setFollowPlayer?.(userId);
+    try { scene = createScene(target);setGraphicsError(""); } catch { setGraphicsError("A quadra 3D precisa de WebGL. Habilite a aceleração gráfica e recarregue."); return; }
+    scene.setQuality(quality); scene.setFollowPlayer?.(userId);scene.setReducedMotion?.(reducedMotion);
     const detach = attachKeyboard(target, keyboard.current);
     const resize = new ResizeObserver(([entry]) => { if (entry) scene.resize(entry.contentRect.width, entry.contentRect.height); }); resize.observe(target);
     let raf = 0;
@@ -59,32 +61,32 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
       });
     }, 20);
     return () => { cancelAnimationFrame(raf); clearInterval(inputTimer); detach(); resize.disconnect(); scene.dispose(); };
-  }, [connection, quality, userId, team]);
-  const playing = snapshot?.phase === "rally" || snapshot?.phase === "serving";
-  const serving = snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
+  }, [connection, quality, userId, team,reducedMotion]);
+  const playing = !graphicsError&&(snapshot?.phase === "rally" || snapshot?.phase === "serving");
+  const serving = !graphicsError&&snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
   const abilityCooldown = Math.ceil(snapshot?.cooldowns[userId] ?? 0);
   const trigger = (code: string) => { host.current?.focus(); keyboard.current.press(code); keyboard.current.release(code); };
-  return <section aria-label="Partida online" style={{ marginTop: 18 }}>
-    <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-      <strong style={{ fontSize: 30 }} aria-label="Placar">{snapshot ? `${snapshot.score.A} × ${snapshot.score.B}` : "0 × 0"}</strong>
-      <span>{phases[snapshot?.phase ?? ""] ?? "Aguardando servidor"}{snapshot?.secondsRemaining ? ` · ${Math.ceil(snapshot.secondsRemaining)}s` : ""}</span>
-      <span>Você: equipe {team} · Saque: {snapshot?.servingSide ?? "A"}</span>
+  return <section aria-label="Partida online" className="online-match" onPointerDown={enableFeedbackSound} onKeyDown={enableFeedbackSound}>
+    <MatchHud snapshot={snapshot} team={team} slot={slot} characterName={characterName}/>
+    <details className="game-options"><summary>Áudio e imagem</summary><div className="options-grid">
       <button onClick={() => setQuality(quality === "low" ? "high" : "low")}>Qualidade: {quality === "low" ? "baixa" : "alta"}</button>
-      <label>Volume dos sinais <input aria-label="Volume dos sinais sonoros" type="range" min="0" max="100" value={volume} onPointerDown={enableFeedbackSound} onKeyDown={enableFeedbackSound} onChange={(event) => { const next = Number(event.target.value); setVolume(next); try { localStorage.setItem("volleyball-mythics-volume", String(next)); } catch { /* keep the in-memory preference */ } }} /></label>
-    </div>
-    <div ref={host} tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." style={{ width: "100%", height: "65vh", minHeight: 280, outlineColor: "#8bf0ce" }} />
-    {error && <div role="status" aria-label="Placar textual, modo gráfico indisponível" style={{ padding: 16, color: "#fff", background: "#102236", border: "2px solid #fff" }}><strong>Modo gráfico indisponível</strong><p>Placar: equipe A {snapshot?.score.A ?? 0}, equipe B {snapshot?.score.B ?? 0}. {phases[snapshot?.phase ?? ""] ?? "Aguardando servidor"}. Você joga pela equipe {team}; o saque é da equipe {snapshot?.servingSide ?? "A"}.</p><p>Você ainda pode usar os botões de ação abaixo. Para recuperar a quadra 3D, habilite WebGL/aceleração gráfica e recarregue.</p></div>}
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+      <label>Volume dos sinais · {volume===0?"mudo":volume+"%"}<input aria-label="Volume dos sinais sonoros" aria-valuetext={volume===0?"Mudo":volume+" por cento"} type="range" min="0" max="100" value={volume} onChange={(event) => { const next = Number(event.target.value); setVolume(next); try { localStorage.setItem("volleyball-mythics-volume", String(next)); } catch {} }} /></label>
+      <label className="checkbox-label"><input type="checkbox" checked={reducedMotion} onChange={event=>{setReducedMotion(event.target.checked);try{localStorage.setItem("volleyball-mythics-reduced-motion",String(event.target.checked));}catch{}}}/>Câmera estável (reduzir movimento)</label>
+    </div><p className="helper">As opções não pausam a partida. Câmera estável usa uma visão fixa da quadra.</p></details>
+    <div ref={host} className="court-host" tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." style={{height:graphicsError?180:"60vh",minHeight:graphicsError?180:280}} />
+    {graphicsError&&<div className="notice error" role="alert"><strong>Modo gráfico indisponível</strong><p>{graphicsError}</p><p>O placar continua disponível, mas a partida online não foi pausada. Você pode sair pelos controles da sala.</p></div>}
+    <div className="action-bar" role="group" aria-label="Ações da partida">
       <button disabled={!playing} onClick={() => trigger("Space")}>Saltar · Espaço</button>
       <button disabled={!serving} onClick={() => trigger("KeyL")}>Sacar · L</button>
-      <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyJ")}>Receber / bloquear · J</button>
-      <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyK")}>Levantar · K</button>
-      <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyL")}>Atacar · L</button>
+      <button disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyJ")}>Receber / bloquear · J</button>
+      <button disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyK")}>Levantar · K</button>
+      <button disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyL")}>Atacar · L</button>
       <button disabled={!playing || !abilityAvailable || abilityCooldown > 0} onClick={() => trigger("KeyU")}>Especial · {abilityCooldown > 0 ? `${abilityCooldown}s` : "U"}</button>
     </div>
-    <p>WASD move em relação à câmera. Clique na quadra para usar o teclado. Aproxime-se da bola para receber, levantar ou atacar; salte perto da rede e receba para bloquear.</p>
-    {feedback && <p role="status">{feedback}</p>}
-    {intent && <p role="status">{intent.text}</p>}
-    {error && <p role="alert">{error}</p>}
+    <p className="helper">WASD move em relação à câmera. A marca “VOCÊ” identifica seu atleta. Salte perto da rede e receba para bloquear.</p>
+    <p className="helper">Especial: {!abilityAvailable?"indisponível nesta formação":abilityCooldown>0?"em recarga · "+abilityCooldown+"s":"pronto · U"}</p>
+    {feedback && <p className="notice" role="status">{feedback}</p>}
+    {intent && <p className="helper" role="status">{intent.text}</p>}
+    {error && <p className="notice error" role="alert">{error}</p>}
   </section>;
 }

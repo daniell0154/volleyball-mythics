@@ -1,5 +1,5 @@
 # Entrada com elenco e HUD contextual
-Status: proposta; não implementada.
+Status: T1–T3 implementadas e verificadas. Trabalho interrompido por pedido do proprietário após T3; T4 ainda não iniciada.
 Requisito R11: entrada com elenco e hud contextual para a versão de tese.
 
 ## Escopo e referência

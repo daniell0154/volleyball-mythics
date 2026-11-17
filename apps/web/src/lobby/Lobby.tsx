@@ -116,11 +116,11 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
        <p className="helper">Você joga como visitante. Seu apelido deve ter de 2 a 24 caracteres.</p>{connected&&<span className="connected-label">Conectado como {name}</span>}
       </form>
     </div><CharacterShowcase catalog={catalog} status={catalogStatus} selectedKey={featuredKey} onSelect={character=>setFeaturedKey(characterKey(character))} onRetry={()=>void loadCatalog()}/></div>:room.status==="lobby"?<RoomLobby room={room} userId={userId} catalog={catalog} catalogStatus={catalogStatus} onRetry={()=>void loadCatalog()} command={command} pending={pending} error={commandError}/>:<div>
-      <p>{room.mode} · {room.code} · {room.status}</p>
+      <p className="helper">Sala {room.code} · {room.mode}</p>
       <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
       {commandError&&<p className="notice error" role="alert">{commandError.message}</p>}
       {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}
-      {connected && connection.current && self && <Suspense fallback={<p role="status">Preparando quadra…</p>}><OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} abilityAvailable={Boolean(selected?.abilityId)}/></Suspense>}
+      {connected && connection.current && self && <Suspense fallback={<p role="status">Preparando quadra…</p>}><OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} characterName={selected?.name??"Seu atleta"} abilityAvailable={Boolean(selected?.abilityId&&!(selected.abilityConfig?.target==="teammate"&&room.mode==="1v1"))}/></Suspense>}
     </div>}
     {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
   </section>;

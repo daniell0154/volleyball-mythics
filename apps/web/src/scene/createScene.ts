@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCamera, fitCamera, followCamera } from "./camera.js";
+import { createCamera, fitCamera, followCamera,fitStableCamera } from "./camera.js";
 import { disposeAvatar } from "./avatar.js";
 import { createPresentationAvatar } from "./avatarManifest.js";
 import { AvatarAnimator } from "./animateAvatar.js";
@@ -33,10 +33,24 @@ export function createScene(host: HTMLElement): SceneAdapter {
   box(2, 3, 0.1, "#584b44", 0, 1.5, -16.4);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: "#fff1bd" }));
   scene.add(ball);
+  const marker=new THREE.Group();marker.visible=false;scene.add(marker);
+  for(const [inner,outer,color]of [[.40,.47,"#ffffff"],[.47,.51,"#102334"]] as const){
+    const ring=new THREE.Mesh(new THREE.RingGeometry(inner,outer,32),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide}));
+    ring.name="local-player-marker";ring.rotation.x=-Math.PI/2;ring.position.y=.025;marker.add(ring);
+  }
+  const triangle=new THREE.Shape();triangle.moveTo(0,.3);triangle.lineTo(-.16,.64);triangle.lineTo(.16,.64);triangle.closePath();
+  const arrow=new THREE.Mesh(new THREE.ShapeGeometry(triangle),new THREE.MeshBasicMaterial({color:"#ffd277",side:THREE.DoubleSide}));arrow.rotation.x=-Math.PI/2;arrow.position.y=.028;marker.add(arrow);
+  const labelCanvas=document.createElement("canvas");labelCanvas.width=256;labelCanvas.height=64;
+  const labelContext=labelCanvas.getContext("2d");
+  let markerTexture:THREE.CanvasTexture|undefined;
+  let markerLabel:THREE.Sprite|undefined;
+  if(labelContext){labelContext.fillStyle="#102334";labelContext.fillRect(0,0,256,64);labelContext.fillStyle="#ffffff";labelContext.font="bold 42px sans-serif";labelContext.textAlign="center";labelContext.fillText("VOCÊ",128,47);markerTexture=new THREE.CanvasTexture(labelCanvas);markerLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:markerTexture,depthTest:true,depthWrite:false}));markerLabel.scale.set(1.1,.275,1);marker.add(markerLabel);}
   const athletes = new Map<string, { model: THREE.Object3D; assetKey: string; team: string; animator: AvatarAnimator }>();
   let matchId: string | undefined;
   let disposed = false;
   let followId: string | null = null;
+  let reducedMotion=false;
+  let stableTeam:string|undefined;
   let lastFrame = performance.now();
   const resize = (width: number, height: number) => {
     if (disposed || width <= 0 || height <= 0) return;
@@ -52,7 +66,10 @@ export function createScene(host: HTMLElement): SceneAdapter {
       }
       const now = performance.now();
       const followed = snapshot.athletes.find((a) => a.id === followId);
-      if (followed) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
+      if (followed&&!reducedMotion) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
+      if(followed&&reducedMotion&&stableTeam!==followed.team){fitStableCamera(camera,followed.team,host.clientWidth,host.clientHeight);stableTeam=followed.team;}
+      marker.visible=Boolean(followed);
+      if(followed){marker.position.set(followed.position.x,0,followed.position.z);marker.rotation.y=followed.team==="A"?0:Math.PI;if(markerLabel)markerLabel.position.y=followed.position.y+2.25;}
       lastFrame = now;
       ball.position.copy(snapshot.ball);
       const ids = new Set(snapshot.athletes.map((athlete) => athlete.id));
@@ -74,12 +91,15 @@ export function createScene(host: HTMLElement): SceneAdapter {
       }
       renderer.render(scene, camera);
     }, resize,
-    setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false; },
+    setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false;stableTeam=undefined; },
+    setReducedMotion(reduced){reducedMotion=reduced;stableTeam=undefined;camera.userData.following=false;},
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },
     dispose() {
       if (disposed) return;
       disposed = true;
       disposeAvatar(scene);
+      markerLabel?.material.dispose();
+      markerTexture?.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); scene.clear(); athletes.clear();
     },
   };
