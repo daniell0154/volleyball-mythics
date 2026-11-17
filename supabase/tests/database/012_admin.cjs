@@ -1,0 +1,23 @@
+const {PGlite}=require(require('node:path').resolve('.test-build/sql/node_modules/@electric-sql/pglite'));
+const {readFileSync,readdirSync}=require('node:fs');
+const assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create schema auth; create schema extensions; create role anon; create role authenticated; create role service_role bypassrls;
+ create table auth.users(id uuid primary key); grant usage on schema auth to authenticated;
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;`);
+ for(const file of readdirSync('supabase/migrations').sort())await db.exec(readFileSync('supabase/migrations/'+file,'utf8').replace('create extension if not exists pgcrypto with schema extensions;',''));
+ const id='00000000-0000-4000-8000-000000000012';
+ await db.query('insert into auth.users values($1)',[id]);
+ await db.query('insert into roster_admins(user_id) values($1)',[id]);
+ await db.exec(`set role authenticated; set request.jwt.claim.sub='${id}'; set request.jwt.claims='{"is_anonymous":true}'`);
+ assert.equal((await db.query('select is_roster_admin() as ok')).rows[0].ok,false);
+ await assert.rejects(db.query('insert into roster_admins(user_id) values($1)',[id]),e=>e.code==='42501');
+ assert.equal((await db.query('select * from character_drafts')).rows.length,0);
+ await db.exec(`set request.jwt.claims='{"is_anonymous":false}'`);
+ assert.equal((await db.query('select is_roster_admin() as ok')).rows[0].ok,true);
+ await assert.rejects(db.query(`update characters set name='changed' where id='samuel'`),e=>e.code==='42501');
+ await db.exec('reset role');
+ await assert.rejects(db.query(`update characters set name='changed' where id='samuel'`),e=>e.code==='23514');
+ console.log('012-T1: guest denied, membership protected, admin recognized, direct writes denied, published content immutable');
+}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
