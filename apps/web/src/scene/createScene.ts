@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createCamera, fitCamera, followCamera } from "./camera.js";
-import { createAvatar, disposeAvatar } from "./avatar.js";
+import { disposeAvatar } from "./avatar.js";
+import { createPresentationAvatar } from "./avatarManifest.js";
 import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
 export function createScene(host: HTMLElement): SceneAdapter {
@@ -58,7 +59,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
         if (entry && (entry.assetKey !== assetKey || entry.team !== athlete.team)) { scene.remove(entry.model); disposeAvatar(entry.model); athletes.delete(athlete.id); entry = undefined; }
         if (!entry) {
           let model: THREE.Object3D;
-          try { model = createAvatar(assetKey, athlete.team); }
+          try { model = createPresentationAvatar(assetKey, athlete.team); }
           catch { model = box(0.65, 1.8, 0.65, athlete.team === "A" ? "#154c8a" : "#b94338", 0, 0, 0); model.userData.placeholder = true; }
           scene.add(model); entry = { model, assetKey, team: athlete.team }; athletes.set(athlete.id, entry);
         }

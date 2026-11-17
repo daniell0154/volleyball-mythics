@@ -3,6 +3,20 @@ import assert from 'node:assert/strict';
 import {Box3,Mesh,Vector3} from 'three';
 import {createAthleticAvatar} from '../.test-build/scene/athleticAvatar.js';
 import {disposeAvatar} from '../.test-build/scene/avatar.js';
+import {createPresentationAvatar} from '../.test-build/scene/avatarManifest.js';
+
+test('preview and recreated match presentation resolve pinned manifest deterministically',()=>{
+ for(const key of ['procedural:v1:male:2626328580','procedural:v1:male:2016838844']){
+  const first=createPresentationAvatar(key,'A'),second=createPresentationAvatar(key,'A');
+  assert.equal(first.userData.modelVersion,'athletic-v2');
+  assert.deepEqual(new Box3().setFromObject(first),new Box3().setFromObject(second));
+  assert.deepEqual(first.toJSON().object.userData,second.toJSON().object.userData);
+  disposeAvatar(first);disposeAvatar(second);
+ }
+ const legacy=createPresentationAvatar('procedural:v1:female:42','B');
+ assert.equal(legacy.userData.modelVersion,undefined);disposeAvatar(legacy);
+ assert.throws(()=>createPresentationAvatar('unknown','A'));
+});
 
 test('athletic rig keeps articulated limbs attached and feet at ground level',()=>{
  const model=createAthleticAvatar('procedural:v1:male:2626328580','A');

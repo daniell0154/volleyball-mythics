@@ -10,7 +10,7 @@ Todas referenciam R08; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Criar hierarquia com pivôs nomeados, volumes arredondados, mãos/pés e rosto legível. Ombros, cotovelos, joelhos e tornozelos giram sem separar membros. Hitboxes e atributos permanecem iguais.
 
-- [ ] 008-T3 — Integração versionada
+- [x] 008-T3 — Integração versionada
   - Destinos: apps/web/src/scene/avatar.ts, createScene.ts, CharacterPreview.tsx; docs/art.
   - Entrega/aceite: Mesmo personagem tem mesma aparência no preview e na partida, inclusive após reconexão. Manter procedural:v1 e fallback; novas variantes usam chave/manifesto versionado, sem regenerar revisões publicadas.
 
