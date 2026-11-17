@@ -1,0 +1,13 @@
+import {performance} from 'node:perf_hooks';import os from 'node:os';import {writeFile} from 'node:fs/promises';
+import {MatchRuntime} from '../../apps/server/dist/runtime/matches.js';import {RoomRegistry} from '../../apps/server/dist/rooms/registry.js';import {botRoom} from './015-fixtures.mjs';
+const duration=Number(process.argv[2]??900000),rooms=Array.from({length:10},(_,i)=>botRoom(i)),humanRooms=Array.from({length:10},(_,i)=>{const r=new RoomRegistry(),room=r.create('a'+i,'2v2');for(const id of ['b','c','d'])r.join(id+i,room.code);return room;});
+let snapshots=0;const runtime=new MatchRuntime(()=>snapshots++),humanRuntime=new MatchRuntime(()=>{});for(const room of rooms)runtime.start(room);for(const room of humanRooms)humanRuntime.start(room);
+const samples=[],humanSamples=[],memory=[],start=performance.now();let previous=start,restarts=0;
+await new Promise(resolve=>{const timer=setInterval(()=>{const now=performance.now(),delta=Math.min(100,now-previous);previous=now;const t=performance.now();runtime.advance(delta);samples.push(performance.now()-t);const h=performance.now();humanRuntime.advance(delta);humanSamples.push(performance.now()-h);
+ for(const room of rooms)if(runtime.get(room.roomId).ended){runtime.start(room);restarts++;}for(const room of humanRooms)if(humanRuntime.get(room.roomId).ended)humanRuntime.start(room);
+ if(!memory.length||now-start-memory.at(-1).elapsedMs>=60000)memory.push({elapsedMs:now-start,heapMiB:process.memoryUsage().heapUsed/1024**2});
+ if(now-start>=duration){clearInterval(timer);resolve();}},16);});
+const p95=xs=>[...xs].sort((a,b)=>a-b)[Math.ceil(xs.length*.95)-1];
+const histories=rooms.map(r=>runtime.get(r.roomId).bots.history.length);for(const r of rooms)runtime.remove(r.roomId);for(const r of humanRooms)humanRuntime.remove(r.roomId);
+const report={date:new Date().toISOString(),durationMs:performance.now()-start,requestedDurationMs:duration,cpu:os.cpus()[0].model,node:process.version,scenario:'10 solo vsBots rooms / 30 bots plus 10 idle four-human rooms, real wall clock, snapshots counted without serialization/network',samples:samples.length,p95Ms:p95(samples),maxMs:Math.max(...samples),humanP95Ms:p95(humanSamples),snapshots,restarts,memory,maximumHistory:Math.max(...histories),remainingMatches:runtime.matches.size,pass:p95(samples)<=16.7&&Math.max(...histories)<=64&&runtime.matches.size===0};
+await writeFile(process.argv[3]??'docs/benchmarks/015-load.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));

@@ -1,4 +1,5 @@
 import type { MatchEnded, RoomState } from "@volleyball-mythics/protocol";
+import {participantId} from "../rooms/participants.js";
 import type { RunningMatch } from "../runtime/matches.js";
 import type { FinalMatchResult } from "../persistence/results.js";
 import { ResultQueue } from "./queue.js";
@@ -22,9 +23,9 @@ export class MatchResults {
     this.emit(match.room, "roomState", match.room); this.emit(match.room, "matchEnded", result);
     const players = match.room.members.map((member) => {
       if (!member.character) throw new Error("match_missing_character_revision");
-      return { userId: member.userId, team: member.team, slot: member.slot, characterId: member.character.id, characterVersion: member.character.version };
+      return { ...(member.userId?{userId:member.userId}:{}),...(match.room.matchKind==="vsBots"?{participantId:participantId(member),controller:member.controller??"human"}:{}),team: member.team, slot: member.slot, characterId: member.character.id, characterVersion: member.character.version };
     });
-    this.queue.enqueue({ matchId: result.matchId, mode: match.room.mode, score: result.score, winner: result.winner, reason: result.reason,
+    this.queue.enqueue({ ...(match.room.matchKind==="vsBots"?{matchKind:"vsBots",difficulty:match.room.difficulty??"normal",botSeed:match.room.botSeed??0,botPolicyVersion:1}:{}),matchId: result.matchId, mode: match.room.mode, score: result.score, winner: result.winner, reason: result.reason,
       status: result.winner ? "finished" : "cancelled", rulesVersion: match.state.rulesVersion, startedAt: match.startedAt, endedAt: new Date(this.now()).toISOString(), players });
   }
   restore(room: RoomState): void { const record = this.records.get(room.roomId); if (record) this.emit(room, "matchEnded", record.result); }

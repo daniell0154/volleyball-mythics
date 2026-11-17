@@ -1,0 +1,13 @@
+# Contrato 015 — participantes e bots
+
+Base main 1ee43f0, 014 integrada. Implementar RPC nova de resultado contra bots sem alterar RPCs/dados históricos humanos. MatchMode permanece 2v2; matchKind humans|vsBots distingue origem. Rooms vsBots fixam humanSlots 1|2, difficulty easy|normal|hard, botPolicyVersion=1 e seed uint32 gerada no servidor, preservados na revanche.
+
+RoomMember é união: humano tem userId e participantId igual ao userId; bot tem participantId bot:UUID e controller=bot, sem userId/Auth/JWT. Campos participantId/controller opcionais apenas para leitura de fixtures humanas antigas. Atleta/snapshot/visualActions usam participantId como id, igual ao userId nos humanos. Nenhum endpoint autentica bot.
+
+Envelope v1 mantido para salas humanas. createRoom aceita forma antiga {mode:2v2}, ou nova {mode:2v2,matchKind:vsBots,humanSlots:1|2,difficulty}. Não aceitar seed, identidade/controller arbitrários, times ou placar do cliente. Para entrar em sala vsBots, joinRoom exige acceptBots:true; cliente antigo sem capacidade recebe client_update_required. Salas humanas continuam compatíveis. Somente humanos A0/A1; B é sempre bots. Em solo, A1 é bot; coop aguarda segundo humano. Bot nunca preenche sala humans.
+
+Bots têm personagem publicado selecionado pelo servidor e ficam prontos automaticamente, revalidados com catálogo. Apenas humanos votam e precisam de conexão/prontidão. Saída do último humano remove bots/sala/runtime; desconexão conserva janela de 20/40s e então libera runtime conforme lifecycle, sem substituir identidade humana por bot.
+
+Persistência: matches ganha metadados opcionais de política/dificuldade/seed e default matchKind=humans. match_participants armazena os quatro atores, user_id nullable somente para bots; match_players continua contendo apenas humanos e mantém FKs/RLS históricos. persist_bot_match_result é restrita a service_role, idempotente por hash do payload completo, com rejeição de conflito e rollback integral. Datas/placar/slots/identidades/revisões validados. Novos resultados humanos usam o formato antigo intacto.
+
+IA determinística usa somente snapshots observadas atrasadas, contatos aceitos passados e seed; gera inputs legais pelo mesmo pipeline do runtime. Reação, erro de alvo e decisão mudam por dificuldade, não atributos/hitbox. Estados posicionar/receber/levantar/atacar/bloquear/sacar; responsabilidade por bola atribuída a um ator elegível por equipe, excluindo último contato quando necessário. Memória limitada por partida, descarte no remove/encerramento. Gate técnico e inspeção conforme delegação do proprietário; sem alegar playtest humano.

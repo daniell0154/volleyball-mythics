@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { RallyMetrics, type RallyMeasurement } from "./rallyMetrics.js";
+import {participantId} from "../rooms/participants.js";
+import {BotController} from "./bots/controller.js";
 import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, createMatch, transition, createBallContactState, applyContact, resolveGround, validateAbilityDefinition, rallyProfile, rallyVelocity, actionRange, type RallyProfile, type AbilityDefinition, type BallState, type MatchState, type BallContactState } from "@volleyball-mythics/domain";
 import type { InputPayload, MatchSnapshot, RoomState, Vector3, Team, CharacterAttributes, VisualAction, VisualActionKind } from "@volleyball-mythics/protocol";
 export interface Athlete { id: string; team: Team; slot: number; position: Vector3; velocityY: number; assetKey?: string; ability?: AbilityDefinition; attributes: CharacterAttributes }
 interface ActiveEffect { expiresAtTick: number; multiplier: number; attributes: readonly string[] }
 export interface RunningMatch {
+  bots?:BotController;
   room: RoomState; state: MatchState; tick: number; phaseTicks: number; startedAt: string;
   athletes: Athlete[]; ball: BallState; contacts: BallContactState; touching: Set<string>;
   pending: Map<string, InputPayload>; receivedSeq: Record<string, number>; processedSeq: Record<string, number>; receivedTick: Record<string, number>;
@@ -37,13 +40,14 @@ export class MatchRuntime {
       const configuredAbility = member.character ? this.resolveAbility(member.character.id, member.character.version) : undefined;
       let ability: AbilityDefinition | undefined;
       if (configuredAbility) { try { ability = validateAbilityDefinition(configuredAbility.id, configuredAbility.config, this.allowDevelopmentFixture); } catch { /* Invalid catalog abilities stay unavailable. */ } }
-      return { id: member.userId, team: member.team, slot: member.slot, ...(key ? { assetKey: key } : {}), ...(ability ? { ability } : {}), attributes: { ...(attributes ?? fallbackAttributes) },
+      return { id: participantId(member), team: member.team, slot: member.slot, ...(key ? { assetKey: key } : {}), ...(ability ? { ability } : {}), attributes: { ...(attributes ?? fallbackAttributes) },
         position: { x: room.mode === "1v1" ? 0 : member.slot ? 2 : -2, y: 0, z: member.team === "A" ? -6 : 6 }, velocityY: 0 };
     });
     const profile = rallyProfile(this.defaultRulesVersion);
     const match: RunningMatch = { room, state: transition(createMatch(randomUUID(), room.mode, profile.version), { type: "START" }), tick: 0, phaseTicks: 0, startedAt: new Date(this.now()).toISOString(), athletes,
       ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false }, contacts: createBallContactState(room.mode), touching: new Set(), pending: new Map(), receivedTick: {}, actionReceivedTick: {},
       receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), abilityCooldowns: new Map(), activeEffects: new Map(), visualActions: [], visualSequence: 0, metrics: new RallyMetrics(), initialServingSide: "A", rallyProfile: profile, contactRecovery: new Map(), suspended: false, pointReason: "", winner: null, reason: null, ended: false };
+    if(room.matchKind==="vsBots")match.bots=new BotController(room.botSeed??0,room.difficulty??"normal");
     this.matches.set(room.roomId, match); this.emit(room, this.snapshot(match));
   }
   get(roomId: string): RunningMatch | undefined { return this.matches.get(roomId); }
@@ -101,6 +105,7 @@ export class MatchRuntime {
   }
   private step(match: RunningMatch): void {
     match.tick++; match.phaseTicks++;
+    match.bots?.step(match,(id,input)=>this.submit(match.room,id,input));
     for (const [userId, effect] of match.activeEffects) if (match.tick >= effect.expiresAtTick) match.activeEffects.delete(userId);
     if (match.state.phase === "countdown") {
       if (match.phaseTicks >= 180) { match.state = transition(match.state, { type: "COUNTDOWN_FINISHED" }); match.phaseTicks = 0; this.resetRally(match); }

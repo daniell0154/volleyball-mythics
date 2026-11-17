@@ -15,6 +15,10 @@ export class RoomApplication {
     rematch?(room: RoomState, userId: string): void;
     finishedDisconnect?(room: RoomState): void;
   } = {}) {}
+  private selectBots(room:RoomState):void{
+    const first=this.catalog[0];if(!first)return;
+    for(const member of room.members)if(member.controller==="bot"&&!member.character){member.character={id:first.id,version:first.version};member.ready=true;}
+  }
   refreshCatalog(catalog: readonly CatalogEntry[]): void {
     this.catalog = catalog;
     for (const room of this.rooms.all()) if (room.status === "lobby") {
@@ -22,7 +26,7 @@ export class RoomApplication {
       for (const member of room.members) if (member.character && !catalog.some((c) => c.id === member.character!.id && c.version === member.character!.version)) {
         member.character = null; changed = true;
       }
-      if (changed) { this.rooms.invalidate(room); this.changed(room); }
+      if (changed) {this.selectBots(room); this.rooms.invalidate(room); this.changed(room); }
     }
     for (const session of this.sessions.values()) session.send("catalog", catalog);
   }
@@ -35,14 +39,14 @@ export class RoomApplication {
     member.connected = true; this.hooks.reconnect?.(room, session.userId); this.changed(room);
   }
   broadcast(room: RoomState, type: string, payload: unknown): void {
-    for (const member of room.members) this.sessions.get(member.userId)?.send(type, payload);
+    for (const member of room.members) if(member.userId)this.sessions.get(member.userId)?.send(type, payload);
   }
   sendTo(userId: string, type: string, payload: unknown): void { this.sessions.get(userId)?.send(type, payload); }
   private changed(room: RoomState): void { this.broadcast(room, "roomState", room); }
   disconnect(session: Session): void {
     this.sessions.delete(session.userId);
     let room: RoomState; try { room = this.rooms.roomFor(session.userId); } catch { return; }
-    if (room.status === "lobby") { const remaining = this.rooms.leave(session.userId); if (remaining) this.changed(remaining); }
+    if (room.status === "lobby") { const remaining = this.rooms.leave(session.userId); if (remaining) this.changed(remaining);else this.hooks.remove?.(room.roomId); }
     else if (room.status === "finished") { const member = room.members.find((m) => m.userId === session.userId); if (member) member.connected = false; this.hooks.finishedDisconnect?.(room); this.changed(room); }
     else {
       const member = room.members.find((m) => m.userId === session.userId)!; member.connected = false;
@@ -54,9 +58,12 @@ export class RoomApplication {
       let room: RoomState;
       if (message.type === "createRoom") {
         if (message.payload.mode !== "2v2") throw new RoomError("mode_unavailable");
-        room = this.rooms.create(session.userId, "2v2");
+        if(message.payload.matchKind==="vsBots"){
+          if(!this.catalog.length||![1,2].includes(message.payload.humanSlots??0)||!["easy","normal","hard"].includes(message.payload.difficulty??""))throw new RoomError("invalid_message");
+          room=this.rooms.create(session.userId,"2v2",{humanSlots:message.payload.humanSlots!,difficulty:message.payload.difficulty!});this.selectBots(room);
+        }else room = this.rooms.create(session.userId, "2v2");
       }
-      else if (message.type === "joinRoom") room = this.rooms.join(session.userId, message.payload.code);
+      else if (message.type === "joinRoom") room = this.rooms.join(session.userId, message.payload.code,message.payload.acceptBots===true);
       else {
         room = this.rooms.roomFor(session.userId);
         const member = room.members.find((m) => m.userId === session.userId)!;
@@ -81,6 +88,7 @@ export class RoomApplication {
             member.character = { id: selected.id, version: selected.version }; this.rooms.invalidate(room); break;
           }
           case "setTeam": {
+            if(room.matchKind==="vsBots"&&(message.payload.team!=="A"||message.payload.slot>=(room.humanSlots??1)))throw new RoomError("forbidden");
             if ((room.mode === "1v1" && message.payload.slot !== 0) || room.members.some((m) => m !== member && m.team === message.payload.team && m.slot === message.payload.slot)) throw new RoomError("room_full");
             member.team = message.payload.team; member.slot = message.payload.slot; this.rooms.invalidate(room); break;
           }
@@ -93,7 +101,7 @@ export class RoomApplication {
             this.hooks.start?.(room); room.status = "active"; break;
           case "leave": {
             const remaining = this.rooms.leave(session.userId);
-            session.send("roomState", null); if (remaining) this.changed(remaining);
+            session.send("roomState", null); if (remaining) this.changed(remaining);else this.hooks.remove?.(room.roomId);
             session.send("ack", { requestId: message.requestId, result: null }); return;
           }
           default: throw new RoomError("invalid_state");

@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-17T19:21:18.831Z",
+  "browser": "157.0.8103.79",
+  "auth": "fixture only; actual rooms/runtime/bots/transport, no remote Supabase",
+  "rows": [
+    {
+      "mode": "solo",
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "humans": 1,
+      "bots": 3,
+      "rematch": true,
+      "policyPinned": true,
+      "errors": []
+    },
+    {
+      "mode": "coop",
+      "score": {
+        "A": 0,
+        "B": 6
+      },
+      "humans": 2,
+      "bots": 2,
+      "rematch": true,
+      "policyPinned": true,
+      "errors": []
+    }
+  ]
+}
