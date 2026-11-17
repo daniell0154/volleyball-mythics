@@ -5,7 +5,7 @@ Todas referenciam R11; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/main.tsx, lobby, scene/CharacterPreview.tsx, game/OnlineMatch.tsx, results; docs/acceptance.
   - Entrega/aceite: Organizar apelido/criar/entrar e atleta em destaque com modelo, sete atributos, overall e habilidade. Catálogo é fonte dinâmica, não lista fixa de dois. Cobrir loading, vazio e falha; priorizar preview por seleção e carregar renderer sob demanda.
 
-- [ ] 011-T2 — Lobby e orientação
+- [x] 011-T2 — Lobby e orientação
   - Destinos: apps/web/src/main.tsx, lobby, scene/CharacterPreview.tsx, game/OnlineMatch.tsx, results; docs/acceptance.
   - Entrega/aceite: Exibir modo, slots, convite, personagem e prontidão; erros junto à ação. Manter fluxo guest existente, dono autorizado para iniciar e suporte a personagens repetidos.
 
