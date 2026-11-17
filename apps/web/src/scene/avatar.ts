@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export function appearance(assetKey: string) {
-  const match = /^procedural:v1:(male|female):([0-9]{1,10})$/.exec(assetKey);
+  const match = /^procedural:(?:v1|athletic-v2):(male|female):([0-9]{1,10})$/.exec(assetKey);
   if (!match || Number(match[2]) > 4294967295) throw new Error("Unknown avatar asset");
   let seed = Number(match[2]) >>> 0;
   const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };

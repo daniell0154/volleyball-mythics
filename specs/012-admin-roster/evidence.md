@@ -16,3 +16,9 @@ Migration 006 expõe roster_write via RPC autenticada: save/publish/disable com 
 
 `node supabase/tests/database/012_admin.cjs` passou: inválidos não deixam auditoria, draft invisível ao catálogo, duas publicações concorrentes resultam em um sucesso/um conflito, versões preservadas, overall calculado, disable e revogação. Execução local PGlite, não PostgREST remoto. Servidor 40/40 passou, incluindo revisões de atributos/visual/poder fixadas na partida. Loader RLS recarrega antes de select/ready/start/rematch e a cada 2s com sessões; falhas rejeitam comandos dependentes. Gate técnico T2 aprovado.
 
+## 012-T3
+
+Rota /admin com chunk sob demanda, login Supabase por email/senha e storageKey separado do guest. Lista paginada (50), edição com revisão otimista, overall derivado, seleção de habilidade existente e modelo/variação visual. Save/publicar/desativar mostram estado e mensagens; campos possuem constraints e preview compartilhado. Namespace procedural:athletic-v2 permite novos atletas articulados sem mudar manifesto, preservando chaves v1 e modelos iniciais.
+
+Chrome 157.0.8103.79 em 1440x1100: formulário/preenchimento/save/publicação/preview passou, captura 012-admin.png; nome acessível do seletor corrigido após primeiro ensaio. Harness 012-admin.cjs usa RPC/migrations reais no PGlite e autenticação exclusiva de fixture; não valida login Supabase remoto. Web 23/23 passou antes do teste adicional de avatar, tipos e build completo passaram. Runner web inicialmente recebeu EPERM do sandbox e passou fora dele. Avisos conhecidos RN Web/use client e chunk 3D >500kB preservados. Gate funcional T3 aprovado; revisão do proprietário na T4.
+

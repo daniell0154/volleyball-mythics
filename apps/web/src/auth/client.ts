@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export interface SupabasePublicConfig {
   url: string;
   publishableKey: string;
+  storageKey?: string;
 }
 
 export function createWebSupabaseClient(config: SupabasePublicConfig): SupabaseClient {
@@ -11,7 +12,7 @@ export function createWebSupabaseClient(config: SupabasePublicConfig): SupabaseC
   }
   if (!config.publishableKey.trim()) throw new Error("Supabase publishable key is required");
   return createClient(config.url, config.publishableKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, ...(config.storageKey?{storageKey:config.storageKey}:{}) },
   });
 }
 
