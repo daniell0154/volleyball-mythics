@@ -14,3 +14,9 @@ RoomApplication rejeita criação 1v1 com mode_unavailable antes de criar sala; 
 
 Servidor 40/40 passou, incluindo proprietário/prontidão/slots/personagens repetidos, snapshots/input em quatro sessões e RTT 150ms/jitter 30ms. Ambiente Node/Windows local; sem WAN ou Supabase remoto. Gate funcional T2 aprovado; UX completa na T4.
 
+## 013-T3
+
+Removidos botão/importação Demo e componentes exclusivos Demo.tsx/Game.tsx, além de CSS do seletor de modo. main mantém lobby e rota /admin; preview de personagem, cena compartilhada e fontes sintéticas usadas por benchmarks/testes permanecem. Nenhum asset binário exclusivo encontrado. React Native Web fica como dependência histórica do projeto, sem importação na entrada atual.
+
+Web 24/24, typecheck e build completos passaram. Build sem chunk Demo/Game; chunks de CharacterPreview/Admin/OnlineMatch continuam sob demanda. Módulos transformados caíram de 339 na 012 para 87; isso não é benchmark de runtime. Sem avisos de use client de RN Web nesta build; aviso do chunk 3D >500kB permanece. Gate funcional T3 aprovado; navegação/preview de usuário na T4.
+
