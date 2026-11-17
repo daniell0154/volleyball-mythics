@@ -1,7 +1,7 @@
 # Tarefas — 011
 Todas referenciam R11; executar em ordem. Cada tarefa depende da anterior e das dependências do plan.md.
 
-- [ ] 011-T1 — Entrada e catálogo
+- [x] 011-T1 — Entrada e catálogo
   - Destinos: apps/web/src/main.tsx, lobby, scene/CharacterPreview.tsx, game/OnlineMatch.tsx, results; docs/acceptance.
   - Entrega/aceite: Organizar apelido/criar/entrar e atleta em destaque com modelo, sete atributos, overall e habilidade. Catálogo é fonte dinâmica, não lista fixa de dois. Cobrir loading, vazio e falha; priorizar preview por seleção e carregar renderer sob demanda.
 
