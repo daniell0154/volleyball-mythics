@@ -9,7 +9,7 @@ Todas referenciam R04; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/server/src/rooms.
   - Aceite/verificação: Código/link resolve mesma sala; concorrência respeita lotação; dono que sai no lobby transfere ao mais antigo.
 
-- [ ] 004-T3 — Seleção e prontidão
+- [x] 004-T3 — Seleção e prontidão
   - Destinos: apps/web/src/lobby, apps/server/src/rooms.
   - Aceite/verificação: Equipe com capacidade, versão de personagem válida e somente dono inicia; mudança invalida prontidão.
 

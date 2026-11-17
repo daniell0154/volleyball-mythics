@@ -125,6 +125,7 @@ export interface RoomState {
   status: "lobby" | "active" | "suspended";
   members: RoomMember[];
 }
+export interface CatalogEntry { id: string; version: number; name: string }
 
 export type ServerResponse<T> =
   | ServerMessage<"ack", { requestId: string; result: T }>

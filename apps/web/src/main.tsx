@@ -1,5 +1,11 @@
 import { createRoot } from "react-dom/client";
 import { Game } from "./game/Game.js";
 import { createScene } from "./scene/createScene.js";
+import { useState } from "react";
+import { Lobby } from "./lobby/Lobby.js";
 
-createRoot(document.getElementById("root")!).render(<Game createScene={createScene} />);
+function App() {
+  const [online, setOnline] = useState(new URLSearchParams(location.search).has("room"));
+  return <><nav style={{ padding: 20 }}><button onClick={() => setOnline(!online)}>{online ? "Ver demonstração 3D" : "Salas online"}</button></nav>{online ? <Lobby /> : <Game createScene={createScene} />}</>;
+}
+createRoot(document.getElementById("root")!).render(<App />);

@@ -9,6 +9,7 @@ export function createTransport(options: {
   verify: VerifyToken;
   origins: readonly string[];
   onCommand(session: Session, message: ClientMessage): void;
+  onConnect?(session: Session): void;
   onDisconnect?(session: Session): void;
   authTimeoutMs?: number;
 }) {
@@ -50,6 +51,7 @@ export function createTransport(options: {
           session = { ...identity, send }; identities.add(identity.userId); clearTimeout(timeout);
           expiry = setTimeout(() => ws.close(1008, "unauthorized"), Math.min(2147483647, identity.expiresAt - Date.now()));
           send("ack", { requestId: auth.requestId, result: { userId: identity.userId } });
+          options.onConnect?.(session);
         } catch { ws.close(1008, "unauthorized"); }
         return;
       }

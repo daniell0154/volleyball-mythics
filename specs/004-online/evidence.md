@@ -17,3 +17,11 @@ Dependências 001/002 integradas; 003 integrada por merge da PR #4, commit 79245
 - Lotação 2/4, slots únicos por equipe; entrada/saída invalida prontidão; dono que sai transfere ao membro restante mais antigo e sala vazia expira.
 - Testes: seis tentativas concorrentes em cada modo preservam lotação; código extraído do link resolve a sala; transferência de dono e expiração de código verificadas.
 - Gate local aprovado; nenhum serviço remoto necessário para o registro de salas.
+
+## 004-T3 — Seleção, equipes e prontidão (R04)
+
+- Servidor carrega somente personagens habilitados e revisões existentes do catálogo Supabase; não cria elenco. Seleção e mudança de posição invalidam prontidão; slots ocupados/fora da capacidade são rejeitados. Start exige dono, lotação completa, conexão, personagem e prontidão de todos.
+- Lobby web com login guest, perfil, criar/entrar, convite, elenco versionado, equipes, pronto e start; comandos são validados pelo servidor. Identidade deriva do handshake, nunca de payload de jogo.
+- Vite lê `.env` da raiz; somente variáveis VITE são expostas ao cliente. Entry point do servidor lê catálogo com credencial exclusiva do backend e valida tokens com o Auth. Nenhuma credencial de produção foi lida nesta implementação.
+- Teste de aplicação cobre versão inválida, slot ocupado, start por não dono, alteração invalidando ready e início somente com todos prontos. Suite servidor: 8 testes aprovados; typecheck de todos os workspaces aprovado.
+- Limitação: aceite local de regras aprovado com catálogo de teste injetado; login guest, perfis e catálogo no projeto remoto do proprietário aguardam configuração local. Catálogo vazio permite testar salas, mas bloqueia prontidão/início conforme o contrato.
