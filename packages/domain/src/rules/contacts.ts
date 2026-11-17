@@ -44,7 +44,7 @@ export function resolveGround(position: { x: number; z: number }, lastTouchSide:
   const inside = Math.abs(position.x) <= 4.5 && Math.abs(position.z) <= 9;
   if (inside) {
     if (lastTouchSide === null) throw new Error("grounded ball requires last touch side");
-    return lastTouchSide === "A" ? "B" : "A";
+    return position.z < 0 ? "B" : "A";
   }
   if (lastTouchSide === null) throw new Error("out ball requires last touch side");
   return lastTouchSide === "A" ? "B" : "A";

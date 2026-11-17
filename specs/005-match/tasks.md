@@ -1,7 +1,7 @@
 # Tarefas — Partida online 1v1 completa
 Todas referenciam R05; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 005-T1 — Unir loop e HUD
+- [x] 005-T1 — Unir loop e HUD
   - Destinos: apps/web/src/match, apps/server/src/match.
   - Aceite/verificação: Partida real 0–0 até sexto ponto em dois contextos de navegador distintos.
 

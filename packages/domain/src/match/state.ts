@@ -47,7 +47,7 @@ export function transition(state: MatchState, event: MatchEvent): MatchState {
       if (state.phase !== "serving") return state;
       return { ...state, phase: "rally" };
     case "RALLY_POINT": {
-      if (state.phase !== "rally" || !event.pointId || state.appliedPointIds.includes(event.pointId)) return state;
+      if ((state.phase !== "rally" && state.phase !== "serving") || !event.pointId || state.appliedPointIds.includes(event.pointId)) return state;
       const score = { ...state.score, [event.scoringSide]: state.score[event.scoringSide] + 1 };
       const won = score[event.scoringSide] === 6;
       const regainedServe = event.scoringSide !== state.servingSide;

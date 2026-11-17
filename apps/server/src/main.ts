@@ -9,16 +9,19 @@ async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const publicKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !publicKey) throw new Error("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env da raiz.");
-  const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now, (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey);
+  const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
+    (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
+    (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes);
   const app = new RoomApplication([], { start: (room) => runtime.start(room), input: (room, userId, input) => runtime.submit(room, userId, input), suspend: (room) => runtime.suspend(room), remove: (roomId) => runtime.remove(roomId) });
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
     // Read through authenticated RLS using this guest's token, never a service secret.
     const database = createClient(url, publicKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
-    const { data, error } = await database.from("characters").select("id,version,name,overall,asset_key,ability_config").eq("enabled", true);
+    const { data, error } = await database.from("characters").select("id,version,name,overall,asset_key,ability_config,serve,receive,set_skill,attack,block,speed,jump").eq("enabled", true);
     if (error || !data) throw new Error("unauthorized");
     app.refreshCatalog(data.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, assetKey: c.asset_key,
+      attributes: { serve: c.serve, receive: c.receive, set: c.set_skill, attack: c.attack, block: c.block, speed: c.speed, jump: c.jump },
       ...(typeof c.ability_config?.name === "string" ? { abilityName: c.ability_config.name } : {}) })));
     return identity;
   },

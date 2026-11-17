@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCamera, fitCamera } from "./camera.js";
+import { createCamera, fitCamera, followCamera } from "./camera.js";
 import { createAvatar, disposeAvatar } from "./avatar.js";
 import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
@@ -33,6 +33,8 @@ export function createScene(host: HTMLElement): SceneAdapter {
   scene.add(ball);
   const athletes = new Map<string, { model: THREE.Object3D; assetKey: string; team: string }>();
   let disposed = false;
+  let followId: string | null = null;
+  let lastFrame = performance.now();
   const resize = (width: number, height: number) => {
     if (disposed || width <= 0 || height <= 0) return;
     fitCamera(camera, width, height); renderer.setSize(width, height);
@@ -41,6 +43,10 @@ export function createScene(host: HTMLElement): SceneAdapter {
   return {
     update(snapshot: SceneSnapshot) {
       if (disposed) return;
+      const now = performance.now();
+      const followed = snapshot.athletes.find((a) => a.id === followId);
+      if (followed) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
+      lastFrame = now;
       ball.position.copy(snapshot.ball);
       const ids = new Set(snapshot.athletes.map((athlete) => athlete.id));
       for (const [id, entry] of athletes) if (!ids.has(id)) {
@@ -60,6 +66,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
       }
       renderer.render(scene, camera);
     }, resize,
+    setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false; },
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },
     dispose() {
       if (disposed) return;

@@ -4,6 +4,7 @@ export class KeyboardInput {
   private held = new Set<string>();
   private pending = new Set<string>();
   private seq = 0;
+  synchronizeSequence(seq: number): void { this.seq = Math.max(this.seq, seq); }
   press(code: string, repeat = false): boolean {
     if (!codes.has(code)) return false;
     if (!repeat && !this.held.has(code)) this.pending.add(code);

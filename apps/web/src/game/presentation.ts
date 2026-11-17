@@ -11,6 +11,7 @@ export interface SceneAdapter {
   update(snapshot: SceneSnapshot): void;
   resize(width: number, height: number): void;
   setQuality(quality: "low" | "high"): void;
+  setFollowPlayer?(playerId: string | null): void;
   dispose(): void;
 }
 export type SceneFactory = (host: HTMLElement) => SceneAdapter;

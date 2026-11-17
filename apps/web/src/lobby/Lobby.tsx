@@ -70,7 +70,7 @@ export function Lobby() {
       <button disabled={!self?.character || room.status !== "lobby"} onClick={() => command("ready", { ready: !self?.ready })}>{self?.ready ? "Não pronto" : "Pronto"}</button>
       {room.ownerId === userId && <button disabled={room.status !== "lobby"} onClick={() => command("start")}>Iniciar</button>}
       <button disabled={room.status !== "lobby"} onClick={() => command("leave")}>Sair da sala</button>
-      {room.status !== "lobby" && connection.current && <OnlineMatch snapshot={snapshot} connection={connection.current} />}
+      {room.status !== "lobby" && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} />}
     </div>}
     {userId && <button onClick={() => connection.current?.close()}>Desconectar</button>}
   </section>;
