@@ -20,6 +20,7 @@ Na etapa 005, snapshots incluem countdown/serving/rally/point/finished/cancelled
 Eventos adicionais: reconnectState (espera/retomada), actionFeedback (feedback ao próprio jogador), matchEnded (resultado e votos) e resultSaveState (pending/saved/failed por matchId). Revanche exige unanimidade de participantes conectados, novo matchId e zero pontos. Conclusão tardia de salvamento anterior nunca substitui resultado de outra partida.
 Servidor valida JWT, associação à sala, fase, versão, schema, tamanho (máximo 8 KiB), frequência (60 inputs/s; 10 comandos/s por sessão). Rejeita seq repetido/antigo.
 Simulação inicial 60 ticks/s; snapshots 20/s; interpolação visual 100 ms, sem rollback inicialmente. Tuning exige registro de medição.
+010: ação discreta consumida uma vez; validade de fila limitada a 6 ticks desde recepção, sem renovar por pacote de movimento posterior. Movimento mantém validade de 15 ticks. Prioridade: salto → habilidade → saque ou ataque > levantamento > recepção, com atletas por equipe/slot. Intenção local é texto, não confirmação de contato. Sem nova janela de buffering.
 Estados: lobby → countdown → serving → rally → point → serving; sexto ponto → finished. disconnectedSuspension retorna à fase anterior; falha servidor → cancelled.
 Desconexão: regras de 20/40 segundos em REFINAMENTO; comandos atrasados nunca geram ações retroativas.
 ## Regras arcade propostas
@@ -30,4 +31,5 @@ Bola em contato contínuo não gera vários toques: novo toque exige separação
 Saque inicial time A; vencedor do ponto saca. Em 2v2 slot sacador alterna apenas quando time recupera saque. Timeout saque 8s concede ponto ao adversário.
 Um rally concede no máximo um ponto; demais contatos ignorados após transição point. Entre pontos: 2s; início: 3s.
 Gravidade, alcance de ações, velocidades e força são parâmetros versionados a calibrar no spike; não produzir elenco final antes dessa calibração.
+010: perfis imutáveis de rally 1 (legado), 2 (comparação de alcance) e 3 (arcos com destino). Padrão de novas partidas é rulesVersion=3, fixada ao iniciar e persistida no resultado. Base física/tempo permanecem v1; alcance e recuperação pertencem ao perfil. Revisões 2/3 exigem separação >2,5 m e recuperação de 6 ticks por atleta; não mudam limite de toques nem poderes. RALLY_RULES_VERSION configura novos jogos no servidor; nunca é input de cliente. Detalhes em docs/benchmarks/010-profiles.md.
 

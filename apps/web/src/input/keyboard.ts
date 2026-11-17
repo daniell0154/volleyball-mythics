@@ -1,13 +1,14 @@
 import type { InputPayload } from "@volleyball-mythics/protocol";
 const codes = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyJ", "KeyK", "KeyL", "KeyU"]);
 export class KeyboardInput {
+  onIntent: ((code: string) => void) | undefined;
   private held = new Set<string>();
   private pending = new Set<string>();
   private seq = 0;
   synchronizeSequence(seq: number): void { this.seq = Math.max(this.seq, seq); }
   press(code: string, repeat = false): boolean {
     if (!codes.has(code)) return false;
-    if (!repeat && !this.held.has(code)) this.pending.add(code);
+    if (!repeat && !this.held.has(code)) { this.pending.add(code); this.onIntent?.(code); }
     this.held.add(code); return true;
   }
   release(code: string): void { this.held.delete(code); }

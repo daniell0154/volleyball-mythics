@@ -22,5 +22,6 @@ test('server shutdown cancels each active mode and persists a result without a w
   assert.equal(runtime.get(doubles.roomId).reason, 'server_failure');
   assert.equal(saved.length, 2);
   assert.ok(saved.every((result) => result.status === 'cancelled' && result.winner === null));
+  assert.ok(saved.every((result) => result.rulesVersion === 3));
   assert.deepEqual(saved.map((result) => result.mode).sort(), ['1v1', '2v2']);
 });

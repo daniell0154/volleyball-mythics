@@ -20,7 +20,8 @@ async function main() {
   const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes,
-    (id, version) => { const character = app.catalog.find((c) => c.id === id && c.version === version); return character?.abilityId && character.abilityConfig ? { id: character.abilityId, config: character.abilityConfig } : undefined; });
+    (id, version) => { const character = app.catalog.find((c) => c.id === id && c.version === version); return character?.abilityId && character.abilityConfig ? { id: character.abilityId, config: character.abilityConfig } : undefined; },
+    process.env.NODE_ENV === "development", Number(process.env.RALLY_RULES_VERSION ?? 3));
   const reconnect = new ReconnectController(runtime, (room, type, payload) => app.broadcast(room, type, payload));
   const results = new MatchResults(process.env.SUPABASE_SECRET_KEY ? createResultsRepository(url, process.env.SUPABASE_SECRET_KEY) : { persist: async () => { throw new Error("server_result_secret_missing"); } },
     (room, type, payload) => app.broadcast(room, type, payload), Date.now, (matchId) => console.error(`result_persistence_failed matchId=${matchId}`));
@@ -32,6 +33,7 @@ async function main() {
   runtime.onEnded = (match) => { reconnect.clear(match.room.roomId); results.finish(match); lifecycle.ended(match.room); };
   runtime.onPoint = (room, snapshot) => app.broadcast(room, "point", snapshot);
   runtime.onAction = (userId, message) => app.sendTo(userId, "actionFeedback", { message });
+  if (process.env.RALLY_TELEMETRY === "1") runtime.onRallyMeasured = (measurement) => console.info(JSON.stringify({ type: "rallyMeasurement", ...measurement }));
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
