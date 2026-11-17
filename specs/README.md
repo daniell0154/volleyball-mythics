@@ -1,6 +1,8 @@
 # Ordem de execução SDD
 Ler constitution → REFINAMENTO → contracts → spec/plan/tasks da feature.
 Sequência: 001 dados → 002 domínio → 003 3D → 004 salas/rede → 005 1v1 → 006 2v2/habilidades → 007 beta.
+Novo ciclo de melhorias planejado: 008 modelos articulados → 009 animações → 010 dinâmica do rally → 011 apresentação. Direção, referência Happy Hoops e metas propostas em [docs/MELHORIAS.md](../docs/MELHORIAS.md). Estas specs são planejamento, não implementação concluída.
+Após integração da 007, a primeira implementação elegível deste ciclo é 008-character-models. As evidências pendentes de publicação da 007 continuam registradas; não impedem desenvolvimento visual local independente e continuam obrigatórias antes de publicar.
 Não iniciar feature dependente de gate reprovado. Consultar os checklists para identificar a próxima tarefa pendente.
 
 ## Commits, branches e PRs
