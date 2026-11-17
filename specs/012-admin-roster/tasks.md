@@ -2,7 +2,7 @@
 Todas referenciam R12; dependem da anterior e de 011 integrada.
 
 - [x] 012-T1 — Contrato e autorização: schema de rascunhos/revisões, RLS e bootstrap do admin; testes de negação guest.
-- [ ] 012-T2 — API de gestão: validação, revisão imutável, publicação/desativação e auditoria; testes transacionais.
+- [x] 012-T2 — API de gestão: validação, revisão imutável, publicação/desativação e auditoria; testes transacionais.
 - [ ] 012-T3 — Tela admin: login, lista, formulário e preview; publicação refletida no catálogo e visual dinâmico.
 - [ ] 012-T4 — Aceite: criar atleta de teste, jogar com ele, revisar/desativar sem alterar partida ativa; regressões e revisão do proprietário.
 

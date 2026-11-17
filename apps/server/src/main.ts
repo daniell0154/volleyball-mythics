@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createCatalogLoader } from "./admin/catalog.js";
 import { createSupabaseVerifier } from "./network/auth.js";
 import { createTransport } from "./network/server.js";
 import { RoomApplication } from "./rooms/application.js";
@@ -8,7 +8,7 @@ import { ReconnectController } from "./reconnect/controller.js";
 import { createResultsRepository } from "./persistence/results.js";
 import { MatchResults } from "./results/coordinator.js";
 import { MatchLifecycle } from "./lifecycle/matches.js";
-import { VersionedCharacterCatalog } from "@volleyball-mythics/domain";
+
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -16,7 +16,10 @@ async function main() {
   if (!url || !publicKey) throw new Error("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env da raiz.");
   const port = Number(process.env.PORT ?? 3001);
   if (!Number.isSafeInteger(port) || port <= 0 || port > 65535) throw new Error("PORT inválida");
-  const characterCatalog = new VersionedCharacterCatalog();
+  const loadCatalog = createCatalogLoader(url, publicKey);
+  const tokens = new Map<string,string>();
+  let refreshing: Promise<void> | undefined;
+  const refresh = (token:string) => refreshing ??= loadCatalog(token).then(catalog=>{app.refreshCatalog(catalog);}).finally(()=>{refreshing=undefined;});
   const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes,
@@ -37,30 +40,30 @@ async function main() {
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
-    // Read through authenticated RLS using this guest's token, never a service secret.
-    const database = createClient(url, publicKey, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
-    const { data, error } = await database.from("characters").select("id,version,name,overall,asset_key,ability_id,ability_config,serve,receive,set_skill,attack,block,speed,jump").eq("enabled", true);
-    if (error || !data) throw new Error("unauthorized");
-    const revisions = characterCatalog.replaceEnabled(data.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, assetKey: c.asset_key,
-      attributes: { serve: c.serve, receive: c.receive, set: c.set_skill, attack: c.attack, block: c.block, speed: c.speed, jump: c.jump },
-      abilityId: c.ability_id, abilityConfig: c.ability_config
-      })));
-    app.refreshCatalog(revisions.map((c) => ({ id: c.id, version: c.version, name: c.name, overall: c.overall, ...(c.assetKey ? { assetKey: c.assetKey } : {}), attributes: c.attributes,
-      ...(c.abilityId ? { abilityId: c.abilityId } : {}), ...(c.abilityConfig ? { abilityConfig: c.abilityConfig } : {}),
-      ...(typeof c.abilityConfig?.name === "string" ? { abilityName: c.abilityConfig.name } : {}) })));
+    await refresh(token);
+    tokens.set(identity.userId,token);
     return identity;
   },
     staticDirectory: fileURLToPath(new URL("../../web/dist/", import.meta.url)),
     origins: (process.env.ALLOWED_ORIGINS ?? `http://localhost:5173,http://127.0.0.1:5173,http://localhost:${port},http://127.0.0.1:${port}`).split(",").map((s) => s.trim()),
-    onConnect: (session) => app.connect(session), onCommand: (session, message) => app.command(session, message), onDisconnect: (session) => app.disconnect(session) });
+    onConnect: (session) => app.connect(session), onCommand: async (session, message) => {
+      try {
+        if (["selectCharacter","ready","start","rematchVote"].includes(message.type)) {
+          const token=tokens.get(session.userId); if(!token)throw Error("disconnected");
+          await refresh(token);
+        }
+        app.command(session,message);
+      } catch { session.send("error",{requestId:message.requestId,code:"invalid_state"}); }
+    }, onDisconnect: (session) => {tokens.delete(session.userId);app.disconnect(session);} });
   const host = process.env.HOST ?? (process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
   transport.http.listen(port, host, () => console.log(`Servidor iniciado em ${host}:${port}`));
   let previous = performance.now();
   const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); lifecycle.tick(); runtime.advance(Math.min(100, now - previous)); void results.queue.tick(); previous = now; }, 5);
+  const catalogTimer=setInterval(()=>{const token=tokens.values().next().value;if(token)void refresh(token).catch(()=>{});},2000);
   let closing: Promise<void> | undefined;
   const close = () => {
     if (closing) return;
-    clearInterval(ticker);
+    clearInterval(ticker); clearInterval(catalogTimer);
     runtime.cancelForShutdown();
     closing = (async () => { await results.queue.tick(); await transport.close(); })();
     void closing.catch(() => { process.exitCode = 1; });
