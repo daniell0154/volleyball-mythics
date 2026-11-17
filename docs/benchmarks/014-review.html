@@ -1,0 +1,10 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>014 — revisão da bola</title><style>body{margin:0;background:#102334;color:white;font:16px Arial}#court{width:100vw;height:100vh}#status{position:absolute;left:12px;top:12px;background:#102334;padding:8px;pointer-events:none}</style><div id="status">Preparando…</div><div id="court"></div><script type="module">
+import {createScene} from '/apps/web/src/scene/createScene.ts';
+const q=new URLSearchParams(location.search),data=await(await fetch(q.get('profile')==='4'?'./014-traces-4.json':'./014-render-traces.json')).json();
+const trace=data.find(t=>t.side===(q.get('side')||'A')&&t.defending===true).frames.map(frame=>({...frame,athletes:frame.athletes.map((a,i)=>({...a,assetKey:i%2?'procedural:v1:male:2016838844':'procedural:v1:male:2626328580'}))}));
+const adapter=createScene(document.querySelector('#court'));adapter.setQuality(q.get('quality')||'low');adapter.setFollowPlayer(trace[0].athletes.find(a=>a.team===(q.get('side')||'A')).id);adapter.setReducedMotion(q.get('stable')==='1');
+new ResizeObserver(()=>adapter.resize(innerWidth,innerHeight)).observe(document.querySelector('#court'));
+window.adapter=adapter;window.trace=trace;window.reviewAt=time=>{const frame=trace[Math.max(0,Math.min(trace.length-1,Math.floor(time*20)))];adapter.update({...frame,renderTick:frame.tick});};
+let start=performance.now();function step(now){if(!window.manual)window.reviewAt(((now-start)/1000)%(trace.length/20));requestAnimationFrame(step);}requestAnimationFrame(step);
+document.querySelector('#status').textContent='014 · replay técnico v3 · '+(q.get('side')||'A')+' · '+(q.get('quality')||'low');
+</script></html>

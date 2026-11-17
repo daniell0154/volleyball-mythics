@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { createCamera, fitCamera, followCamera,fitStableCamera } from "./camera.js";
+import { createCamera, fitCamera, followRallyCamera,fitStableCamera } from "./camera.js";
+import {visualBallScale,ballScreenCue} from "./ballVisibility.js";
 import { disposeAvatar } from "./avatar.js";
 import { createPresentationAvatar } from "./avatarManifest.js";
 import { AvatarAnimator } from "./animateAvatar.js";
@@ -8,6 +9,9 @@ import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 export function createScene(host: HTMLElement): SceneAdapter {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   host.append(renderer.domElement);
+  const originalPosition=host.style.position;host.style.position="relative";
+  const cue=document.createElement("span");cue.setAttribute("aria-hidden","true");cue.dataset.ballCue="true";
+  cue.style.cssText="position:absolute;pointer-events:none;width:14px;height:14px;border:2px solid #101820;border-radius:50%;background:#ffe600;box-shadow:0 0 0 2px white;color:#101820;font:bold 18px/20px Arial;text-align:center;transform:translate(-50%,-50%);z-index:1;display:none";host.append(cue);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#90c9ed");
   const camera = createCamera();
@@ -31,8 +35,11 @@ export function createScene(host: HTMLElement): SceneAdapter {
   box(27, 0.4, 6, "#6a6673", 0, 8.2, -19);
   for (const y of [2, 5.5]) for (let x = -10; x <= 10; x += 4) box(2, 1.8, 0.05, "#4d7188", x, y, -16.45);
   box(2, 3, 0.1, "#584b44", 0, 1.5, -16.4);
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: "#fff1bd" }));
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: "#ffe600" }));
   scene.add(ball);
+  const outline=new THREE.Mesh(new THREE.SphereGeometry(.11,16,12),new THREE.MeshBasicMaterial({color:"#101820",side:THREE.BackSide}));outline.scale.setScalar(1.18);ball.add(outline);
+  const shadow=new THREE.Mesh(new THREE.RingGeometry(.18,.30,32),new THREE.MeshBasicMaterial({color:"#101820",transparent:true,opacity:.7,depthWrite:false,side:THREE.DoubleSide}));shadow.rotation.x=-Math.PI/2;scene.add(shadow);
+  const shadowBorder=new THREE.Mesh(new THREE.RingGeometry(.30,.36,32),new THREE.MeshBasicMaterial({color:"#ffffff",transparent:true,opacity:.7,depthWrite:false,side:THREE.DoubleSide}));shadowBorder.rotation.x=-Math.PI/2;scene.add(shadowBorder);
   const marker=new THREE.Group();marker.visible=false;scene.add(marker);
   for(const [inner,outer,color]of [[.40,.47,"#ffffff"],[.47,.51,"#102334"]] as const){
     const ring=new THREE.Mesh(new THREE.RingGeometry(inner,outer,32),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide}));
@@ -66,12 +73,18 @@ export function createScene(host: HTMLElement): SceneAdapter {
       }
       const now = performance.now();
       const followed = snapshot.athletes.find((a) => a.id === followId);
-      if (followed&&!reducedMotion) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
+      if (followed&&!reducedMotion) followRallyCamera(camera, followed.position,snapshot.ball, followed.team, (now - lastFrame) / 1000);
       if(followed&&reducedMotion&&stableTeam!==followed.team){fitStableCamera(camera,followed.team,host.clientWidth,host.clientHeight);stableTeam=followed.team;}
       marker.visible=Boolean(followed);
       if(followed){marker.position.set(followed.position.x,0,followed.position.z);marker.rotation.y=followed.team==="A"?0:Math.PI;if(markerLabel)markerLabel.position.y=followed.position.y+2.25;}
       lastFrame = now;
       ball.position.copy(snapshot.ball);
+      camera.updateMatrixWorld();ball.scale.setScalar(visualBallScale(camera,snapshot.ball,host.clientHeight));
+      shadow.position.set(snapshot.ball.x,.035,snapshot.ball.z);shadowBorder.position.copy(shadow.position);
+      shadow.material.opacity=Math.max(.25,.75-snapshot.ball.y*.035);shadowBorder.material.opacity=shadow.material.opacity;
+      const screen=ballScreenCue(camera,snapshot.ball,host.clientWidth,host.clientHeight);cue.style.display="block";cue.style.left=screen.x+"px";cue.style.top=screen.y+"px";
+      cue.textContent=screen.offscreen?screen.arrow:"";cue.style.width=cue.style.height=screen.offscreen?"24px":"14px";cue.style.borderRadius=screen.offscreen?"6px":"50%";
+      cue.title=screen.offscreen?"Bola fora da tela":"Posição atual da bola";
       const ids = new Set(snapshot.athletes.map((athlete) => athlete.id));
       for (const [id, entry] of athletes) if (!ids.has(id)) {
         scene.remove(entry.model); disposeAvatar(entry.model); athletes.delete(id);
@@ -90,7 +103,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
         entry.animator.update(snapshot, athlete);
       }
       renderer.render(scene, camera);
-    }, resize,
+    }, resize(width,height){resize(width,height);stableTeam=undefined;},
     setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false;stableTeam=undefined; },
     setReducedMotion(reduced){reducedMotion=reduced;stableTeam=undefined;camera.userData.following=false;},
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },
@@ -100,7 +113,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
       disposeAvatar(scene);
       markerLabel?.material.dispose();
       markerTexture?.dispose();
-      renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); scene.clear(); athletes.clear();
+      renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();cue.remove();host.style.position=originalPosition; scene.clear(); athletes.clear();
     },
   };
 }

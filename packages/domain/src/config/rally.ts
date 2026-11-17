@@ -12,6 +12,7 @@ export const RALLY_PROFILES: Readonly<Record<number, RallyProfile>> = Object.fre
   1: Object.freeze({ version: 1, actionRange: 1.9, separationRange: 2.1, recoveryTicks: 0, targetedArcs: false }),
   2: Object.freeze({ version: 2, actionRange: 2.3, separationRange: 2.5, recoveryTicks: 6, targetedArcs: false }),
   3: Object.freeze({ version: 3, actionRange: 2.15, separationRange: 2.5, recoveryTicks: 6, targetedArcs: true }),
+  4: Object.freeze({ version: 4, actionRange: 2.15, separationRange: 2.5, recoveryTicks: 6, targetedArcs: true }),
 });
 export function rallyProfile(version: number): RallyProfile {
   const profile = RALLY_PROFILES[version]; if (!profile) throw new Error("Unknown rally rules version"); return profile;
@@ -20,7 +21,17 @@ export function actionRange(profile: RallyProfile, attribute: number): number {
   return profile.actionRange + (profile.targetedArcs ? .2 * (attribute - 1) / 99 : 0);
 }
 export function rallyVelocity(profile: RallyProfile, kind: "serve" | "receive" | "set" | "attack" | "block",
-  ball: Vector3, athlete: Vector3, direction: number, attributes: CharacterAttributes, teammate?: Vector3): Vector3 {
+  ball: Vector3, athlete: Vector3, direction: number, attributes: CharacterAttributes, teammate?: Vector3, aim?: {x:number;z:number}): Vector3 {
+  if(profile.version===4){
+    const x=aim?.x??0,z=aim?.z??0;
+    if(!Number.isFinite(x)||!Number.isFinite(z)||Math.hypot(x,z)>1)throw new Error("Invalid aim");
+    const own=kind==="receive"||kind==="set",clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
+    const targetX=clamp((own&&teammate?teammate.x:0)+x*3.5,-3.8,3.8);
+    const targetZ=own?-direction*(kind==="set"?clamp(2+z,1.2,3):clamp((teammate?Math.abs(teammate.z):4)+z,2,7)) :direction*clamp(5+z*2,3,7);
+    const normalized=(n:number)=>(n-1)/99;
+    const flight=kind==="serve"?2.2-.15*normalized(attributes.serve):kind==="receive"?1.9:kind==="set"?1.6:kind==="attack"?(athlete.y>.5?1.3:1.65)-.12*normalized(attributes.attack):1.4;
+    return{x:(targetX-ball.x)/flight,y:(.11-ball.y+.5*9.81*flight*flight)/flight,z:(targetZ-ball.z)/flight};
+  }
   if (!profile.targetedArcs) {
     if (kind === "serve") return { x: -athlete.x*.15, y: 7.5, z: direction*(7.5+attributes.serve/100) };
     const action = kind === "block" ? "receive" : kind;

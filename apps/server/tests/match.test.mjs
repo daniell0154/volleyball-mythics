@@ -11,7 +11,7 @@ test('a complete match reaches sixth point without fabricated winner or duplicat
 });
 test('only server can serve; ball landing in opponent half scores for the serving side',()=>{
  const {runtime,room,frames}=setup();runtime.advance(3000);runtime.submit(room,'b',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);assert.equal(frames.at(-1).phase,'serving');
- runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(2000);assert.equal(frames.at(-1).score.A,1);assert.equal(frames.at(-1).score.B,0);assert.equal(frames.at(-1).phase,'point');
+ runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(2500);assert.equal(frames.at(-1).score.A,1);assert.equal(frames.at(-1).score.B,0);assert.equal(frames.at(-1).phase,'point');
 });
 test('receive action requires ball in range and separation prevents repeated touches',()=>{
  const {runtime,room}=setup();const feedback=[];runtime.onAction=(id,message)=>feedback.push({id,message});runtime.advance(3000);runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);

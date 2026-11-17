@@ -16,6 +16,9 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   const lastScore = useRef("");
   const [error, setError] = useState("");
   const [graphicsError,setGraphicsError]=useState("");
+  const [cursorAim,setCursorAim]=useState(false);
+  useEffect(()=>{keyboard.current.enableAim(snapshot?.rulesVersion===4);},[snapshot?.rulesVersion]);
+  useEffect(()=>{keyboard.current.clear();},[cursorAim]);
   const [reducedMotion,setReducedMotion]=useState(()=>{try{const saved=localStorage.getItem("volleyball-mythics-reduced-motion");if(saved!==null)return saved==="true";}catch{}return matchMedia("(prefers-reduced-motion: reduce)").matches;});
   const [intent, setIntent] = useState<{ text: string; at: number } | null>(null);
   useEffect(() => {
@@ -54,7 +57,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
       if (phase.current !== "serving" && phase.current !== "rally") { keyboard.current.clear(); return; }
       const input = keyboard.current.sample(phase.current);
       const sign = team === "A" ? -1 : 1;
-      void connection.request("input", { ...input, moveX: input.moveX * sign, moveZ: input.moveZ * sign }).catch((e: unknown) => {
+      void connection.request("input", { ...input, moveX: input.moveX * sign, moveZ: input.moveZ * sign,...(input.aim?{aim:{x:input.aim.x*sign,z:input.aim.z}}:{}) }).catch((e: unknown) => {
         // A snapshot can arrive just after the server suspends/finishes the match.
         if (e instanceof Error && e.message === "invalid_state") return;
         setError(e instanceof Error ? e.message : "Falha de entrada");
@@ -73,7 +76,8 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
       <label>Volume dos sinais · {volume===0?"mudo":volume+"%"}<input aria-label="Volume dos sinais sonoros" aria-valuetext={volume===0?"Mudo":volume+" por cento"} type="range" min="0" max="100" value={volume} onChange={(event) => { const next = Number(event.target.value); setVolume(next); try { localStorage.setItem("volleyball-mythics-volume", String(next)); } catch {} }} /></label>
       <label className="checkbox-label"><input type="checkbox" checked={reducedMotion} onChange={event=>{setReducedMotion(event.target.checked);try{localStorage.setItem("volleyball-mythics-reduced-motion",String(event.target.checked));}catch{}}}/>Câmera estável (reduzir movimento)</label>
     </div><p className="helper">As opções não pausam a partida. Câmera estável usa uma visão fixa da quadra.</p></details>
-    <div ref={host} className="court-host" tabIndex={0} onClick={() => host.current?.focus()} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." style={{height:graphicsError?180:"60vh",minHeight:graphicsError?180:280}} />
+    {snapshot?.rulesVersion===4&&<div className="notice"><button onClick={()=>setCursorAim(value=>!value)}>Direção: {cursorAim?"cursor":"teclado"}</button><p className="helper">Perfil candidato · {cursorAim?"Posicione o cursor na quadra para escolher lateral e profundidade.":"Segure as setas ao tocar na bola para escolher lateral e profundidade."} C centraliza. WASD move. Saque exige estar no fundo.</p></div>}
+    <div ref={host} className="court-host" tabIndex={0} onPointerMove={event=>{if(!cursorAim||snapshot?.rulesVersion!==4)return;const rect=event.currentTarget.getBoundingClientRect();keyboard.current.setCursorAim((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);}} onClick={() => host.current?.focus()} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." style={{height:graphicsError?180:"60vh",minHeight:graphicsError?180:280}} />
     {graphicsError&&<div className="notice error" role="alert"><strong>Modo gráfico indisponível</strong><p>{graphicsError}</p><p>O placar continua disponível, mas a partida online não foi pausada. Você pode sair pelos controles da sala.</p></div>}
     <div className="action-bar" role="group" aria-label="Ações da partida">
       <button disabled={!playing} onClick={() => trigger("Space")}>Saltar · Espaço</button>

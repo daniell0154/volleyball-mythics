@@ -1,5 +1,5 @@
 # Contratos compartilhados v1
-Este arquivo descreve o contrato ativo, incluindo administração 012 e criação 2v2 da 013. Propostas posteriores de direção de ações e bots estão em [contratos futuros 012–016](future-contracts-012-016.md) e serão incorporadas junto às respectivas migrations/código.
+Este arquivo descreve o contrato ativo, incluindo administração 012, criação 2v2 da 013 e direção/perfil 4 da 014. Propostas posteriores de bots estão em [contratos futuros 012–016](future-contracts-012-016.md) e serão incorporadas junto às respectivas migrations/código.
 ## Dados
 012: administração em [contrato 012](012-admin-roster/contract.md), migrations 005/006. Membership privado com JWT não anônimo; RLS e escrita somente por roster_write autorizada (save/publish/disable, revisão otimista). Conteúdo publicado imutável, enabled mutável; id textual preserva catálogo existente. Servidor revalida catálogo em seleção/prontidão/início/revanche e atualiza sessões periodicamente; runtime mantém revisão fixada.
 IDs UUID. Horários persistidos UTC; simulação usa tick inteiro.
@@ -25,6 +25,7 @@ Eventos adicionais: reconnectState (espera/retomada), actionFeedback (feedback a
 Servidor valida JWT, associação à sala, fase, versão, schema, tamanho (máximo 8 KiB), frequência (60 inputs/s; 10 comandos/s por sessão). Rejeita seq repetido/antigo.
 Simulação inicial 60 ticks/s; snapshots 20/s; interpolação visual 100 ms, sem rollback inicialmente. Tuning exige registro de medição.
 010: ação discreta consumida uma vez; validade de fila limitada a 6 ticks desde recepção, sem renovar por pacote de movimento posterior. Movimento mantém validade de 15 ticks. Prioridade: salto → habilidade → saque ou ataque > levantamento > recepção, com atletas por equipe/slot. Intenção local é texto, não confirmação de contato. Sem nova janela de buffering.
+014: input v1 aceita aim opcional {x,z}, finito e norma <=1; servidor calcula destinos limitados, nunca aceita posição/contato. Perfil 4 padrão de novas partidas, fixado no início; regras 1–3 ignoram aim e continuam disponíveis por configuração. Saque v4 exige fundo (z relativo <=-5), recepção/levantamento constroem no próprio lado, ataque cruza. Snapshot anuncia rulesVersion opcional; cliente habilita controles direcionais somente em v4. Bola escala apenas visualmente para mínimo 12 CSS px, com marcador de oclusão/projeção no chão, sem mudar raio físico 0,11m. Gate delegado e medições em specs/014-rally-balance/evidence.md.
 Estados: lobby → countdown → serving → rally → point → serving; sexto ponto → finished. disconnectedSuspension retorna à fase anterior; falha servidor → cancelled.
 Desconexão: regras de 20/40 segundos em REFINAMENTO; comandos atrasados nunca geram ações retroativas.
 ## Regras arcade propostas

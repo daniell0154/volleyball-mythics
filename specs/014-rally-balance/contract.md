@@ -1,0 +1,13 @@
+# Contrato 014 — candidato e legibilidade
+
+Base: 013 integrada em edc3b9c. Regras 1/2/3 imutáveis; revisão 4 fixada por partida e promovida após gate técnico T4 e delegação do proprietário. Padrão de novas partidas é 4; RALLY_RULES_VERSION=3 permite rollback para novas partidas, sem mudar partidas existentes. Não é comando público. Playtest humano posterior registrado como limitação.
+
+Input v1 ganha aim opcional {x,z}, números finitos com norma <=1. x é lateral no mundo; z escolhe profundidade relativa ao lado/ação. Sem aim equivale ao destino padrão do perfil; regras 1–3 ignoram a extensão. Parser rejeita pares incompletos, NaN, excesso de magnitude, posição/destino arbitrário ou campos desconhecidos. Antigos leitores mantêm suporte; snapshots podem anunciar rulesVersion opcional para mostrar os controles apenas no candidato. Servidor calcula destino limitado à área legal e trajetória, mantendo alcance, separação e consumo único de ação.
+
+Cliente: setas ajustam lateral/profundidade, tecla C centraliza; WASD continua movimento. Protótipo alternativo de cursor usa posição relativa no canvas, normalizada, somente com opção explícita. Seleção do modo não muda física; ambos emitem a mesma intenção limitada. Inputs recebem sinal lateral relativo à equipe na conversão já usada para WASD. Perda de foco limpa teclas e intenção direcional. Sem antecipar placar/contato.
+
+Perfil 4 propõe saque com preparação no fundo, arco mais longo, recepção para construção no próprio lado, levantamento próximo da rede e ataque dirigido ao adversário. Não muda atributos/poderes, três toques, alternância de colegas, hitbox ou seis pontos. Recepção/levantamento continuam depender de input aceito e alcance real. Clientes sem aim continuam jogáveis.
+
+Bola: posição interpolada permanece autoritativa para apresentação. Diâmetro mínimo de 12 CSS px e contorno são escala apenas visual; sombra marca projeção atual, não queda garantida. Marcador em oclusão/fora da tela não confirma toque. Câmera estável e dinâmica devem considerar bola; reduzir movimento elimina rastro e balanço extra. Sem previsão privilegiada de trajetória futura no cliente.
+
+Baseline 3: fixture de perseguição legal com reação 200ms devolveu 100% de 40 saques por lado a RTT 0/150ms e a estratégia só-saque venceu 0/20 partidas. Isto não reproduz o relato humano, que pode depender de controles/visibilidade/experiência. Não afirmar causa demonstrada nem calibrar artificialmente para reprovar baseline. Mediana de contatos =1 nesse cenário com um time inativo; meta de três contatos é avaliada em cenário separado com ambos os times ativos. Registrar amostras por atributos/zona, não só resumo. Não herdar dispensa humana da 010.

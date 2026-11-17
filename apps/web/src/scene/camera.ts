@@ -29,3 +29,11 @@ export function fitStableCamera(camera:PerspectiveCamera,team:"A"|"B",width:numb
   camera.position.set(0,22,team==="A"?-25:25);camera.lookAt(0,1,0);
   camera.userData.following=false;fitCamera(camera,width,height);camera.updateMatrixWorld();
 }
+
+/** Elevated, team-aligned view: court and high arcs stay readable without camera bob. */
+export function followRallyCamera(camera:PerspectiveCamera,player:{x:number;y:number;z:number},ball:{x:number;y:number;z:number},team:"A"|"B",dt:number):void{
+ const x=MathUtils.clamp((player.x+ball.x)*.1,-.6,.6),z=MathUtils.clamp((player.z+ball.z)*.05,-.5,.5);
+ const desired=new Vector3(x,22,z+(team==="A"?-25:25)),target=new Vector3(x,1,z);
+ const blend=camera.userData.following?1-Math.exp(-Math.min(dt,.1)*4):1;
+ camera.position.lerp(desired,blend);camera.lookAt(target);camera.userData.following=true;camera.updateMatrixWorld();
+}

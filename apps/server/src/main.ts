@@ -24,7 +24,7 @@ async function main() {
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes,
     (id, version) => { const character = app.catalog.find((c) => c.id === id && c.version === version); return character?.abilityId && character.abilityConfig ? { id: character.abilityId, config: character.abilityConfig } : undefined; },
-    process.env.NODE_ENV === "development", Number(process.env.RALLY_RULES_VERSION ?? 3));
+    process.env.NODE_ENV === "development", Number(process.env.RALLY_RULES_VERSION ?? 4));
   const reconnect = new ReconnectController(runtime, (room, type, payload) => app.broadcast(room, type, payload));
   const results = new MatchResults(process.env.SUPABASE_SECRET_KEY ? createResultsRepository(url, process.env.SUPABASE_SECRET_KEY) : { persist: async () => { throw new Error("server_result_secret_missing"); } },
     (room, type, payload) => app.broadcast(room, type, payload), Date.now, (matchId) => console.error(`result_persistence_failed matchId=${matchId}`));
