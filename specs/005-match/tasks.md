@@ -5,7 +5,7 @@ Todas referenciam R05; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/web/src/match, apps/server/src/match.
   - Aceite/verificação: Partida real 0–0 até sexto ponto em dois contextos de navegador distintos.
 
-- [ ] 005-T2 — Reconexão e abandono
+- [x] 005-T2 — Reconexão e abandono
   - Destinos: apps/server/src/reconnect.
   - Aceite/verificação: Retorno em 19s retoma; após limite perde; ambos ausentes cancela; menu não pausa.
 

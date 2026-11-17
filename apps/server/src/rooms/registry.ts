@@ -39,7 +39,7 @@ export class RoomRegistry {
   invalidate(room: RoomState): void { for (const member of room.members) member.ready = false; }
   leave(userId: string): RoomState | null {
     const room = this.roomFor(userId);
-    if (room.status !== "lobby") throw new RoomError("invalid_state");
+    if (room.status !== "lobby" && room.status !== "finished") throw new RoomError("invalid_state");
     room.members = room.members.filter((member) => member.userId !== userId);
     this.membership.delete(userId); this.invalidate(room);
     if (!room.members.length) { this.rooms.delete(room.code); return null; }

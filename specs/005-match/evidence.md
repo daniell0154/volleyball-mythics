@@ -11,3 +11,11 @@ Base main com 004 e serviço único integrados (38f2718). Por pedido explícito,
 - Testes: 15 servidor e 9 web passaram (incluindo câmera, partida até sexto ponto, saque autorizado, bola dentro no lado oposto, ação fora de alcance e contato contínuo). Typecheck passou; testes de domínio mantidos com regra de chão corrigida.
 - Edge 157, dois contexts independentes, Supabase real, servidor/teste local: guest/perfil, personagens Samuel/Caio, pronto/start, clique no botão de saque e partida 0–0→6–5, vencedor A/points idêntico nos clientes; zero erros JS. Relógio acelerado 4× exclusivamente no harness, sem alterar parâmetros de produção. Guests temporários removidos. Captura de terceira pessoa inspecionada em .test-build/005-third-person.png.
 - Gate T1 aprovado. Reconexão, resultado persistido e revanche são as tarefas seguintes.
+
+## 005-T2 — Reconexão e abandono
+
+- Relógio de espera é tempo de servidor, separado do tick congelado. Retorno em 19 s permitido, retomada após 3 s, limite 20 s por ocorrência/40 s acumulados por equipe. Ambos incompletos ao expirar cancelam sem vencedor; abandono explícito concede derrota preservando placar.
+- Reautenticação restaura associação e estado da sala; cliente tenta reconectar com a mesma sessão guest e JWT atualizado. Inputs pendentes são descartados e teclas limpas. UI informa espera/contagem; alternar demonstração mantém socket conectado e partida ativa.
+- Suite servidor: 19 testes passaram, incluindo retorno em 19 s, expiração 20 s, orçamento 19+19+2 s, ambos ausentes, retorno tardio e abandono. Typecheck passou.
+- Edge real/Supabase real em dois contexts: socket do jogador A foi encerrado pelo harness; simulação suspendeu, cliente reconectou automaticamente, houve contagem e retomada. Alternar demonstração não parou ticks. Partida terminou 6–5 igual nos clientes, sem erros JS; guests de teste removidos.
+- Gate T2 aprovado. A gravação de cancelamento exige a nova migration da tarefa T3; ela não é simulada como vitória.

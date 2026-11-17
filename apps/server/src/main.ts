@@ -4,6 +4,7 @@ import { createTransport } from "./network/server.js";
 import { RoomApplication } from "./rooms/application.js";
 import { MatchRuntime } from "./runtime/matches.js";
 import { fileURLToPath } from "node:url";
+import { ReconnectController } from "./reconnect/controller.js";
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -12,7 +13,9 @@ async function main() {
   const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes);
-  const app = new RoomApplication([], { start: (room) => runtime.start(room), input: (room, userId, input) => runtime.submit(room, userId, input), suspend: (room) => runtime.suspend(room), remove: (roomId) => runtime.remove(roomId) });
+  const reconnect = new ReconnectController(runtime, (room, type, payload) => app.broadcast(room, type, payload));
+  const app = new RoomApplication([], { start: (room) => runtime.start(room), input: (room, userId, input) => runtime.submit(room, userId, input), suspend: (room) => reconnect.disconnect(room),
+    reconnect: (room) => reconnect.reconnect(room), abandon: (room, userId) => reconnect.abandon(room, userId), remove: (roomId) => { runtime.remove(roomId); reconnect.clear(roomId); } });
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
@@ -33,7 +36,7 @@ async function main() {
   const host = process.env.HOST ?? (process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
   transport.http.listen(port, host, () => console.log(`Servidor iniciado em ${host}:${port}`));
   let previous = performance.now();
-  const ticker = setInterval(() => { const now = performance.now(); runtime.advance(Math.min(100, now - previous)); previous = now; }, 5);
+  const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); runtime.advance(Math.min(100, now - previous)); previous = now; }, 5);
   const close = () => { clearInterval(ticker); void transport.close(); };
   process.once("SIGINT", close); process.once("SIGTERM", close);
 }
