@@ -42,11 +42,11 @@ Fallback: bloqueia somente contextos WebGL no navegador de teste. Confere mensag
 
 Os quatro percursos terminaram sem exceções JavaScript. Menor contraste HTML observado 8,13:1, com mínimo 8,78:1 no HUD/opções e na revanche; todos acima de 4,5:1 no escopo medido. Resultado completo em `011-journey-results.json`. Estes são resultados de automação, sem aprovação visual inferida.
 
-## Pendências do aceite
+## Limitações e aceite final
 
 - Firefox não instalado: sem versão ou execução local a registrar.
 - Safari indisponível neste Windows: requer macOS; WebKit de automação não seria evidência de Safari instalado.
-- Zoom nativo 200% no Edge/percurso completo com zoom nativo, saída audível e revisão visual do proprietário permanecem pendentes.
+- Zoom nativo 200% no Edge/percurso completo com zoom nativo e saída audível permanecem sem comprovação adicional.
 - Não foram repetidos benchmark de cinco minutos, carga de quinze minutos ou ensaio de reconexão das specs anteriores; a T4 não altera física, rede ou renderer.
 
-O gate da T4 permanece aberto até aprovação visual e resolução explícita dos aceites pendentes. Não há autorização implícita para dispensar critérios nem para fazer merge ou deploy.
+O proprietário aprovou a apresentação e a entrega em 2026-11-17: “ta perfeito mano podemos subir”, após informação dos resultados e limitações acima. Gate T4 fechado para esta versão com esse aceite, sem afirmar execução dos testes ausentes. Aprovação registrada em spec/tasks/evidence; PR #14 passa a pronta para revisão. Merge/deploy e gates de publicação da 007 continuam separados.

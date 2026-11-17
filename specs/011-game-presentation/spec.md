@@ -1,5 +1,5 @@
 # Entrada com elenco e HUD contextual
-Status: T1–T3 implementadas e verificadas. T4 com percurso automatizado 1v1/2v2 aprovado em Chrome/Edge; gate final aberto para revisão visual e verificações manuais documentadas.
+Status: T1–T4 concluídas. Percurso automatizado aprovado em Chrome/Edge e apresentação aprovada pelo proprietário em 2026-11-17, com as limitações de verificação documentadas.
 Requisito R11: entrada com elenco e hud contextual para a versão de tese.
 
 ## Escopo e referência
@@ -15,4 +15,6 @@ Seguir [documento de melhorias](../../docs/MELHORIAS.md). Samuel e Caio são ini
 - **Aceite do percurso:** Completar criar/entrar, selecionar, pronto, jogar, resultado e revanche com teclado. Cobrir catálogo com pelo menos cinco fixtures só em teste, nomes longos, WebGL indisponível e zoom 200%. Registrar versões Chrome/Edge/Firefox/Safari e pendências reais, além de contraste mínimo 4,5:1 para texto normal.
 
 Gate: todos os aceites de tasks.md com evidências reais; critérios visuais exigem aprovação do proprietário. Conteúdo novo, bots e publicação ficam fora desta spec.
+
+Aceite final: após receber os resultados e as pendências manuais, o proprietário aprovou a entrega: “ta perfeito mano podemos subir”. Para esta versão, o aceite combina os ensaios automatizados e essa aprovação com ciência das limitações. Zoom nativo no Edge/percurso completo, saída audível e Firefox/Safari permanecem sem comprovação adicional; não são apresentados como testes executados. Gates de publicação da 007 continuam independentes.
 
