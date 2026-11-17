@@ -12,11 +12,18 @@ Trajetórias reais capturadas em 014-traces-3.json, replay 014-review.html e cli
 
 ## 014-T2
 
+
 Perfil 4 imutável, ainda candidato; padrão de produção continua 3. Saque requer fundo da quadra e recebe arco mais longo; recepção/levantamento constroem no mesmo lado e ataque segue ao adversário. Mira opcional limitada x/z com teste de norma/valores finitos; nenhum destino/posição autoritativos vindo do cliente. Snapshots anunciam rulesVersion opcional para mostrar controles apenas no candidato. Teclado/setas e protótipo cursor emitem o mesmo formato; WASD e ações preservados. Perfis antigos ignoram aim e mantêm as fórmulas anteriores.
 
 Domínio 23/23, servidor 45/45 e web 25/25 passaram; typecheck passou. Testes novos cobrem destino limitado, monotonicidade de atributos, ação no próprio lado, rejeição de mira inválida/autoridade e saque ilegal fora do fundo, sequência única e normalização/limpeza de teclado/cursor. Regressões existentes de faltas, três toques, poderes, seis pontos e perfil fixado passaram.
 
 Fixture comparativa refinada antes do aceite T4: agora usa duas observações atrasadas por pelo menos 200ms mais RTT para estimar interceptação por gravidade, sem ler posição futura. Decide receber/levantar/atacar por contatos aceitos observados e limita tentativas de rallies longos a 15s. A versão intermediária de perseguição sem estimativa e recepção repetida gerava falhas artificiais de quarto toque/atraso; não usada como comprovação de melhora. A mesma política revisada foi aplicada a v3/v4, com linhas por amostra: 100% de devoluções em ambos os lados/RTTs e 0/20 vitórias só-saque nos dois; construção no time defensor de 1 para 3 contatos, mediana com ambos ativos de 9 para 10. Não é evidência humana. Gate funcional T2 aprovado; ativação de v4 depende da T4.
+
+## 014-T3
+
+Bola amarela com contorno preto, escala visual mínima calculada para 12 CSS px, indicador de posição sobreposto à cena para oclusão e seta se sair do enquadramento. Sombra em anel preto/branco representa projeção atual no chão, com opacidade por altura, sem promessa de queda. Tudo deriva da mesma snapshot interpolada; hitbox continua raio 0,11m. Sem rastro ou efeitos extras de movimento. Recursos da bola/sombra/indicador descartados com a cena; posição CSS do host restaurada.
+
+Câmera dinâmica agora usa vista elevada alinhada à equipe e acompanha suavemente o centro útil do rally; câmera estável permanece fixa. Resize invalida seu enquadramento para recalcular no próximo frame. Testes verificam projeção >=12px nos dois lados, 720p/1080p e viewport equivalente 200%, bola em altura/laterais e seta contida no canvas; web 26/26 passou. Gates visuais e benchmark prolongado na T4, sem aprovação humana antecipada.
 
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 
