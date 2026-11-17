@@ -1,5 +1,5 @@
 # 2v2 e habilidades
-Status: especificado, não implementado.
+Status: implementação parcial; T1–T3 concluídas; T4 aguarda confirmação ou entrega do elenco final pelo proprietário.
 Requisito R06: Quatro jogadores usam elenco definido pelo proprietário.
 
 ## Aceitação
