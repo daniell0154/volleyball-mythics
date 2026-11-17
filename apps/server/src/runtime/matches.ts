@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, createMatch, transition, createBallContactState, applyContact, resolveGround, validateAbilityDefinition, type AbilityDefinition, type BallState, type MatchState, type BallContactState } from "@volleyball-mythics/domain";
-import type { InputPayload, MatchSnapshot, RoomState, Vector3, Team, CharacterAttributes } from "@volleyball-mythics/protocol";
+import type { InputPayload, MatchSnapshot, RoomState, Vector3, Team, CharacterAttributes, VisualAction, VisualActionKind } from "@volleyball-mythics/protocol";
 export interface Athlete { id: string; team: Team; slot: number; position: Vector3; velocityY: number; assetKey?: string; ability?: AbilityDefinition; attributes: CharacterAttributes }
 interface ActiveEffect { expiresAtTick: number; multiplier: number; attributes: readonly string[] }
 export interface RunningMatch {
@@ -8,6 +8,7 @@ export interface RunningMatch {
   athletes: Athlete[]; ball: BallState; contacts: BallContactState; touching: Set<string>;
   pending: Map<string, InputPayload>; receivedSeq: Record<string, number>; processedSeq: Record<string, number>; receivedTick: Record<string, number>;
   abilityCooldowns: Map<string, number>; activeEffects: Map<string, ActiveEffect>;
+  visualActions: VisualAction[]; visualSequence: number;
   suspended: boolean; pointReason: string; winner: Team | null; reason: "points" | "forfeit" | "server_failure" | null; ended: boolean;
 }
 const fallbackAttributes: CharacterAttributes = { serve: 75, receive: 75, set: 75, attack: 75, block: 75, speed: 75, jump: 75 };
@@ -35,7 +36,7 @@ export class MatchRuntime {
     });
     const match: RunningMatch = { room, state: transition(createMatch(randomUUID(), room.mode), { type: "START" }), tick: 0, phaseTicks: 0, startedAt: new Date(this.now()).toISOString(), athletes,
       ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false }, contacts: createBallContactState(room.mode), touching: new Set(), pending: new Map(), receivedTick: {},
-      receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), abilityCooldowns: new Map(), activeEffects: new Map(), suspended: false, pointReason: "", winner: null, reason: null, ended: false };
+      receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), abilityCooldowns: new Map(), activeEffects: new Map(), visualActions: [], visualSequence: 0, suspended: false, pointReason: "", winner: null, reason: null, ended: false };
     this.matches.set(room.roomId, match); this.emit(room, this.snapshot(match));
   }
   get(roomId: string): RunningMatch | undefined { return this.matches.get(roomId); }
@@ -133,6 +134,7 @@ export class MatchRuntime {
       if (athlete.team !== match.state.servingSide || athlete.slot !== match.state.servingSlot) { this.onAction(athlete.id, "Aguarde sua vez de sacar."); return; }
       match.state = transition(match.state, { type: "SERVE_HIT" }); match.phaseTicks = 0;
       match.contacts = { ...createBallContactState(match.room.mode), lastTouchSide: athlete.team, lastPlayerId: athlete.id };
+      this.visual(match, athlete, "serve");
       match.ball = { position: { ...athlete.position, y: athlete.position.y + 1.25 }, velocity: { x: -athlete.position.x * 0.15, y: 7.5, z: direction * (7.5 + athlete.attributes.serve / 100) }, grounded: false }; match.touching.add(athlete.id); this.onAction(athlete.id, "Saque!"); return;
     }
     if (match.state.phase !== "rally" || match.touching.has(athlete.id)) return;
@@ -144,6 +146,7 @@ export class MatchRuntime {
     const result = applyContact(match.contacts, athlete.id, athlete.team, isBlock ? "block" : "hit");
     if (!result.legal) { this.point(match, result.pointFor, result.reason); return; }
     match.contacts = result.state; match.touching.add(athlete.id);
+    this.visual(match, athlete, isBlock ? "block" : action);
     this.onAction(athlete.id, isBlock ? "Bloqueio!" : action === "attack" ? "Ataque!" : action === "set" ? "Levantamento!" : "Recepção!");
     const targetZ = action === "set" ? athlete.position.z + direction : direction * 5;
     const flight = action === "attack" ? 0.85 : action === "set" ? 1.35 : 1.65;
@@ -159,6 +162,7 @@ export class MatchRuntime {
       if (!teammate) { this.onAction(athlete.id, "Habilidade indisponível sem companheiro."); return; }
       match.activeEffects.set(teammate.id, { expiresAtTick: match.tick + ability.durationSeconds * 60, multiplier: ability.multiplier, attributes: ability.affectedAttributes });
       match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
+      this.visual(match, athlete, "rant", teammate.position);
       this.onAction(athlete.id, "Bronca! Seu parceiro recebeu um debuff temporário.");
       this.onAction(teammate.id, "Bronca do Samuel: velocidade e recepção reduzidas.");
       return;
@@ -166,6 +170,7 @@ export class MatchRuntime {
     if (ability.id === "free_point_out") {
       if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) { this.onAction(athlete.id, "Chegue mais perto da bola para usar a habilidade."); return; }
       match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
+      this.visual(match, athlete, "freePoint");
       match.ball = { position: { x: athlete.team === "A" ? -5 : 5, y: Math.max(1, match.ball.position.y), z: match.ball.position.z }, velocity: { x: 0, y: 0, z: 0 }, grounded: false };
       this.onAction(athlete.id, "Foi sem querer... bola para fora, ponto para o adversário.");
       this.point(match, athlete.team === "A" ? "B" : "A", "ability_free_point");
@@ -177,10 +182,17 @@ export class MatchRuntime {
       this.onAction(athlete.id, "Aumento de velocidade de teste ativado.");
     }
   }
+  private visual(match: RunningMatch, athlete: Athlete, kind: VisualActionKind, target = match.ball.position): void {
+    const dx = target.x - athlete.position.x, dz = target.z - athlete.position.z;
+    match.visualActions.push({ id: ++match.visualSequence, actorId: athlete.id, kind, tick: match.tick,
+      facing: Math.hypot(dx, dz) > .01 ? Math.atan2(dx, dz) : athlete.team === "A" ? 0 : Math.PI });
+    match.visualActions = match.visualActions.filter((action) => match.tick - action.tick <= 120).slice(-32);
+  }
   snapshot(match: RunningMatch): MatchSnapshot {
     const phase = match.suspended ? "disconnectedSuspension" : match.state.phase;
     const secondsRemaining = match.suspended ? 0 : match.state.phase === "countdown" ? Math.max(0, 3 - match.phaseTicks / 60) : match.state.phase === "serving" ? Math.max(0, 8 - match.phaseTicks / 60) : match.state.phase === "point" ? Math.max(0, 2 - match.phaseTicks / 60) : 0;
     return { matchId: match.state.matchId, tick: match.tick, phase: phase as MatchSnapshot["phase"], score: { ...match.state.score }, serverTime: this.now(),
+      visualActions: match.visualActions.filter((action) => match.tick - action.tick <= 120).map((action) => ({ ...action })),
       lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position }, ...(a.assetKey ? { assetKey: a.assetKey } : {}) })), ball: { ...match.ball.position }, cooldowns: Object.fromEntries([...match.abilityCooldowns].filter(([, expiry]) => expiry > match.tick).map(([id, expiry]) => [id, (expiry - match.tick) / 60])),
       servingSide: match.state.servingSide, servingSlot: match.state.servingSlot, secondsRemaining, winner: match.winner, reason: match.reason, pointReason: match.pointReason };
   }

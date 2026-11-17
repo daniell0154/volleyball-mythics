@@ -127,6 +127,14 @@ export interface RoomState {
 }
 export interface CatalogEntry { id: string; version: number; name: string; assetKey?: string; overall?: number; abilityId?: string; abilityConfig?: Readonly<Record<string, unknown>>; abilityName?: string; attributes?: CharacterAttributes }
 export interface Vector3 { readonly x: number; readonly y: number; readonly z: number }
+export type VisualActionKind = "serve" | "receive" | "set" | "attack" | "block" | "rant" | "freePoint";
+export interface VisualAction {
+  readonly id: number;
+  readonly actorId: string;
+  readonly kind: VisualActionKind;
+  readonly tick: number;
+  readonly facing: number;
+}
 export interface MatchSnapshot {
   matchId: string;
   tick: number;
@@ -143,6 +151,7 @@ export interface MatchSnapshot {
   winner?: Team | null;
   reason?: MatchReason | null;
   pointReason?: string;
+  visualActions?: readonly VisualAction[];
 }
 export interface MatchEnded {
   matchId: string; score: Readonly<Record<Team, number>>; winner: Team | null;

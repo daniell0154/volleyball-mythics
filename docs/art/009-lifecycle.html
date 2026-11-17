@@ -1,0 +1,32 @@
+<!doctype html><html><meta charset="UTF-8"><title>009 lifecycle probe</title><body><div id="host" style="width:1280px;height:720px"></div>
+<script type="module">
+import * as THREE from 'three';
+import {createScene} from '/apps/web/src/scene/createScene.ts';
+import {syntheticSnapshot} from '/apps/web/src/game/presentation.ts';
+window.runLifecycle=()=>{
+ const geometries=new Set(),materials=new Set(),seen=new WeakSet();
+ let rendered=new Set();
+ const original=THREE.Mesh.prototype.onBeforeRender;
+ THREE.Mesh.prototype.onBeforeRender=function(...args){
+  rendered.add(this.uuid);
+  for(const [resource,live] of [[this.geometry,geometries],...((Array.isArray(this.material)?this.material:[this.material]).map(m=>[m,materials]))]){
+   if(!seen.has(resource)){seen.add(resource);live.add(resource.uuid);resource.addEventListener('dispose',()=>live.delete(resource.uuid));}
+  }
+  original.apply(this,args);
+ };
+ const rows=[];
+ try{
+  for(let i=0;i<10;i++){
+   const host=document.querySelector('#host'),adapter=createScene(host);adapter.setQuality('low');
+   const frame=syntheticSnapshot(1);frame.matchId='first-'+i;frame.visualActions=[{id:1,actorId:'fixture-0',kind:'block',tick:60,facing:0}];
+   frame.athletes=frame.athletes.map((a,j)=>({...a,assetKey:j%2?'procedural:v1:male:2016838844':'procedural:v1:male:2626328580'}));
+   rendered=new Set();adapter.update(frame);const before=rendered.size;
+   rendered=new Set();adapter.update({...frame,matchId:'rematch-'+i});const afterRematch=rendered.size;
+   const canvases=host.querySelectorAll('canvas').length;
+   adapter.dispose();
+   rows.push({before,afterRematch,canvases,canvasesAfter:host.querySelectorAll('canvas').length,liveGeometries:geometries.size,liveMaterials:materials.size});
+  }
+ }finally{THREE.Mesh.prototype.onBeforeRender=original;}
+ return {rows,pass:rows.every(r=>r.before===r.afterRematch&&r.before===rows[0].before&&r.canvases===1&&r.canvasesAfter===0&&r.liveGeometries===0&&r.liveMaterials===0)};
+};
+</script></body></html>

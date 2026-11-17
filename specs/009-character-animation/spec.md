@@ -1,5 +1,5 @@
 # Animações de locomoção e ações
-Status: proposta; não implementada.
+Status: implementada; T1–T4 verificadas e animações aprovadas pelo proprietário. Aguardando integração.
 Requisito R09: animações de locomoção e ações para a versão de tese.
 
 ## Escopo e referência

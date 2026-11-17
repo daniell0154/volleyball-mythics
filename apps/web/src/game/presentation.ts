@@ -1,6 +1,10 @@
 // Presentation-only data. These fixtures never determine a real match result.
+import type { VisualAction } from "@volleyball-mythics/protocol";
 export interface Position { readonly x: number; readonly y: number; readonly z: number }
 export interface SceneSnapshot {
+  readonly matchId?: string;
+  readonly renderTick?: number;
+  readonly visualActions?: readonly VisualAction[];
   readonly tick: number;
   readonly phase: string;
   readonly score: { readonly A: number; readonly B: number };

@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createCamera, fitCamera, followCamera } from "./camera.js";
 import { disposeAvatar } from "./avatar.js";
 import { createPresentationAvatar } from "./avatarManifest.js";
+import { AvatarAnimator } from "./animateAvatar.js";
 import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
 export function createScene(host: HTMLElement): SceneAdapter {
@@ -32,7 +33,8 @@ export function createScene(host: HTMLElement): SceneAdapter {
   box(2, 3, 0.1, "#584b44", 0, 1.5, -16.4);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: "#fff1bd" }));
   scene.add(ball);
-  const athletes = new Map<string, { model: THREE.Object3D; assetKey: string; team: string }>();
+  const athletes = new Map<string, { model: THREE.Object3D; assetKey: string; team: string; animator: AvatarAnimator }>();
+  let matchId: string | undefined;
   let disposed = false;
   let followId: string | null = null;
   let lastFrame = performance.now();
@@ -44,6 +46,10 @@ export function createScene(host: HTMLElement): SceneAdapter {
   return {
     update(snapshot: SceneSnapshot) {
       if (disposed) return;
+      if (matchId !== snapshot.matchId) {
+        for (const entry of athletes.values()) { scene.remove(entry.model); disposeAvatar(entry.model); }
+        athletes.clear(); matchId = snapshot.matchId;
+      }
       const now = performance.now();
       const followed = snapshot.athletes.find((a) => a.id === followId);
       if (followed) followCamera(camera, followed.position, followed.team, (now - lastFrame) / 1000);
@@ -61,9 +67,10 @@ export function createScene(host: HTMLElement): SceneAdapter {
           let model: THREE.Object3D;
           try { model = createPresentationAvatar(assetKey, athlete.team); }
           catch { model = box(0.65, 1.8, 0.65, athlete.team === "A" ? "#154c8a" : "#b94338", 0, 0, 0); model.userData.placeholder = true; }
-          scene.add(model); entry = { model, assetKey, team: athlete.team }; athletes.set(athlete.id, entry);
+          scene.add(model); entry = { model, assetKey, team: athlete.team, animator: new AvatarAnimator(model) }; athletes.set(athlete.id, entry);
         }
         entry.model.position.set(athlete.position.x, athlete.position.y + (entry.model.userData.placeholder ? 0.9 : 0), athlete.position.z);
+        entry.animator.update(snapshot, athlete);
       }
       renderer.render(scene, camera);
     }, resize,
