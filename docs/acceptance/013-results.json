@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-17T17:28:21.082Z",
+  "browser": "157.0.8103.79",
+  "auth": "local fixture; production UI built, real sockets/runtime",
+  "sessions": 4,
+  "preview": true,
+  "removedDemo": true,
+  "productionRoutes": [
+    "/",
+    "/demo",
+    "/preview",
+    "/admin"
+  ],
+  "result": {
+    "A": 6,
+    "B": 5
+  },
+  "rematch": true,
+  "forfeit": {
+    "A": 0,
+    "B": 0
+  },
+  "protocolErrors": [],
+  "jsErrors": []
+}

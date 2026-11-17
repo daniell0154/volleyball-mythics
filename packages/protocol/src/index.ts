@@ -101,6 +101,7 @@ export interface ServerMessage<TType extends string, TPayload> {
 }
 
 export type ServerErrorCode =
+  | "mode_unavailable"
   | "unauthorized"
   | "invalid_message"
   | "room_not_found"

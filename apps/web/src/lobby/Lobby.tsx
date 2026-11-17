@@ -24,7 +24,6 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
   const catalogRef=useRef<CatalogEntry[]>([]);
   const [catalogStatus,setCatalogStatus]=useState<"loading"|"ready"|"error">("loading");
   const [featuredKey,setFeaturedKey]=useState("");
-  const [mode,setMode]=useState<"1v1"|"2v2">("1v1");
   const catalogGeneration=useRef(0);
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
@@ -104,10 +103,10 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
     {error && <p className="notice error" role="alert">{error}</p>}
     {reconnectStatus && <p className="notice" role="status">{reconnectStatus}</p>}
     {!room?<div className="entry-grid"><div className="entry-copy">
-      <div className="eyebrow">Vôlei 3D · 1v1 e 2v2 · Primeiro a 6</div><h1>A quadra<br/>é de vocês.</h1><p className="lead">Escolha seu atleta, chame seus amigos e transforme o próximo rally em história.</p>
-      <form className="entry-form panel" onSubmit={event=>{event.preventDefault();void enter("createRoom",{mode});}}>
+      <div className="eyebrow">Vôlei 3D · 2v2 online · Primeiro a 6</div><h1>A quadra<br/>é de vocês.</h1><p className="lead">Escolha seu atleta e chame mais três pessoas para o próximo rally.</p>
+      <form className="entry-form panel" onSubmit={event=>{event.preventDefault();void enter("createRoom",{mode:"2v2"});}}>
        <label>Seu apelido<input autoComplete="nickname" value={name} minLength={2} maxLength={24} onChange={event=>setName(event.target.value)} required placeholder="Como você quer ser chamado?"/></label>
-       <div className="mode-choice" role="group" aria-label="Modo de jogo"><button type="button" aria-pressed={mode==="1v1"} onClick={()=>setMode("1v1")}>1v1 · Duelo</button><button type="button" aria-pressed={mode==="2v2"} onClick={()=>setMode("2v2")}>2v2 · Duplas</button></div>
+       <p className="helper">2v2 online · Dois jogadores por equipe. Compartilhe o convite para completar os quatro lugares.</p>
        <button className="primary wide" disabled={busy||Boolean(pending)||name.trim().length<2} type="submit">{busy?"Entrando…":"Criar sala"}</button>
        {commandError?.action==="createRoom"&&<p className="notice error" role="alert">{commandError.message}</p>}
        <div className="divider">ou entre com um convite</div>

@@ -1,5 +1,5 @@
 # 2v2 online como modo principal
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T4 concluídas; experiência aprovada pelo proprietário, que autorizou retirar draft e integrar a PR #16.
 Requisito R13. Dependência: 012 integrada.
 
 ## Aceitação
