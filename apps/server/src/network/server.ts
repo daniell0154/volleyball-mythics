@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { ClientMessage } from "@volleyball-mythics/protocol";
 import type { Identity, VerifyToken } from "./auth.js";
 import { parseAuth, parseEnvelope } from "./envelope.js";
+import { createStaticHandler } from "./static.js";
 
 export interface Session extends Identity { send(type: string, payload: unknown): void }
 export function createTransport(options: {
@@ -12,8 +13,13 @@ export function createTransport(options: {
   onConnect?(session: Session): void;
   onDisconnect?(session: Session): void;
   authTimeoutMs?: number;
+  staticDirectory?: string;
 }) {
-  const http = createServer((_request, response) => { response.writeHead(200, { "Content-Type": "text/plain" }); response.end("Volleyball Mythics\n"); });
+  const handler = options.staticDirectory ? createStaticHandler(options.staticDirectory) : undefined;
+  const http = createServer((request, response) => {
+    if (handler) { void handler(request, response); return; }
+    response.writeHead(200, { "Content-Type": "text/plain" }); response.end("Volleyball Mythics\n");
+  });
   const sockets = new WebSocketServer({ noServer: true, maxPayload: 8192, perMessageDeflate: false });
   const identities = new Set<string>();
   http.on("upgrade", (request, socket, head) => {

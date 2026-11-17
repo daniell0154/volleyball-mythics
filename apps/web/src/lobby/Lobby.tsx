@@ -3,6 +3,7 @@ import type { CatalogEntry, ClientMessage, RoomState, MatchSnapshot } from "@vol
 import { createWebSupabaseClient, saveGuestProfile } from "../auth/client.js";
 import { RoomConnection } from "../network/connection.js";
 import { OnlineMatch } from "../game/OnlineMatch.js";
+import { gameServerUrl } from "../network/serverUrl.js";
 
 export function Lobby() {
   const connection = useRef<RoomConnection | null>(null);
@@ -25,7 +26,7 @@ export function Lobby() {
       }
       if (!session) throw new Error("Sessão guest indisponível");
       await saveGuestProfile(client, name);
-      const socket = new RoomConnection(import.meta.env.VITE_GAME_SERVER_URL ?? "ws://127.0.0.1:3001/socket", (type, payload) => {
+      const socket = new RoomConnection(gameServerUrl(location.href, import.meta.env.DEV, import.meta.env.VITE_GAME_SERVER_URL), (type, payload) => {
         if (type === "roomState") { setRoom(payload as RoomState | null); if (!payload) setSnapshot(null); }
         if (type === "catalog") setCatalog(payload as CatalogEntry[]);
         if (type === "snapshot") setSnapshot(payload as MatchSnapshot);

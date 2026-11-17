@@ -47,10 +47,29 @@ Abrir `http://localhost:5173` e clicar **Salas online**. O servidor usa `ws://12
 
 Envie apenas resultados e mensagens de erro, sem valores de chaves ou tokens. Um erro `unauthorized` pode indicar guest desabilitado, token expirado ou falha na leitura de catálogo; confira as duas variáveis, migrações e RLS. O catálogo é relido em cada conexão autenticada, portanto reconecte após adicionar revisões.
 
-## Hospedagem posterior
+## Render com um único Web Service
 
-Frontend: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_GAME_SERVER_URL=wss://SEU_SERVIDOR/socket`.
+O Web Service Node serve `apps/web/dist`, os assets e `/socket` na mesma porta. Não é necessário criar Static Site. A rota `/healthz` responde `ok`. O bind continua em 0.0.0.0 no Render com a PORT fornecida; localmente usa loopback.
 
-Backend: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_ORIGINS=https://SEU_SITE` e porta da hospedagem em `PORT`. A escrita de resultados futura exigirá `SUPABASE_SECRET_KEY`. Localmente o servidor escuta em 127.0.0.1; no Render detecta RENDER e usa 0.0.0.0 com a PORT fornecida. HOST permite override explícito. Nenhuma hospedagem foi criada por esta implementação.
+Configuração do serviço existente:
 
-No Render, criar Web Service Node para o backend, Root Directory vazio, Build Command `npm ci --include=dev && npm run build --workspace @volleyball-mythics/server` e Start Command `npm run start --workspace @volleyball-mythics/server`. O monorepo precisa da raiz para acessar packages/domain e packages/protocol. Usar uma única instância enquanto salas e partidas estiverem em memória. O frontend pode ser Static Site, também com Root Directory vazio, Build Command `npm ci --include=dev && npm run build --workspace @volleyball-mythics/web` e Publish Directory `apps/web/dist`. Configurar os endereços públicos no frontend/backend e reconstruir o frontend após alterar variáveis VITE.
+- Branch: `main` após merge da correção de serviço único.
+- Root Directory: vazio (raiz do monorepo).
+- Build Command: `npm ci --include=dev && npm run build`.
+- Start Command: `npm start`.
+- Health Check Path: `/healthz`.
+- Usar uma única instância enquanto salas/partidas estiverem em memória.
+
+Variáveis no Render:
+
+```dotenv
+SUPABASE_URL=https://SEU_PROJETO.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+ALLOWED_ORIGINS=https://volleyball-mythics.onrender.com
+```
+
+Pode manter `SUPABASE_SECRET_KEY` apenas para o backend quando a persistência de resultados for usada. A configuração Vite copia exclusivamente URL e publishable key para o frontend durante o build; nunca copia a secret key. Os nomes VITE_SUPABASE_URL/PUBLISHABLE_KEY também são aceitos e têm precedência. Não é preciso duplicar as variáveis públicas no serviço único.
+
+Remova `VITE_GAME_SERVER_URL` do Render para que o cliente use automaticamente `wss://volleyball-mythics.onrender.com/socket`. Em produção HTTP local, usa ws na mesma origem. No desenvolvimento Vite separado, continua usando ws://127.0.0.1:3001/socket. O override VITE_GAME_SERVER_URL permanece disponível caso separe os serviços no futuro.
+
+Faça novo deploy depois de alterar variáveis públicas: elas são incluídas no build React. Não configure PORT manualmente no Render. A URL do serviço agora deve abrir a UI, em vez do texto de health check antigo. Cadastro de convidados/salas usa Supabase; nenhuma configuração de serviço Render é alterada automaticamente por este repositório.
