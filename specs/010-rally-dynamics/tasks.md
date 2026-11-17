@@ -10,7 +10,7 @@ Todas referenciam R10; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: packages/domain, apps/server/src/runtime/matches.ts, apps/web/src/input, apps/web/src/game; docs/benchmarks.
   - Entrega/aceite: Feedback imediato de intenção sem afirmar contato; contato/habilidade só após confirmação. Documentar prioridade quando múltiplas ações chegam no mesmo tick; impedir ações atrasadas e spam. Não mudar limite de rede para mascarar atraso.
 
-- [ ] 010-T3 — Calibrar trajetórias
+- [x] 010-T3 — Calibrar trajetórias
   - Destinos: packages/domain, apps/server/src/runtime/matches.ts, apps/web/src/input, apps/web/src/game; docs/benchmarks.
   - Entrega/aceite: Comparar perfis versionados de saque, recepção, levantamento e ataque, um conjunto por vez. Dar janela de recuperação entre contatos, preservar monotonicidade dos atributos e avaliar 1v1 e 2v2 separadamente. Qualquer input buffering muda contrato e exige limite explícito.
 

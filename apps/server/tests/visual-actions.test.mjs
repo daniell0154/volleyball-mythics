@@ -23,7 +23,8 @@ test('only accepted contacts emit bounded animation history; old server inputs r
 
 test('server identifies set, attack and block, and caps dense accepted-contact history',()=>{
  const registry=new RoomRegistry(),room=registry.create('a','1v1');registry.join('b',room.code);
- const runtime=new MatchRuntime(()=>{});runtime.start(room);runtime.advance(3000);
+ // Legacy permits dense per-tick contacts; new profiles also impose recovery.
+ const runtime=new MatchRuntime(()=>{},Date.now,undefined,undefined,undefined,false,1);runtime.start(room);runtime.advance(3000);
  runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(20);
  const match=runtime.get(room.roomId),athlete=match.athletes[0];
  for(let seq=2;seq<42;seq++){

@@ -3,11 +3,12 @@ import {writeFile} from 'node:fs/promises';
 import {MatchRuntime} from '../../apps/server/dist/runtime/matches.js';
 import {RoomRegistry} from '../../apps/server/dist/rooms/registry.js';
 const rows=[];
+const profileVersion=Number(process.argv[3]??1);
 for(const mode of ['1v1','2v2']){
  const registry=new RoomRegistry(),room=registry.create('fixture-a',mode);
  for(const id of mode==='1v1'?['fixture-b']:['fixture-b','fixture-c','fixture-d'])registry.join(id,room.code);
  let clock=0,seq=0;
- const runtime=new MatchRuntime(()=>{},()=>clock);
+ const runtime=new MatchRuntime(()=>{},()=>clock,undefined,undefined,undefined,false,profileVersion);
  runtime.onRallyMeasured=summary=>rows.push(summary);
  runtime.start(room);
  for(let step=0;step<120000&&rows.filter(r=>r.mode===mode).length<20;step++){
