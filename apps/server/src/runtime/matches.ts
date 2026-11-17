@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, createMatch, transition, createBallContactState, applyContact, resolveGround, type BallState, type MatchState, type BallContactState } from "@volleyball-mythics/domain";
+import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, createMatch, transition, createBallContactState, applyContact, resolveGround, validateAbilityDefinition, type AbilityDefinition, type BallState, type MatchState, type BallContactState } from "@volleyball-mythics/domain";
 import type { InputPayload, MatchSnapshot, RoomState, Vector3, Team, CharacterAttributes } from "@volleyball-mythics/protocol";
-export interface Athlete { id: string; team: Team; slot: number; position: Vector3; velocityY: number; assetKey?: string; attributes: CharacterAttributes }
+export interface Athlete { id: string; team: Team; slot: number; position: Vector3; velocityY: number; assetKey?: string; ability?: AbilityDefinition; attributes: CharacterAttributes }
+interface ActiveEffect { expiresAtTick: number; multiplier: number; attributes: readonly string[] }
 export interface RunningMatch {
   room: RoomState; state: MatchState; tick: number; phaseTicks: number; startedAt: string;
   athletes: Athlete[]; ball: BallState; contacts: BallContactState; touching: Set<string>;
   pending: Map<string, InputPayload>; receivedSeq: Record<string, number>; processedSeq: Record<string, number>; receivedTick: Record<string, number>;
+  abilityCooldowns: Map<string, number>; activeEffects: Map<string, ActiveEffect>;
   suspended: boolean; pointReason: string; winner: Team | null; reason: "points" | "forfeit" | "server_failure" | null; ended: boolean;
 }
 const fallbackAttributes: CharacterAttributes = { serve: 75, receive: 75, set: 75, attack: 75, block: 75, speed: 75, jump: 75 };
@@ -18,17 +20,22 @@ export class MatchRuntime {
   onAction: (userId: string, message: string) => void = () => {};
   constructor(private emit: (room: RoomState, snapshot: MatchSnapshot) => void, private now: () => number = Date.now,
     private resolveAsset: (id: string, version: number) => string | undefined = () => undefined,
-    private resolveAttributes: (id: string, version: number) => CharacterAttributes | undefined = () => undefined) {}
+    private resolveAttributes: (id: string, version: number) => CharacterAttributes | undefined = () => undefined,
+    private resolveAbility: (id: string, version: number) => { id: string; config: unknown } | undefined = () => undefined,
+    private allowDevelopmentFixture = process.env.NODE_ENV === "development") {}
   start(room: RoomState): void {
     const athletes: Athlete[] = room.members.map((member) => {
       const key = member.character ? this.resolveAsset(member.character.id, member.character.version) : undefined;
       const attributes = member.character ? this.resolveAttributes(member.character.id, member.character.version) : undefined;
-      return { id: member.userId, team: member.team, slot: member.slot, ...(key ? { assetKey: key } : {}), attributes: { ...(attributes ?? fallbackAttributes) },
+      const configuredAbility = member.character ? this.resolveAbility(member.character.id, member.character.version) : undefined;
+      let ability: AbilityDefinition | undefined;
+      if (configuredAbility) { try { ability = validateAbilityDefinition(configuredAbility.id, configuredAbility.config, this.allowDevelopmentFixture); } catch { /* Invalid catalog abilities stay unavailable. */ } }
+      return { id: member.userId, team: member.team, slot: member.slot, ...(key ? { assetKey: key } : {}), ...(ability ? { ability } : {}), attributes: { ...(attributes ?? fallbackAttributes) },
         position: { x: room.mode === "1v1" ? 0 : member.slot ? 2 : -2, y: 0, z: member.team === "A" ? -6 : 6 }, velocityY: 0 };
     });
     const match: RunningMatch = { room, state: transition(createMatch(randomUUID(), room.mode), { type: "START" }), tick: 0, phaseTicks: 0, startedAt: new Date(this.now()).toISOString(), athletes,
       ball: { position: { x: 0, y: 1, z: -6 }, velocity: { x: 0, y: 0, z: 0 }, grounded: false }, contacts: createBallContactState(room.mode), touching: new Set(), pending: new Map(), receivedTick: {},
-      receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), suspended: false, pointReason: "", winner: null, reason: null, ended: false };
+      receivedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), processedSeq: Object.fromEntries(athletes.map((a) => [a.id, 0])), abilityCooldowns: new Map(), activeEffects: new Map(), suspended: false, pointReason: "", winner: null, reason: null, ended: false };
     this.matches.set(room.roomId, match); this.emit(room, this.snapshot(match));
   }
   get(roomId: string): RunningMatch | undefined { return this.matches.get(roomId); }
@@ -68,7 +75,7 @@ export class MatchRuntime {
   }
   private end(match: RunningMatch): void {
     if (match.ended) return;
-    match.ended = true; match.suspended = false; match.pending.clear(); match.room.status = "finished";
+    match.ended = true; match.suspended = false; match.pending.clear(); match.activeEffects.clear(); match.room.status = "finished";
     this.emit(match.room, this.snapshot(match)); this.onEnded(match);
   }
   private resetRally(match: RunningMatch): void {
@@ -77,6 +84,7 @@ export class MatchRuntime {
   }
   private step(match: RunningMatch): void {
     match.tick++; match.phaseTicks++;
+    for (const [userId, effect] of match.activeEffects) if (match.tick >= effect.expiresAtTick) match.activeEffects.delete(userId);
     if (match.state.phase === "countdown") {
       if (match.phaseTicks >= 180) { match.state = transition(match.state, { type: "COUNTDOWN_FINISHED" }); match.phaseTicks = 0; this.resetRally(match); }
       else return;
@@ -92,7 +100,8 @@ export class MatchRuntime {
       const input = stored && match.tick - (match.receivedTick[athlete.id] ?? 0) <= 15 ? stored : undefined;
       if (input) {
         match.processedSeq[athlete.id] = input.seq;
-        const speed = DEFAULT_RULES.athleteSpeedMin + (athlete.attributes.speed - 1) / 99 * (DEFAULT_RULES.athleteSpeedMax - DEFAULT_RULES.athleteSpeedMin);
+        const speedMultiplier = match.activeEffects.get(athlete.id)?.attributes.includes("speed") ? match.activeEffects.get(athlete.id)!.multiplier : 1;
+        const speed = (DEFAULT_RULES.athleteSpeedMin + (athlete.attributes.speed - 1) / 99 * (DEFAULT_RULES.athleteSpeedMax - DEFAULT_RULES.athleteSpeedMin)) * speedMultiplier;
         athlete.position = moveAthlete(athlete.position, { x: input.moveX, z: input.moveZ }, speed, dt, { minX: -4.175, maxX: 4.175, minZ: athlete.team === "A" ? -8.675 : 0.325, maxZ: athlete.team === "A" ? -0.325 : 8.675 });
         if (input.actions.includes("jump") && athlete.position.y === 0) athlete.velocityY = 4 + (athlete.attributes.jump - 1) / 99 * 5;
         this.action(match, athlete, input);
@@ -114,7 +123,7 @@ export class MatchRuntime {
     }
   }
   private action(match: RunningMatch, athlete: Athlete, input: InputPayload): void {
-    if (input.actions.includes("ability")) this.onAction(athlete.id, "Especial ainda indisponível.");
+    if (input.actions.includes("ability")) { this.useAbility(match, athlete); if (match.state.phase === "point" || match.ended) return; }
     const direction = athlete.team === "A" ? 1 : -1;
     if (match.state.phase === "serving") {
       if (!input.actions.includes("serve")) return;
@@ -126,7 +135,8 @@ export class MatchRuntime {
     if (match.state.phase !== "rally" || match.touching.has(athlete.id)) return;
     const action = input.actions.includes("attack") ? "attack" : input.actions.includes("set") ? "set" : input.actions.includes("receive") ? "receive" : null;
     if (!action) return;
-    if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) { this.onAction(athlete.id, "Chegue mais perto da bola."); return; }
+    const receiveMultiplier = match.activeEffects.get(athlete.id)?.attributes.includes("receive") ? match.activeEffects.get(athlete.id)!.multiplier : 1;
+    if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9 * receiveMultiplier) { this.onAction(athlete.id, "Chegue mais perto da bola."); return; }
     const isBlock = action === "receive" && athlete.position.y > 0.2 && Math.abs(athlete.position.z) < 1 && match.ball.position.y >= DEFAULT_RULES.netHeight;
     const result = applyContact(match.contacts, athlete.id, athlete.team, isBlock ? "block" : "hit");
     if (!result.legal) { this.point(match, result.pointFor, result.reason); return; }
@@ -136,11 +146,39 @@ export class MatchRuntime {
     const flight = action === "attack" ? 0.85 : action === "set" ? 1.35 : 1.65;
     match.ball = { position: { ...match.ball.position }, velocity: { x: -match.ball.position.x / flight * 0.3, y: action === "attack" ? (athlete.position.y > 0.5 ? 3 : 6.5) : action === "set" ? 8 : 7.5, z: (targetZ - match.ball.position.z) / flight }, grounded: false };
   }
+  private useAbility(match: RunningMatch, athlete: Athlete): void {
+    const ability = athlete.ability;
+    if (!ability) { this.onAction(athlete.id, "Habilidade indisponível."); return; }
+    if (!ability.validPhases.includes(match.state.phase as "rally")) { this.onAction(athlete.id, "Use a habilidade durante a jogada."); return; }
+    if (match.tick < (match.abilityCooldowns.get(athlete.id) ?? 0)) { this.onAction(athlete.id, "Habilidade em recarga."); return; }
+    if (ability.id === "teammate_rant") {
+      const teammate = match.athletes.find((other) => other.team === athlete.team && other.id !== athlete.id);
+      if (!teammate) { this.onAction(athlete.id, "Habilidade indisponível sem companheiro."); return; }
+      match.activeEffects.set(teammate.id, { expiresAtTick: match.tick + ability.durationSeconds * 60, multiplier: ability.multiplier, attributes: ability.affectedAttributes });
+      match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
+      this.onAction(athlete.id, "Bronca! Seu parceiro recebeu um debuff temporário.");
+      this.onAction(teammate.id, "Bronca do Samuel: velocidade e recepção reduzidas.");
+      return;
+    }
+    if (ability.id === "free_point_out") {
+      if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) { this.onAction(athlete.id, "Chegue mais perto da bola para usar a habilidade."); return; }
+      match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
+      match.ball = { position: { x: athlete.team === "A" ? -5 : 5, y: Math.max(1, match.ball.position.y), z: match.ball.position.z }, velocity: { x: 0, y: 0, z: 0 }, grounded: false };
+      this.onAction(athlete.id, "Foi sem querer... bola para fora, ponto para o adversário.");
+      this.point(match, athlete.team === "A" ? "B" : "A", "ability_free_point");
+      return;
+    }
+    if (ability.id === "speed_boost_fixture") {
+      match.activeEffects.set(athlete.id, { expiresAtTick: match.tick + ability.durationSeconds * 60, multiplier: ability.multiplier, attributes: [ability.attribute] });
+      match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
+      this.onAction(athlete.id, "Aumento de velocidade de teste ativado.");
+    }
+  }
   snapshot(match: RunningMatch): MatchSnapshot {
     const phase = match.suspended ? "disconnectedSuspension" : match.state.phase;
     const secondsRemaining = match.suspended ? 0 : match.state.phase === "countdown" ? Math.max(0, 3 - match.phaseTicks / 60) : match.state.phase === "serving" ? Math.max(0, 8 - match.phaseTicks / 60) : match.state.phase === "point" ? Math.max(0, 2 - match.phaseTicks / 60) : 0;
     return { matchId: match.state.matchId, tick: match.tick, phase: phase as MatchSnapshot["phase"], score: { ...match.state.score }, serverTime: this.now(),
-      lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position }, ...(a.assetKey ? { assetKey: a.assetKey } : {}) })), ball: { ...match.ball.position }, cooldowns: {},
+      lastProcessedSeq: { ...match.processedSeq }, athletes: match.athletes.map((a) => ({ id: a.id, team: a.team, position: { ...a.position }, ...(a.assetKey ? { assetKey: a.assetKey } : {}) })), ball: { ...match.ball.position }, cooldowns: Object.fromEntries([...match.abilityCooldowns].filter(([, expiry]) => expiry > match.tick).map(([id, expiry]) => [id, (expiry - match.tick) / 60])),
       servingSide: match.state.servingSide, servingSlot: match.state.servingSlot, secondsRemaining, winner: match.winner, reason: match.reason, pointReason: match.pointReason };
   }
 }

@@ -1,5 +1,6 @@
 import type { CharacterAttributes } from "@volleyball-mythics/protocol";
 import { overallFromAttributes, validateCharacterAttributes } from "../config/physics.js";
+import { validateAbilityDefinition } from "../abilities/index.js";
 
 export interface CharacterRevision {
   readonly id: string;
@@ -27,6 +28,10 @@ export function validateCharacterRevision(character: CharacterRevision): Charact
   validateCharacterAttributes(character.attributes);
   if (character.overall !== overallFromAttributes(character.attributes)) throw new Error("character overall does not match its seven attributes");
   if (character.assetKey !== undefined && (typeof character.assetKey !== "string" || character.assetKey.length > 160)) throw new Error("invalid character asset key");
+  if (character.abilityId || character.abilityConfig) {
+    if (!character.abilityId || !character.abilityConfig) throw new Error("ability id and config must be provided together");
+    validateAbilityDefinition(character.abilityId, character.abilityConfig);
+  }
   return character;
 }
 

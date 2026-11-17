@@ -21,3 +21,36 @@ test('receive action requires ball in range and separation prevents repeated tou
  runtime.submit(room,'b',{seq:2,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.lastTouchSide,'B');assert.equal(match.contacts.touches,1);
  runtime.submit(room,'b',{seq:3,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.touches,1);
 });
+
+const rant={trigger:'manual',validPhases:['rally'],target:'teammate',affectedAttributes:['speed','receive'],multiplier:.85,durationSeconds:5,cooldownSeconds:20,stackable:false};
+const freePoint={trigger:'manual',validPhases:['rally'],target:'opponent_team',effect:'force_ball_out',requiresBallInActionRange:true,points:1,pointPolicy:'opponent_once_on_rally_resolution',durationSeconds:0,cooldownSeconds:25,endsRally:true,stackable:false};
+function doubles(abilityId){
+ const rooms=new RoomRegistry(),room=rooms.create('a','2v2');for(const id of ['b','c','d'])rooms.join(id,room.code);
+ room.members.forEach((member,index)=>{member.character={id:index===0?abilityId:'none',version:1};});
+ const frames=[];const runtime=new MatchRuntime((_r,s)=>frames.push(s),Date.now,()=>undefined,()=>undefined,(id)=>id==='teammate_rant'?{id,config:rant}:id==='free_point_out'?{id,config:freePoint}:undefined);
+ runtime.start(room);return{runtime,room,frames};
+}
+test('teammate ability applies one bounded debuff, ignores spam during cooldown, expires, and clears on match end',()=>{
+ const {runtime,room}=doubles('teammate_rant');runtime.advance(3000);
+ runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);
+ const match=runtime.get(room.roomId);match.ball={position:{x:0,y:10000,z:0},velocity:{x:0,y:0,z:0},grounded:false};
+ runtime.submit(room,'a',{seq:2,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
+ const expires=match.activeEffects.get('b').expiresAtTick;assert.equal(match.activeEffects.get('b').multiplier,.85);
+ assert.ok(match.abilityCooldowns.get('a')>match.tick);
+ runtime.submit(room,'a',{seq:3,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
+ assert.equal(match.activeEffects.get('b').expiresAtTick,expires);
+ runtime.advance(5000);assert.equal(match.activeEffects.has('b'),false);
+ match.activeEffects.set('b',{expiresAtTick:match.tick+500,multiplier:.85,attributes:['speed']});runtime.finish(room,'A','forfeit');
+ assert.equal(match.activeEffects.size,0);
+});
+test('free point ability requires range and resolves at most one opponent point per rally',()=>{
+ const {runtime,room}=doubles('free_point_out');runtime.advance(3000);
+ runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);
+ const match=runtime.get(room.roomId);const caio=match.athletes.find(a=>a.id==='a');match.ball={position:{x:100,y:100,z:100},velocity:{x:0,y:0,z:0},grounded:false};
+ runtime.submit(room,'a',{seq:2,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
+ assert.deepEqual(match.state.score,{A:0,B:0});assert.equal(match.abilityCooldowns.has('a'),false);
+ match.ball={position:{x:caio.position.x,y:caio.position.y+1.1,z:caio.position.z},velocity:{x:0,y:0,z:0},grounded:false};
+ runtime.submit(room,'a',{seq:3,moveX:0,moveZ:0,actions:['ability']});runtime.advance(20);
+ assert.deepEqual(match.state.score,{A:0,B:1});assert.equal(match.state.phase,'point');assert.ok(match.abilityCooldowns.get('a')>match.tick);
+ runtime.advance(20);assert.deepEqual(match.state.score,{A:0,B:1});
+});

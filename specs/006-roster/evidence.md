@@ -17,3 +17,12 @@ Base: branch `feat/006-roster`, partindo de `main` em `c912c9c` (PR #7 da 005 in
 - Comando: `npm run test --workspace @volleyball-mythics/domain`.
 - Resultado: build do pacote domínio e 17/17 testes passaram, incluindo arredondamento, sete chaves exatas, imutabilidade e consulta de revisão após remoção do catálogo habilitado. O servidor mantém atributos e visual em cópia da revisão ao iniciar uma partida; cobertura de partida e build conjunto registrada no gate final da spec.
 - Gate: aprovado.
+
+## 006-T3 — Contrato de habilidades
+
+- Requisito: execução exclusiva no servidor; fase, alvo, duração e cooldown validados; reaplicação por spam bloqueada; efeitos expiram e são limpos ao encerrar partida.
+- Cenários: configuração só aceita handlers revisados `teammate_rant` e `free_point_out`; fixture `speed_boost_fixture` só é permitida em desenvolvimento. Testes rejeitam fase, alvo, duração, multiplicador e cooldown fora do contrato. No servidor, Samuel debuffa um único companheiro, ignora spam em cooldown, expira em 5 s e limpa no fim; Caio não ativa fora de alcance, aplica recarga apenas quando aceito, posiciona a bola fora e concede um ponto adversário idempotente.
+- Interface: botão U fica ativo apenas com habilidade configurada, durante rally e fora da recarga; o valor restante vem dos snapshots autoritativos.
+- Comandos: `npm run test --workspace @volleyball-mythics/domain`; `npm run test --workspace @volleyball-mythics/server`; `npm run typecheck`; `npm run build`.
+- Resultado: domínio 18/18 e servidor 32/32 passaram; typecheck e build do workspace passaram. Build web manteve avisos existentes de bundle acima de 500 kB e diretivas `use client` do RN Web, sem falha.
+- Gate: aprovado.

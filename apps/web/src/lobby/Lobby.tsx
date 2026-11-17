@@ -116,7 +116,7 @@ export function Lobby() {
       </>}
       <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
       {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}
-      {room.status !== "lobby" && connected && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} />}
+      {room.status !== "lobby" && connected && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} abilityAvailable={Boolean(selected?.abilityId)} />}
     </div>}
     {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
   </section>;

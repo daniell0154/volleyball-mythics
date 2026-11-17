@@ -9,7 +9,7 @@ Todas referenciam R06; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: packages/domain/src/characters.
   - Aceite/verificação: Média arredondada de sete atributos; partida em curso mantém versão ao atualizar catálogo.
 
-- [ ] 006-T3 — Contrato de habilidades
+- [x] 006-T3 — Contrato de habilidades
   - Destinos: packages/domain/src/abilities.
   - Aceite/verificação: Servidor valida fase, cooldown, duração e alvo; spam não reaplica; efeito expira e limpa no fim.
 

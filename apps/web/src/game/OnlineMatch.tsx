@@ -6,7 +6,7 @@ import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
 
 const phases: Record<string, string> = { countdown: "Prepare-se", serving: "Saque", rally: "Em jogo", point: "Ponto", finished: "Partida encerrada", cancelled: "Partida cancelada", disconnectedSuspension: "Aguardando reconexão" };
-export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string }) {
+export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string; abilityAvailable: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const buffer = useRef(new SnapshotBuffer());
   const keyboard = useRef(new KeyboardInput());
@@ -42,6 +42,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   }, [connection, quality, userId, team]);
   const playing = snapshot?.phase === "rally" || snapshot?.phase === "serving";
   const serving = snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
+  const abilityCooldown = Math.ceil(snapshot?.cooldowns[userId] ?? 0);
   const trigger = (code: string) => { host.current?.focus(); keyboard.current.press(code); keyboard.current.release(code); };
   return <section aria-label="Partida online" style={{ marginTop: 18 }}>
     <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
@@ -57,7 +58,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
       <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyJ")}>Receber / bloquear · J</button>
       <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyK")}>Levantar · K</button>
       <button disabled={snapshot?.phase !== "rally"} onClick={() => trigger("KeyL")}>Atacar · L</button>
-      <button disabled title="Habilidades especiais serão ativadas em uma próxima etapa">Especial · em breve</button>
+      <button disabled={!playing || !abilityAvailable || abilityCooldown > 0} onClick={() => trigger("KeyU")}>Especial · {abilityCooldown > 0 ? `${abilityCooldown}s` : "U"}</button>
     </div>
     <p>WASD move em relação à câmera. Clique na quadra para usar o teclado. Aproxime-se da bola para receber, levantar ou atacar; salte perto da rede e receba para bloquear.</p>
     {feedback && <p role="status">{feedback}</p>}
