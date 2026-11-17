@@ -1,7 +1,7 @@
 # Tarefas — 2v2 e habilidades
 Todas referenciam R06; executar em ordem. Cada tarefa depende da anterior e das features indicadas no plan.md.
 
-- [ ] 006-T1 — Quatro jogadores e equipes
+- [x] 006-T1 — Quatro jogadores e equipes
   - Destinos: apps/server/src/match, apps/web/src/lobby.
   - Aceite/verificação: Dois por equipe, slots exclusivos e todos sincronizados; saque alterna conforme contrato.
 
