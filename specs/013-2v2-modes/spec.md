@@ -1,5 +1,5 @@
 # 2v2 online como modo principal
-Status: T1–T3 implementadas; percurso técnico da T4 aprovado localmente. Revisão da experiência pelo proprietário pendente.
+Status: T1–T4 concluídas; experiência aprovada pelo proprietário, que autorizou retirar draft e integrar a PR #16.
 Requisito R13. Dependência: 012 integrada.
 
 ## Aceitação
