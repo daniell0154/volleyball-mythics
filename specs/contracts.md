@@ -1,5 +1,5 @@
 # Contratos compartilhados v1
-Este arquivo descreve o contrato ativo. Mudanças planejadas para administração, somente 2v2, direção de ações e bots estão em [contratos futuros 012–016](future-contracts-012-016.md); não estão implementadas e serão incorporadas aqui junto às respectivas migrations/código.
+Este arquivo descreve o contrato ativo, incluindo administração 012 e criação 2v2 da 013. Propostas posteriores de direção de ações e bots estão em [contratos futuros 012–016](future-contracts-012-016.md) e serão incorporadas junto às respectivas migrations/código.
 ## Dados
 012: administração em [contrato 012](012-admin-roster/contract.md), migrations 005/006. Membership privado com JWT não anônimo; RLS e escrita somente por roster_write autorizada (save/publish/disable, revisão otimista). Conteúdo publicado imutável, enabled mutável; id textual preserva catálogo existente. Servidor revalida catálogo em seleção/prontidão/início/revanche e atualiza sessões periodicamente; runtime mantém revisão fixada.
 IDs UUID. Horários persistidos UTC; simulação usa tick inteiro.

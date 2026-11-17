@@ -1,5 +1,5 @@
 # 2v2 online como modo principal
-Status: planejada; nenhuma implementação ou aprovação antecipada.
+Status: T1–T3 implementadas; percurso técnico da T4 aprovado localmente. Revisão da experiência pelo proprietário pendente.
 Requisito R13. Dependência: 012 integrada.
 
 ## Aceitação
