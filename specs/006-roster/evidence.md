@@ -27,10 +27,10 @@ Base: branch `feat/006-roster`, partindo de `main` em `c912c9c` (PR #7 da 005 in
 - Resultado: domínio 18/18 e servidor 32/32 passaram; typecheck e build do workspace passaram. Build web manteve avisos existentes de bundle acima de 500 kB e diretivas `use client` do RN Web, sem falha.
 - Gate: aprovado.
 
-## 006-T4 — Integrar elenco do proprietário (pendente)
+## 006-T4 — Integrar elenco inicial do proprietário
 
-- Requisito: atributos, visual e ficha de poder para todo o elenco final fornecido pelo proprietário; nenhum personagem pode ser inventado para preencher lacunas.
+- Requisito: atributos, visual e ficha de poder para todo o elenco confirmado para esta etapa; nenhum personagem pode ser inventado para preencher lacunas.
 - Cenário/comando: `node scripts/roster.mjs check` validou `content/characters/initial.json` e retornou Samuel v1 overall 85 e Caio v1 overall 77. As fichas incluem atributos, assetKey procedural e configuração de habilidade; a prévia existente está em `docs/roster/initial-preview.png`.
-- Resultado: os dois registros iniciais solicitados estão integrados e seus handlers são cobertos por 006-T3. Ainda não há confirmação de que Samuel e Caio compõem o elenco final completo; `specs/checklist.md` mantém “Elenco final e regras de poderes fornecidos” pendente. Não foram adicionados personagens nem regras inventadas.
-- Ambiente/limitação: checkout local na branch `feat/006-roster`; apenas dois personagens constam no conteúdo fornecido.
-- Gate: bloqueado por conteúdo do proprietário. Tarefa permanece sem marcação de conclusão; a PR será draft com essa pendência explícita.
+- Resultado: o proprietário confirmou em 2026-11-17 que Samuel e Caio são o elenco inicial desta etapa e que outros personagens serão adicionados depois. Os dois registros estão integrados, têm visual e ficha de poder, e seus handlers são cobertos por 006-T3. Não foram adicionados personagens nem regras inventadas.
+- Ambiente/limitação: checkout local na branch `feat/006-roster`; escopo desta tarefa cobre o elenco inicial confirmado. A lista completa continua pendente para lançamento.
+- Gate: aprovado para o elenco inicial. O gate global “Elenco final e regras de poderes fornecidos” permanece pendente para a spec 007.

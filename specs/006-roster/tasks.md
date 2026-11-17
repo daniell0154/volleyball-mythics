@@ -13,7 +13,8 @@ Todas referenciam R06; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: packages/domain/src/abilities.
   - Aceite/verificação: Servidor valida fase, cooldown, duração e alvo; spam não reaplica; efeito expira e limpa no fim.
 
-- [ ] 006-T4 — Integrar elenco do proprietário
+- [x] 006-T4 — Integrar elenco do proprietário
   - Destinos: content/characters, docs/roster.
   - Aceite/verificação: Para cada personagem receber atributos, visual e ficha de poder; ausência bloqueia esta tarefa e lançamento, não substituir por inventados.
+  - Escopo confirmado em 2026-11-17: Samuel e Caio são o elenco inicial para esta etapa; outros personagens serão adicionados depois. O elenco completo continua obrigatório para o gate de lançamento da 007.
 
