@@ -6,7 +6,7 @@ import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
 
 const phases: Record<string, string> = { countdown: "Prepare-se", serving: "Saque", rally: "Em jogo", point: "Ponto", finished: "Partida encerrada", cancelled: "Partida cancelada", disconnectedSuspension: "Aguardando reconexão" };
-export function OnlineMatch({ snapshot, connection, userId, team, slot }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number }) {
+export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback }: { snapshot: MatchSnapshot | null; connection: RoomConnection; userId: string; team: Team; slot: number; feedback: string }) {
   const host = useRef<HTMLDivElement>(null);
   const buffer = useRef(new SnapshotBuffer());
   const keyboard = useRef(new KeyboardInput());
@@ -17,6 +17,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot }: { snap
     buffer.current.push(snapshot, performance.now()); phase.current = snapshot.phase;
     keyboard.current.synchronizeSequence(snapshot.lastProcessedSeq[userId] ?? 0);
   } }, [snapshot, userId]);
+  useEffect(() => setError(""), [snapshot?.phase]);
   useEffect(() => {
     if (!host.current) return;
     const target = host.current;
@@ -31,7 +32,11 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot }: { snap
       if (phase.current !== "serving" && phase.current !== "rally") { keyboard.current.clear(); return; }
       const input = keyboard.current.sample(phase.current);
       const sign = team === "A" ? -1 : 1;
-      void connection.request("input", { ...input, moveX: input.moveX * sign, moveZ: input.moveZ * sign }).catch((e: unknown) => setError(e instanceof Error ? e.message : "Falha de entrada"));
+      void connection.request("input", { ...input, moveX: input.moveX * sign, moveZ: input.moveZ * sign }).catch((e: unknown) => {
+        // A snapshot can arrive just after the server suspends/finishes the match.
+        if (e instanceof Error && e.message === "invalid_state") return;
+        setError(e instanceof Error ? e.message : "Falha de entrada");
+      });
     }, 20);
     return () => { cancelAnimationFrame(raf); clearInterval(inputTimer); detach(); resize.disconnect(); scene.dispose(); };
   }, [connection, quality, userId, team]);
@@ -55,6 +60,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot }: { snap
       <button disabled title="Habilidades especiais serão ativadas em uma próxima etapa">Especial · em breve</button>
     </div>
     <p>WASD move em relação à câmera. Clique na quadra para usar o teclado. Aproxime-se da bola para receber, levantar ou atacar; salte perto da rede e receba para bloquear.</p>
+    {feedback && <p role="status">{feedback}</p>}
     {error && <p role="alert">{error}</p>}
   </section>;
 }

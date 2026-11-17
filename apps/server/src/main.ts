@@ -7,11 +7,14 @@ import { fileURLToPath } from "node:url";
 import { ReconnectController } from "./reconnect/controller.js";
 import { createResultsRepository } from "./persistence/results.js";
 import { MatchResults } from "./results/coordinator.js";
+import { MatchLifecycle } from "./lifecycle/matches.js";
 
 async function main() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const publicKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !publicKey) throw new Error("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env da raiz.");
+  const port = Number(process.env.PORT ?? 3001);
+  if (!Number.isSafeInteger(port) || port <= 0 || port > 65535) throw new Error("PORT inválida");
   const runtime = new MatchRuntime((room, snapshot) => app.broadcast(room, "snapshot", snapshot), Date.now,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.assetKey,
     (id, version) => app.catalog.find((c) => c.id === id && c.version === version)?.attributes);
@@ -19,9 +22,13 @@ async function main() {
   const results = new MatchResults(process.env.SUPABASE_SECRET_KEY ? createResultsRepository(url, process.env.SUPABASE_SECRET_KEY) : { persist: async () => { throw new Error("server_result_secret_missing"); } },
     (room, type, payload) => app.broadcast(room, type, payload), Date.now, (matchId) => console.error(`result_persistence_failed matchId=${matchId}`));
   const app = new RoomApplication([], { start: (room) => runtime.start(room), input: (room, userId, input) => runtime.submit(room, userId, input), suspend: (room) => reconnect.disconnect(room),
-    reconnect: (room) => { reconnect.reconnect(room); results.restore(room); }, abandon: (room, userId) => reconnect.abandon(room, userId), remove: (roomId) => { runtime.remove(roomId); reconnect.clear(roomId); results.clear(roomId); } });
-  runtime.onEnded = (match) => { reconnect.clear(match.room.roomId); results.finish(match); };
+    reconnect: (room) => { lifecycle.reconnected(room); reconnect.reconnect(room); results.restore(room); }, abandon: (room, userId) => reconnect.abandon(room, userId),
+    rematch: (room, userId) => lifecycle.vote(room, userId), finishedDisconnect: (room) => lifecycle.disconnected(room), remove: (roomId) => lifecycle.close(roomId) });
+  const lifecycle = new MatchLifecycle(app.rooms, runtime, results, reconnect, (room, type, payload) => app.broadcast(room, type, payload),
+    (room) => room.members.every((m) => m.character && app.catalog.some((c) => c.id === m.character!.id && c.version === m.character!.version)));
+  runtime.onEnded = (match) => { reconnect.clear(match.room.roomId); results.finish(match); lifecycle.ended(match.room); };
   runtime.onPoint = (room, snapshot) => app.broadcast(room, "point", snapshot);
+  runtime.onAction = (userId, message) => app.sendTo(userId, "actionFeedback", { message });
   const verifyIdentity = createSupabaseVerifier(url, publicKey);
   const transport = createTransport({ verify: async (token) => {
     const identity = await verifyIdentity(token);
@@ -35,14 +42,12 @@ async function main() {
     return identity;
   },
     staticDirectory: fileURLToPath(new URL("../../web/dist/", import.meta.url)),
-    origins: (process.env.ALLOWED_ORIGINS ?? "http://localhost:5173,http://127.0.0.1:5173").split(",").map((s) => s.trim()),
+    origins: (process.env.ALLOWED_ORIGINS ?? `http://localhost:5173,http://127.0.0.1:5173,http://localhost:${port},http://127.0.0.1:${port}`).split(",").map((s) => s.trim()),
     onConnect: (session) => app.connect(session), onCommand: (session, message) => app.command(session, message), onDisconnect: (session) => app.disconnect(session) });
-  const port = Number(process.env.PORT ?? 3001);
-  if (!Number.isSafeInteger(port) || port <= 0 || port > 65535) throw new Error("PORT inválida");
   const host = process.env.HOST ?? (process.env.RENDER ? "0.0.0.0" : "127.0.0.1");
   transport.http.listen(port, host, () => console.log(`Servidor iniciado em ${host}:${port}`));
   let previous = performance.now();
-  const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); runtime.advance(Math.min(100, now - previous)); void results.queue.tick(); previous = now; }, 5);
+  const ticker = setInterval(() => { const now = performance.now(); reconnect.tick(); lifecycle.tick(); runtime.advance(Math.min(100, now - previous)); void results.queue.tick(); previous = now; }, 5);
   const close = () => { clearInterval(ticker); void transport.close(); };
   process.once("SIGINT", close); process.once("SIGTERM", close);
 }

@@ -14,9 +14,9 @@ test('only server can serve; ball landing in opponent half scores for the servin
  runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(2000);assert.equal(frames.at(-1).score.A,1);assert.equal(frames.at(-1).score.B,0);assert.equal(frames.at(-1).phase,'point');
 });
 test('receive action requires ball in range and separation prevents repeated touches',()=>{
- const {runtime,room}=setup();runtime.advance(3000);runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);
+ const {runtime,room}=setup();const feedback=[];runtime.onAction=(id,message)=>feedback.push({id,message});runtime.advance(3000);runtime.submit(room,'a',{seq:1,moveX:0,moveZ:0,actions:['serve']});runtime.advance(50);
  const match=runtime.get(room.roomId);const before=match.contacts.lastTouchSide;
- runtime.submit(room,'b',{seq:1,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.lastTouchSide,before);
+ runtime.submit(room,'b',{seq:1,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.lastTouchSide,before);assert.ok(feedback.some(f=>f.id==='b'&&f.message.includes('bola')));
  match.ball={position:{x:0,y:1.1,z:6},velocity:{x:0,y:0,z:0},grounded:false};
  runtime.submit(room,'b',{seq:2,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.lastTouchSide,'B');assert.equal(match.contacts.touches,1);
  runtime.submit(room,'b',{seq:3,moveX:0,moveZ:0,actions:['receive']});runtime.advance(20);assert.equal(match.contacts.touches,1);

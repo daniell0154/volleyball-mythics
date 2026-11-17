@@ -16,6 +16,7 @@ export function Lobby() {
   const connecting = useRef(false);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const retryDeadline = useRef(0);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const connectLatest = useRef<() => Promise<void>>(async () => {});
   const [room, setRoom] = useState<RoomState | null>(null);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
@@ -28,7 +29,8 @@ export function Lobby() {
   const [reconnectStatus, setReconnectStatus] = useState("");
   const [snapshot, setSnapshot] = useState<MatchSnapshot | null>(null);
   const [result, setResult] = useState<MatchEnded | null>(null);
-  useEffect(() => () => { alive.current = false; manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }, []);
+  const [feedback, setFeedback] = useState("");
+  useEffect(() => () => { alive.current = false; manualClose.current = true; clearTimeout(retryTimer.current); clearTimeout(feedbackTimer.current); connection.current?.close(); }, []);
   const scheduleRetry = () => {
     if (manualClose.current || !alive.current || !roomRef.current || retryTimer.current !== undefined) return;
     if (!retryDeadline.current) retryDeadline.current = Date.now() + 20000;
@@ -50,10 +52,13 @@ export function Lobby() {
       if (!session) throw new Error("Sessão guest indisponível");
       await saveGuestProfile(client, name);
       const socket = new RoomConnection(gameServerUrl(location.href, import.meta.env.DEV, import.meta.env.VITE_GAME_SERVER_URL), (type, payload) => {
-        if (type === "roomState") { roomRef.current = payload as RoomState | null; setRoom(roomRef.current); if (!payload) setSnapshot(null); }
+        if (type === "roomState") { roomRef.current = payload as RoomState | null; setRoom(roomRef.current); if (!payload) { setSnapshot(null); setResult(null); } }
         if (type === "catalog") setCatalog(payload as CatalogEntry[]);
-        if (type === "snapshot") setSnapshot(payload as MatchSnapshot);
+        if (type === "snapshot") { const frame = payload as MatchSnapshot; setSnapshot(frame); setResult((current) => current && current.matchId !== frame.matchId ? null : current); }
         if (type === "matchEnded") setResult(payload as MatchEnded);
+        if (type === "actionFeedback" && typeof (payload as { message?: unknown }).message === "string") {
+          setFeedback((payload as { message: string }).message); clearTimeout(feedbackTimer.current); feedbackTimer.current = setTimeout(() => setFeedback(""), 1800);
+        }
         if (type === "resultSaveState") {
           const saved = payload as { matchId: string; persistence: MatchEnded["persistence"] };
           setResult((current) => current?.matchId === saved.matchId ? { ...current, persistence: saved.persistence } : current);
@@ -64,7 +69,7 @@ export function Lobby() {
         }
         if (type === "disconnected" && connection.current === socket && alive.current) {
           setConnected(false);
-          if (!manualClose.current && roomRef.current) scheduleRetry();
+          if (!manualClose.current && roomRef.current && roomRef.current.status !== "lobby") scheduleRetry();
           else { setUserId(""); roomRef.current = null; setRoom(null); setError("Conexão encerrada."); }
         }
       });
@@ -81,7 +86,7 @@ export function Lobby() {
   const self = room?.members.find((m) => m.userId === userId);
   const selected = catalog.find((c) => c.id === self?.character?.id && c.version === self?.character?.version);
   return <section style={{ color: "#f0f6ff", padding: 20, fontFamily: "sans-serif" }}>
-    <h1>Sala privada</h1>
+    <h1>{room && room.status !== "lobby" ? "Volleyball Mythics" : "Sala privada"}</h1>
     {error && <p role="alert">{error}</p>}
     {reconnectStatus && <p role="status">{reconnectStatus}</p>}
     {!userId ? <div>
@@ -94,8 +99,9 @@ export function Lobby() {
       <button disabled={!/^[A-Z2-9]{6}$/.test(code)} onClick={() => command("joinRoom", { code })}>Entrar na sala</button>
     </div> : <div>
       <p>{room.mode} · {room.code} · {room.status}</p>
-      <p>Convite: <a style={{ color: "#a8f5cb" }} href={`${location.origin}/?room=${room.code}`}>{`${location.origin}/?room=${room.code}`}</a></p>
-      <ul>{room.members.map((member) => <li key={member.userId}>{member.userId === userId ? "Você" : member.userId.slice(0, 8)} · {member.team}/{member.slot + 1} · {member.ready ? "Pronto" : "Aguardando"}{member.userId === room.ownerId ? " · Dono" : ""}</li>)}</ul>
+      {room.status === "lobby" && <><p>Convite: <a style={{ color: "#a8f5cb" }} href={`${location.origin}/?room=${room.code}`}>{`${location.origin}/?room=${room.code}`}</a></p>
+      <ul>{room.members.map((member) => <li key={member.userId}>{member.userId === userId ? "Você" : member.userId.slice(0, 8)} · {member.team}/{member.slot + 1} · {member.ready ? "Pronto" : "Aguardando"}{member.userId === room.ownerId ? " · Dono" : ""}</li>)}</ul></>}
+      {room.status === "lobby" && <>
       {!catalog.length && <p>O catálogo ainda está vazio. O proprietário precisa fornecer o elenco antes de iniciar partidas.</p>}
       <label>Personagem <select disabled={room.status !== "lobby"} value={self?.character ? JSON.stringify([self.character.id, self.character.version]) : ""} onChange={(e) => { const [characterId, version] = JSON.parse(e.target.value); void command("selectCharacter", { characterId, version }); }}>
         <option value="" disabled>Selecionar</option>{catalog.map((c) => <option key={`${c.id}:${c.version}`} value={JSON.stringify([c.id, c.version])}>{c.name}{c.overall !== undefined ? ` · ${c.overall}` : ""} · v{c.version}</option>)}
@@ -106,10 +112,11 @@ export function Lobby() {
         {(["A", "B"] as const).flatMap((team) => (room.mode === "1v1" ? [0] : [0, 1]).map((slot) => <option key={`${team}:${slot}`} value={`${team}:${slot}`} disabled={room.members.some((m) => m.userId !== userId && m.team === team && m.slot === slot)}>{team}/{slot + 1}</option>))}
       </select></label>
       <button disabled={!self?.character || room.status !== "lobby"} onClick={() => command("ready", { ready: !self?.ready })}>{self?.ready ? "Não pronto" : "Pronto"}</button>
-      {room.ownerId === userId && <button disabled={room.status !== "lobby"} onClick={() => command("start")}>Iniciar</button>}
+      {room.ownerId === userId && <button disabled={!connected || room.members.length !== (room.mode === "1v1" ? 2 : 4) || room.members.some((m) => !m.ready || !m.connected || !m.character)} onClick={() => command("start")}>Iniciar</button>}
+      </>}
       <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
-      {room.status !== "lobby" && connected && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} />}
-      {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} />}
+      {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}
+      {room.status !== "lobby" && connected && connection.current && self && <OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} />}
     </div>}
     {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
   </section>;

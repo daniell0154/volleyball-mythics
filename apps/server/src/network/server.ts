@@ -29,6 +29,13 @@ export function createTransport(options: {
     sockets.handleUpgrade(request, socket, head, (ws) => sockets.emit("connection", ws));
   });
   sockets.on("connection", (ws) => {
+    let alive = true;
+    ws.on("pong", () => { alive = true; });
+    const heartbeat = setInterval(() => {
+      if (ws.readyState !== WebSocket.OPEN) return;
+      if (!alive) { ws.terminate(); return; }
+      alive = false; ws.ping();
+    }, 5000);
     let session: Session | undefined;
     let verifying = false;
     let expiry: ReturnType<typeof setTimeout> | undefined;
@@ -40,7 +47,7 @@ export function createTransport(options: {
     } };
     ws.on("error", () => {}); // Never log frame contents or authentication tokens.
     ws.on("close", () => {
-      clearTimeout(timeout); clearTimeout(expiry);
+      clearTimeout(timeout); clearTimeout(expiry); clearInterval(heartbeat);
       if (session) { identities.delete(session.userId); options.onDisconnect?.(session); }
     });
     ws.on("message", async (data, binary) => {

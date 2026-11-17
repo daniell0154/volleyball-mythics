@@ -15,6 +15,7 @@ export class MatchRuntime {
   private accumulator = 0;
   onEnded: (match: RunningMatch) => void = () => {};
   onPoint: (room: RoomState, snapshot: MatchSnapshot) => void = () => {};
+  onAction: (userId: string, message: string) => void = () => {};
   constructor(private emit: (room: RoomState, snapshot: MatchSnapshot) => void, private now: () => number = Date.now,
     private resolveAsset: (id: string, version: number) => string | undefined = () => undefined,
     private resolveAttributes: (id: string, version: number) => CharacterAttributes | undefined = () => undefined) {}
@@ -113,20 +114,24 @@ export class MatchRuntime {
     }
   }
   private action(match: RunningMatch, athlete: Athlete, input: InputPayload): void {
+    if (input.actions.includes("ability")) this.onAction(athlete.id, "Especial ainda indisponível.");
     const direction = athlete.team === "A" ? 1 : -1;
     if (match.state.phase === "serving") {
-      if (!input.actions.includes("serve") || athlete.team !== match.state.servingSide || athlete.slot !== match.state.servingSlot) return;
+      if (!input.actions.includes("serve")) return;
+      if (athlete.team !== match.state.servingSide || athlete.slot !== match.state.servingSlot) { this.onAction(athlete.id, "Aguarde sua vez de sacar."); return; }
       match.state = transition(match.state, { type: "SERVE_HIT" }); match.phaseTicks = 0;
       match.contacts = { ...createBallContactState(match.room.mode), lastTouchSide: athlete.team, lastPlayerId: athlete.id };
-      match.ball = { position: { ...athlete.position, y: athlete.position.y + 1.25 }, velocity: { x: -athlete.position.x * 0.15, y: 7.5, z: direction * (7.5 + athlete.attributes.serve / 100) }, grounded: false }; match.touching.add(athlete.id); return;
+      match.ball = { position: { ...athlete.position, y: athlete.position.y + 1.25 }, velocity: { x: -athlete.position.x * 0.15, y: 7.5, z: direction * (7.5 + athlete.attributes.serve / 100) }, grounded: false }; match.touching.add(athlete.id); this.onAction(athlete.id, "Saque!"); return;
     }
     if (match.state.phase !== "rally" || match.touching.has(athlete.id)) return;
     const action = input.actions.includes("attack") ? "attack" : input.actions.includes("set") ? "set" : input.actions.includes("receive") ? "receive" : null;
-    if (!action || distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) return;
+    if (!action) return;
+    if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) { this.onAction(athlete.id, "Chegue mais perto da bola."); return; }
     const isBlock = action === "receive" && athlete.position.y > 0.2 && Math.abs(athlete.position.z) < 1 && match.ball.position.y >= DEFAULT_RULES.netHeight;
     const result = applyContact(match.contacts, athlete.id, athlete.team, isBlock ? "block" : "hit");
     if (!result.legal) { this.point(match, result.pointFor, result.reason); return; }
     match.contacts = result.state; match.touching.add(athlete.id);
+    this.onAction(athlete.id, isBlock ? "Bloqueio!" : action === "attack" ? "Ataque!" : action === "set" ? "Levantamento!" : "Recepção!");
     const targetZ = action === "set" ? athlete.position.z + direction : direction * 5;
     const flight = action === "attack" ? 0.85 : action === "set" ? 1.35 : 1.65;
     match.ball = { position: { ...match.ball.position }, velocity: { x: -match.ball.position.x / flight * 0.3, y: action === "attack" ? (athlete.position.y > 0.5 ? 3 : 6.5) : action === "set" ? 8 : 7.5, z: (targetZ - match.ball.position.z) / flight }, grounded: false };

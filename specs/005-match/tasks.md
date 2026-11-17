@@ -13,7 +13,7 @@ Todas referenciam R05; executar em ordem. Cada tarefa depende da anterior e das 
   - Destinos: apps/server/src/results.
   - Aceite/verificação: Indisponibilidade DB gera estado salvamento pendente e retry por 5min; vencedor visual vem do servidor; esgotamento registra falha operacional sem resultado falso.
 
-- [ ] 005-T4 — Revanche e limpeza
+- [x] 005-T4 — Revanche e limpeza
   - Destinos: apps/server/src/lifecycle, apps/web/src/results.
   - Aceite/verificação: Todos votam: novo matchId e placar zero; sem unanimidade permanece resultado; fechar sala libera timers.
 
