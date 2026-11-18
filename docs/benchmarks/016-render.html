@@ -14,7 +14,8 @@
     <footer class="match-controls" hidden>
       <div class="match-toolbar">
         <span class="move-tip"><kbd>WASD</kbd> Mover</span>
-        <div class="action-bar">
+        <button type="button" class="expand-actions" aria-expanded="false">Ações</button>
+        <div class="action-bar" data-expanded="false">
           <button><kbd>Espaço</kbd> Saltar</button><button><kbd>L</kbd> Atacar</button><button><kbd>J</kbd> Receber</button><button><kbd>K</kbd> Levantar</button><button><kbd>U</kbd> Especial</button>
         </div>
         <button>Opções</button><button>Sair</button>
@@ -33,13 +34,14 @@
   const traces = await fetch("./014-traces-4.json").then(response => response.json());
   const side = query.get("serveSide");
   const reference = traces.find(entry => side ? entry.side === side && entry.defending === true : entry.side === "A" && entry.defending === "both");
-  const trace = reference.frames.map(frame => ({
+  window.withReplayAvatars = frames => frames.map(frame => ({
     ...frame,
     athletes: frame.athletes.map((athlete, index) => ({
       ...athlete,
       assetKey: index % 2 ? "procedural:v1:male:2016838844" : "procedural:v1:male:2626328580",
     })),
   }));
+  const trace = window.withReplayAvatars(reference.frames);
   const host = document.querySelector(".court-host");
   const hud = document.querySelector(".match-hud");
   const controls = document.querySelector(".match-controls");
@@ -52,19 +54,42 @@
     controls.hidden = false;
   }
   const adapter = createScene(host, { reserveCueMargin: !baseline, cameraProfile: query.get("camera") === "close" ? "close" : "elevated" });
-  const viewSide = query.get("viewSide") || side || "A";
-  adapter.setFollowPlayer(trace[0].athletes.find(athlete => athlete.team === viewSide).id);
-  adapter.setReducedMotion(query.get("motion") !== "follow");
-  adapter.setQuality("low");
+  window.configureReplay = ({ viewSide, playerId, stable, quality }) => {
+    if (viewSide) {
+      adapter.setFollowPlayer(playerId ?? trace[0].athletes.find(athlete => athlete.team === viewSide).id);
+      hud.querySelector(".match-identity").textContent = `Você · ${viewSide}1`;
+    }
+    if (stable !== undefined) adapter.setReducedMotion(stable);
+    if (quality) adapter.setQuality(quality);
+  };
+  window.configureReplay({
+    viewSide: query.get("viewSide") || side || "A", stable: query.get("motion") !== "follow", quality: "low",
+  });
+  const expand = controls.querySelector(".expand-actions");
+  expand.addEventListener("click", () => {
+    const expanded = expand.getAttribute("aria-expanded") !== "true";
+    expand.setAttribute("aria-expanded", expanded);
+    controls.querySelector(".action-bar").dataset.expanded = expanded;
+  });
   const resize = new ResizeObserver(() => adapter.resize(host.clientWidth, host.clientHeight, { top: hud.offsetHeight, bottom: controls.offsetHeight }));
   resize.observe(host);
   resize.observe(hud);
   resize.observe(controls);
 
-  window.replayAt = seconds => {
-    const frame = trace[Math.floor(seconds * 20) % trace.length];
-    adapter.update({ ...frame, renderTick: frame.tick });
+  window.drawReplayFrame = (frame, now) => {
+    if (now === undefined) {
+      adapter.update({ ...frame, renderTick: frame.tick });
+      return;
+    }
+    const clock = performance.now;
+    performance.now = () => now;
+    try {
+      adapter.update({ ...frame, renderTick: frame.tick });
+    } finally {
+      performance.now = clock;
+    }
   };
+  window.replayAt = seconds => window.drawReplayFrame(trace[Math.floor(seconds * 20) % trace.length]);
   window.measureReplay = durationMs => new Promise(resolve => {
     const intervals = [];
     let start, previous, hidden = false;
