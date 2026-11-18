@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-18T14:15:38.457Z",
+  "browser": "157.0.4341.60",
+  "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+  "os": "Windows 11 Home Single Language",
+  "quality": "low",
+  "scenario": "Replay 014 v4, quatro atletas, mesmo HUD e sequência, msedge headless",
+  "baselineCommit": "e819575",
+  "rows": [
+    {
+      "camera": "elevated",
+      "width": 1280,
+      "height": 720,
+      "dpr": 1,
+      "top": 42,
+      "bottom": 50,
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A78) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "durationMs": 300015.89999999997,
+      "frames": 17938,
+      "p95Ms": 16.89999999999418,
+      "maxMs": 50.80000000000291,
+      "hidden": false,
+      "errors": []
+    },
+    {
+      "camera": "close",
+      "width": 1280,
+      "height": 720,
+      "dpr": 1,
+      "top": 42,
+      "bottom": 50,
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A78) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "durationMs": 300026.4,
+      "frames": 17614,
+      "p95Ms": 17.099999999976717,
+      "maxMs": 906.5,
+      "hidden": false,
+      "errors": []
+    }
+  ],
+  "regressionPercent": 1.1834319525598103,
+  "pass": true
+}
