@@ -67,9 +67,13 @@ export function appearance(assetKey: string) {
   return look;
 }
 
+export function visualKey({ rig, gender, seed, skinId, hairId }: LookSelection & { seed: number }) {
+  return `procedural:visual-v3:${rig}:${gender}:${seed}:${skinId}:${hairId}`;
+}
+
 export function editAppearance(assetKey: string, selection: Partial<LookSelection>) {
   const look = appearance(assetKey);
   const { rig, gender, skinId, hairId } = { ...look, ...selection };
   if (rig === look.rig && gender === look.gender && skinId === look.skinId && hairId === look.hairId) return assetKey;
-  return `procedural:visual-v3:${rig}:${gender}:${look.seed}:${skinId}:${hairId}`;
+  return visualKey({ rig, gender, skinId, hairId, seed: look.seed });
 }
