@@ -2,6 +2,7 @@
 import { attributeKeys, createAdminServices, type AdminServices, type Draft, type Published, type RosterPayload } from "./services.js";
 import { editAppearance, HAIR_STYLES, parseAppearance, SKIN_TONES, visualKey } from "../scene/avatarAppearance.js";
 import type { HairThumbnails } from "../scene/CharacterPreview.js";
+import { RosterAbilityField } from "./RosterAbilityField.js";
 import "./admin.css";
 
 const Preview = lazy(() => import("../scene/CharacterPreview.js").then(module => ({ default: module.CharacterPreview })));
@@ -17,11 +18,16 @@ const models = [
   { rig: "classic", gender: "male", name: "Clássico masculino" },
   { rig: "classic", gender: "female", name: "Clássico feminino" },
 ] as const;
-const blank = (): RosterPayload => ({
+const blank = (abilityId = ""): RosterPayload => ({
   name: "", attributes: { serve: 50, receive: 50, set: 50, attack: 50, block: 50, speed: 50, jump: 50 },
-  abilityId: "teammate_rant", assetKey: "procedural:athletic-v2:male:1",
+  abilityId, assetKey: "procedural:athletic-v2:male:1",
 });
 type CatalogPage = Awaited<ReturnType<AdminServices["list"]>>;
+const emptyPage: CatalogPage = { drafts: [], published: [], abilities: [] };
+
+function abilityUnavailable(cause: unknown) {
+  return cause !== null && typeof cause === "object" && "message" in cause && cause.message === "ability_unavailable";
+}
 
 function overall(payload: RosterPayload) {
   const values = attributeKeys.map(key => payload.attributes[key]);
@@ -43,7 +49,10 @@ function groupRoster(items: CatalogPage) {
   return [...byId.values()];
 }
 
-export function Admin({ services }: { services?: AdminServices }) {
+export function Admin({ services, abilityDrawEnabled = import.meta.env.VITE_ROSTER_ABILITY_DRAW_ENABLED === "true" }: {
+  services?: AdminServices;
+  abilityDrawEnabled?: boolean;
+}) {
   const [backend] = useState(() => {
     try { return services ?? createAdminServices(); } catch { return null; }
   });
@@ -54,7 +63,7 @@ export function Admin({ services }: { services?: AdminServices }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [page, setPage] = useState(0);
-  const [items, setItems] = useState<CatalogPage>({ drafts: [], published: [] });
+  const [items, setItems] = useState<CatalogPage>(emptyPage);
   const [draft, setDraft] = useState<Draft>({ id: "", revision: 0, payload: blank() });
   const [dirty, setDirty] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState("");
@@ -64,6 +73,10 @@ export function Admin({ services }: { services?: AdminServices }) {
   const [password, setPassword] = useState("");
 
   function report(cause: unknown) {
+    if (abilityUnavailable(cause)) {
+      setError("A habilidade selecionada ficou indisponível. Escolha outra habilidade e salve a ficha.");
+      return;
+    }
     const code = typeof cause === "object" && cause !== null && "code" in cause ? String(cause.code) : "";
     setError(code === "40001"
       ? "Este rascunho mudou. Recarregue a lista e abra a versão atual antes de tentar novamente."
@@ -98,7 +111,12 @@ export function Admin({ services }: { services?: AdminServices }) {
     setBusy(true);
     setError("");
     setNotice("");
-    try { await task(); } catch (cause) { report(cause); }
+    try { await task(); } catch (cause) {
+      report(cause);
+      if (abilityUnavailable(cause)) {
+        try { await load(); } catch { /* The editor and original error remain available for retry. */ }
+      }
+    }
     finally { setBusy(false); }
   }
 
@@ -143,6 +161,7 @@ export function Admin({ services }: { services?: AdminServices }) {
   }
 
   const { payload } = draft;
+  const enabledAbility = items.abilities.some(ability => ability.id === payload.abilityId && ability.enabled);
   const look = parseAppearance(payload.assetKey);
   const model = models.find(option => option.rig === look?.rig && option.gender === look.gender);
   const score = overall(payload);
@@ -163,7 +182,7 @@ export function Admin({ services }: { services?: AdminServices }) {
         {authorized && <button disabled={busy} onClick={() => void run(async () => {
           await backend!.logout();
           setAuthorized(false);
-          setItems({ drafts: [], published: [] });
+          setItems(emptyPage);
           setDraft({ id: "", revision: 0, payload: blank() });
           setDirty(false);
           setSelectedEntry("");
@@ -192,9 +211,11 @@ export function Admin({ services }: { services?: AdminServices }) {
       <section className="panel admin-roster" aria-labelledby="admin-roster-title">
         <div className="admin-panel-header">
           <h2 id="admin-roster-title">Elenco</h2>
-          <button className="primary" disabled={busy} onClick={() => {
+          <button className="primary" disabled={busy || loading} onClick={() => {
             const id = crypto.randomUUID();
-            open({ id, revision: 0, payload: blank() }, id);
+            const available = items.abilities.filter(ability => ability.enabled);
+            const firstAbility = available.find(ability => ability.id === "teammate_rant") ?? available[0];
+            open({ id, revision: 0, payload: blank(firstAbility?.id) }, id);
           }}>Novo personagem</button>
         </div>
         <button type="button" className="admin-roster-toggle" aria-expanded={rosterOpen} aria-controls="admin-roster-items"
@@ -261,10 +282,8 @@ export function Admin({ services }: { services?: AdminServices }) {
                 </div>;
               })}
             </div>
-            <label>Habilidade<select value={payload.abilityId} onChange={event => edit({ ...payload, abilityId: event.target.value })}>
-              <option value="teammate_rant">Bronca no Parceiro</option>
-              <option value="free_point_out">Foi Sem Querer</option>
-            </select></label>
+            <RosterAbilityField catalog={items.abilities} currentId={payload.abilityId} drawEnabled={abilityDrawEnabled}
+              onChange={abilityId => { if (abilityId !== payload.abilityId) edit({ ...payload, abilityId }); }} />
             {look ? <div className="admin-appearance">
               <div className="admin-panel-header"><h3>Aparência</h3><a className="admin-preview-link" href="#admin-preview">Ir à prévia</a></div>
               <label>Modelo<select aria-label="Modelo" value={look.rig + ":" + look.gender} onChange={event => {
@@ -286,10 +305,10 @@ export function Admin({ services }: { services?: AdminServices }) {
                 </button>)}
               </div>
             </div> : <p className="notice error">O visual desta ficha está indisponível.</p>}
-            <button type="submit" className="primary" disabled={!look || score === "—"}>Salvar rascunho</button>
+            <button type="submit" className="primary" disabled={!look || score === "—" || !enabledAbility}>Salvar rascunho</button>
           </fieldset>
           <div className="admin-commands">
-            <button type="button" disabled={busy || dirty || draft.revision === 0} onClick={() => void run(publish)}>Publicar revisão</button>
+            <button type="button" disabled={busy || dirty || draft.revision === 0 || !enabledAbility} onClick={() => void run(publish)}>Publicar revisão</button>
             <button type="button" disabled={busy || dirty || draft.revision === 0} onClick={() => {
               if (confirm("Desativar este personagem para novas partidas?")) void run(disable);
             }}>Desativar personagem</button>

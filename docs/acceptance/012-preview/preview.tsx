@@ -7,4 +7,5 @@ async function api(path:string,body?:unknown){const r=await fetch("http://127.0.
 let authorized=false;
 const services={authorized:async()=>authorized,login:async()=>{authorized=true;},logout:async()=>{authorized=false;},list:async()=>api("/list"),write:async(action:string,id:string,expected:number,payload?:unknown)=>api("/write",{action,id,expected,payload})};
 let id=sessionStorage.getItem("012-id");if(!id){id="fixture-"+crypto.randomUUID();sessionStorage.setItem("012-id",id);}
-createRoot(document.getElementById("root")!).render(location.search.includes("game")?<Lobby services={{prepareSession:async()=>id!,saveName:async()=>{},loadCatalog:()=>api("/catalog"),serverUrl:()=>"ws://127.0.0.1:3015/socket"}}/>:<Admin services={services}/>);
+const params = new URLSearchParams(location.search);
+createRoot(document.getElementById("root")!).render(params.has("game")?<Lobby services={{prepareSession:async()=>id!,saveName:async()=>{},loadCatalog:()=>api("/catalog"),serverUrl:()=>"ws://127.0.0.1:3015/socket"}}/>:<Admin services={services} abilityDrawEnabled={params.has("ability-review")}/>);
