@@ -1,5 +1,5 @@
 # Partida ocupa a tela e controles na quadra
-Status: implementação na PR #20 com verificações técnicas registradas. Aceite visual do proprietário pendente.
+Status: implementada e aprovada pelo proprietário após teste local da PR #20.
 Requisito R16. Dependência: 015 integrada.
 
 ## Aceitação
