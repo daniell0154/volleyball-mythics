@@ -78,6 +78,20 @@
 .admin-attribute input[type="number"] { padding-inline: .45rem; font-variant-numeric: tabular-nums; }
 .admin-appearance { padding-top: 1rem; border-top: 1px solid var(--line); }
 .admin-appearance h3 { margin: 0; }
+.admin-ability-controls { display: flex; flex-wrap: wrap; gap: .65rem; align-items: end; }
+.admin-ability-controls label { flex: 1 1 12rem; }
+.admin-ability-details {
+  margin-top: .6rem;
+  padding: .65rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #10201f;
+}
+.admin-ability-details p { margin: 0 0 .5rem; font-size: .9rem; }
+.admin-ability-details dl { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin: 0; font-size: .85rem; }
+.admin-ability-details dt { color: var(--muted); }
+.admin-ability-details dd { margin: .15rem 0 0; }
+.admin-ability > .helper { margin-top: .45rem; }
 .admin-skin, .admin-hair {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));

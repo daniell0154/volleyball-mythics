@@ -4,4 +4,6 @@
 
 A migration inicial contém as configurações legadas aprovadas. Os três candidatos da spec entram desabilitados após os handlers passarem os testes. A fixture de velocidade permanece restrita ao desenvolvimento. O aceite de produção da configuração e dos clipes precede a habilitação dos candidatos e do sorteio.
 
+O seletor lê o catálogo administrativo e apresenta o ID salvo mesmo se ficar indisponível, com aviso para escolher outra habilidade. `VITE_ROSTER_ABILITY_DRAW_ENABLED=true` habilita o botão de sorteio. A escolha é uniforme entre os IDs habilitados, exclui o ID atual quando há alternativa e modifica somente o rascunho em edição.
+
 O servidor conserva a ativação manual em rally, o relógio por ticks e o feedback pessoal de ação. Cada alvo recebe no máximo um modificador simultâneo. Uma tentativa sem alvo ativo, durante recarga ou em colisão preserva o efeito e a recarga anteriores. Velocidade afeta o deslocamento. Nos candidatos, a recepção afeta o alcance de recepção e bloqueio. A Bronca conserva a penalidade de alcance histórica para os contatos do parceiro. O ponto especial mantém seu próprio teste de alcance.

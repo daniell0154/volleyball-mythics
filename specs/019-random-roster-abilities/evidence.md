@@ -17,3 +17,11 @@ No Windows com Node 26, `npm.cmd run test --workspace @volleyball-mythics/server
 | Minha Bola!, recepção recusada em controle e aceita com efeito | 2,2575 m | 2,4675 m |
 
 Os efeitos expiraram aos 180, 240 e 240 ticks. A corrida e a recepção voltaram ao resultado de controle. O teste cobriu ator com atributo extremo, ataque com Mão de Manteiga, recarga, sequência repetida, fase de saque e alvo humano ausente, desconectado ou bot. Café e Mão de Manteiga em colisão com a Bronca preservaram o primeiro efeito e a recarga do segundo ator nos dois sentidos. Minha Bola! e a Bronca coexistiram quando destinadas a parceiros diferentes. A Bronca preserva sua penalidade histórica para os contatos; o ponto de Caio preserva o teste de alcance e ocorre uma vez. A migration registra os candidatos desabilitados. Gate T2 aprovado.
+
+## 019-T3 — Seletor e sorteio
+
+No Windows e Edge 157.0.4341.60, `node docs/acceptance/019-ability-picker.cjs` passou com Vite na porta 5177 e a fixture `node docs/acceptance/012-admin.cjs --serve`. O ensaio cobriu catálogo vazio, opção única, duas opções e sorteio desabilitado pela configuração de produção. O seletor apresentou efeito, alvo, duração e recarga, e Enter/Espaço sortearam apenas o campo da habilidade, preservando nome e atributo em edição. O teste unitário do sorteio injeta a fonte aleatória e testa todos os intervalos das alternativas. Gate T3 aprovado.
+
+## 019-T4 — Pendente
+
+Validar o percurso de salvar, reabrir, publicar e ativar cada candidato em partida com os poderes atuais. Falta cobrir no navegador a indisponibilidade entre salvar e publicar e registrar clipes. As configurações candidatas seguem desabilitadas e o sorteio de produção depende do aceite previsto na spec.

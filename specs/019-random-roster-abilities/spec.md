@@ -1,6 +1,6 @@
 # 019 — Novas habilidades e sorteio na ficha
 
-Planejada · R19
+Em andamento · R19
 
 No editor da 018, o administrador pode escolher uma habilidade pelo nome ou clicar em **Sortear habilidade**. O sorteio altera somente a habilidade do rascunho em edição. Antes de salvar, mostrar efeito, alvo, duração e recarga e permitir trocar manualmente ou sortear de novo. Publicar fixa a escolha na revisão do personagem. Durante a partida, a ativação continua manual durante o rally, como “Bronca no Parceiro” e “Foi Sem Querer”.
 
