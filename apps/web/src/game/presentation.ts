@@ -1,6 +1,7 @@
 // Presentation-only data. These fixtures never determine a real match result.
 import type { VisualAction } from "@volleyball-mythics/protocol";
 export interface Position { readonly x: number; readonly y: number; readonly z: number }
+export interface CourtInsets { readonly top: number; readonly bottom: number }
 export interface SceneSnapshot {
   readonly matchId?: string;
   readonly renderTick?: number;
@@ -13,7 +14,7 @@ export interface SceneSnapshot {
 }
 export interface SceneAdapter {
   update(snapshot: SceneSnapshot): void;
-  resize(width: number, height: number): void;
+  resize(width: number, height: number, insets?: CourtInsets): void;
   setQuality(quality: "low" | "high"): void;
   setFollowPlayer?(playerId: string | null): void;
   setReducedMotion?(reduced: boolean): void;

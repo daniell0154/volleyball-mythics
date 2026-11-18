@@ -1,15 +1,16 @@
 import * as THREE from "three";
-import { createCamera, fitCamera, followRallyCamera,fitStableCamera } from "./camera.js";
+import { createCamera, fitCourtViewport, followRallyCamera,fitStableCamera } from "./camera.js";
 import {visualBallScale,ballScreenCue} from "./ballVisibility.js";
 import { disposeAvatar } from "./avatar.js";
 import { createPresentationAvatar } from "./avatarManifest.js";
 import { AvatarAnimator } from "./animateAvatar.js";
-import type { SceneAdapter, SceneSnapshot } from "../game/presentation.js";
+import type { CourtInsets, SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
-export function createScene(host: HTMLElement): SceneAdapter {
+export function createScene(host: HTMLElement, { reserveCueMargin = false } = {}): SceneAdapter {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   host.append(renderer.domElement);
-  const originalPosition=host.style.position;host.style.position="relative";
+  const originalPosition = host.style.position;
+  if (getComputedStyle(host).position === "static") host.style.position = "relative";
   const cue=document.createElement("span");cue.setAttribute("aria-hidden","true");cue.dataset.ballCue="true";
   cue.style.cssText="position:absolute;pointer-events:none;width:14px;height:14px;border:2px solid #101820;border-radius:50%;background:#ffe600;box-shadow:0 0 0 2px white;color:#101820;font:bold 18px/20px Arial;text-align:center;transform:translate(-50%,-50%);z-index:1;display:none";host.append(cue);
   const scene = new THREE.Scene();
@@ -59,14 +60,24 @@ export function createScene(host: HTMLElement): SceneAdapter {
   let reducedMotion=false;
   let stableTeam:string|undefined;
   let lastFrame = performance.now();
-  const resize = (width: number, height: number) => {
-    if (disposed || width <= 0 || height <= 0) return;
-    fitCamera(camera, width, height); renderer.setSize(width, height);
+  const margin = reserveCueMargin ? 16 : 0;
+  let viewportWidth = 0;
+  let viewportHeight = 0;
+  let insets: CourtInsets = { top: 0, bottom: 0 };
+  const resize = (width: number, height: number, nextInsets = insets) => {
+    if (disposed) return;
+    const dimensionsChanged = width !== viewportWidth || height !== viewportHeight;
+    viewportWidth = width;
+    viewportHeight = height;
+    if (width <= 0 || height <= 0) return;
+    insets = nextInsets;
+    fitCourtViewport(camera, width, height, insets, margin);
+    if (dimensionsChanged) renderer.setSize(width, height);
   };
   resize(host.clientWidth, host.clientHeight);
   return {
     update(snapshot: SceneSnapshot) {
-      if (disposed) return;
+      if (disposed || viewportWidth <= 0 || viewportHeight <= 0) return;
       if (matchId !== snapshot.matchId) {
         for (const entry of athletes.values()) { scene.remove(entry.model); disposeAvatar(entry.model); }
         athletes.clear(); matchId = snapshot.matchId;
@@ -74,15 +85,15 @@ export function createScene(host: HTMLElement): SceneAdapter {
       const now = performance.now();
       const followed = snapshot.athletes.find((a) => a.id === followId);
       if (followed&&!reducedMotion) followRallyCamera(camera, followed.position,snapshot.ball, followed.team, (now - lastFrame) / 1000);
-      if(followed&&reducedMotion&&stableTeam!==followed.team){fitStableCamera(camera,followed.team,host.clientWidth,host.clientHeight);stableTeam=followed.team;}
+      if(followed&&reducedMotion&&stableTeam!==followed.team){fitStableCamera(camera,followed.team,viewportWidth,viewportHeight,margin,insets);stableTeam=followed.team;}
       marker.visible=Boolean(followed);
       if(followed){marker.position.set(followed.position.x,0,followed.position.z);marker.rotation.y=followed.team==="A"?0:Math.PI;if(markerLabel)markerLabel.position.y=followed.position.y+2.25;}
       lastFrame = now;
       ball.position.copy(snapshot.ball);
-      camera.updateMatrixWorld();ball.scale.setScalar(visualBallScale(camera,snapshot.ball,host.clientHeight));
+      camera.updateMatrixWorld();ball.scale.setScalar(visualBallScale(camera,snapshot.ball,viewportHeight));
       shadow.position.set(snapshot.ball.x,.035,snapshot.ball.z);shadowBorder.position.copy(shadow.position);
       shadow.material.opacity=Math.max(.25,.75-snapshot.ball.y*.035);shadowBorder.material.opacity=shadow.material.opacity;
-      const screen=ballScreenCue(camera,snapshot.ball,host.clientWidth,host.clientHeight);cue.style.display="block";cue.style.left=screen.x+"px";cue.style.top=screen.y+"px";
+      const screen=ballScreenCue(camera,snapshot.ball,viewportWidth,viewportHeight,margin,insets);cue.style.display="block";cue.style.left=screen.x+"px";cue.style.top=screen.y+"px";
       cue.textContent=screen.offscreen?screen.arrow:"";cue.style.width=cue.style.height=screen.offscreen?"24px":"14px";cue.style.borderRadius=screen.offscreen?"6px":"50%";
       cue.title=screen.offscreen?"Bola fora da tela":"Posição atual da bola";
       const ids = new Set(snapshot.athletes.map((athlete) => athlete.id));
@@ -103,7 +114,7 @@ export function createScene(host: HTMLElement): SceneAdapter {
         entry.animator.update(snapshot, athlete);
       }
       renderer.render(scene, camera);
-    }, resize(width,height){resize(width,height);stableTeam=undefined;},
+    }, resize(width,height,nextInsets){resize(width,height,nextInsets);stableTeam=undefined;},
     setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false;stableTeam=undefined; },
     setReducedMotion(reduced){reducedMotion=reduced;stableTeam=undefined;camera.userData.following=false;},
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },

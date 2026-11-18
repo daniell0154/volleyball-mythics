@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>016 · Replay de renderização</title>
+<link rel="stylesheet" href="/apps/web/src/styles.css">
+<div class="match-viewport">
+  <main class="online-match">
+    <header class="match-hud" hidden>
+      <strong class="match-identity">Você · A1</strong>
+      <div class="scoreboard"><span>A</span><strong>0 × 0</strong><span>B</span><span class="match-phase">Em jogo</span></div>
+    </header>
+    <div class="match-stage"><div class="court-host"></div></div>
+    <footer class="match-controls" hidden>
+      <div class="match-toolbar">
+        <span class="move-tip"><kbd>WASD</kbd> Mover</span>
+        <div class="action-bar">
+          <button><kbd>Espaço</kbd> Saltar</button><button><kbd>L</kbd> Atacar</button><button><kbd>J</kbd> Receber</button><button><kbd>K</kbd> Levantar</button><button><kbd>U</kbd> Especial</button>
+        </div>
+        <button>Opções</button><button>Sair</button>
+      </div>
+    </footer>
+  </main>
+</div>
+<script type="module">
+  const variant = new URLSearchParams(location.search).get("variant");
+  const baseline = variant === "baseline";
+  const rendererPath = baseline
+    ? "/.test-build/016-baseline/apps/web/src/scene/createScene.ts"
+    : "/apps/web/src/scene/createScene.ts";
+  const { createScene } = await import(/* @vite-ignore */ rendererPath);
+  const traces = await fetch("./014-traces-4.json").then(response => response.json());
+  const trace = traces.find(entry => entry.side === "A" && entry.defending === "both").frames.map(frame => ({
+    ...frame,
+    athletes: frame.athletes.map((athlete, index) => ({
+      ...athlete,
+      assetKey: index % 2 ? "procedural:v1:male:2016838844" : "procedural:v1:male:2626328580",
+    })),
+  }));
+  const host = document.querySelector(".court-host");
+  const hud = document.querySelector(".match-hud");
+  const controls = document.querySelector(".match-controls");
+  if (baseline) {
+    host.style.height = "100%";
+    hud.style.display = "none";
+    controls.style.display = "none";
+  } else {
+    hud.hidden = false;
+    controls.hidden = false;
+  }
+  const adapter = createScene(host, { reserveCueMargin: !baseline });
+  adapter.setFollowPlayer(trace[0].athletes.find(athlete => athlete.team === "A").id);
+  adapter.setReducedMotion(true);
+  adapter.setQuality("low");
+  const resize = new ResizeObserver(() => adapter.resize(host.clientWidth, host.clientHeight, { top: hud.offsetHeight, bottom: controls.offsetHeight }));
+  resize.observe(host);
+  resize.observe(hud);
+  resize.observe(controls);
+
+  window.replayAt = seconds => {
+    const frame = trace[Math.floor(seconds * 20) % trace.length];
+    adapter.update({ ...frame, renderTick: frame.tick });
+  };
+  window.measureReplay = durationMs => new Promise(resolve => {
+    const intervals = [];
+    let start, previous, hidden = false;
+    const frame = now => {
+      start ??= now;
+      if (previous !== undefined) intervals.push(now - previous);
+      previous = now;
+      hidden ||= document.hidden;
+      window.replayAt((now - start) / 1000);
+      if (now - start >= durationMs) {
+        intervals.sort((left, right) => left - right);
+        resolve({ durationMs: now - start, frames: intervals.length, p95Ms: intervals[Math.ceil(intervals.length * .95) - 1], maxMs: intervals.at(-1), hidden });
+      } else requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+  window.replayAt(0);
+</script>

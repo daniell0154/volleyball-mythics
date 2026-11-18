@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-18T02:26:04.178Z",
+  "browser": "157.0.4341.60",
+  "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+  "os": "Windows 11 Home Single Language",
+  "width": 1280,
+  "height": 720,
+  "dpr": 1,
+  "quality": "low",
+  "scenario": "Replay 014 v4, quatro atletas, câmera estável, mesma sequência, Edge headless",
+  "baselineCommit": "1ee43f0",
+  "rows": [
+    {
+      "variant": "baseline",
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A78) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "durationMs": 300015.80000000005,
+      "frames": 17997,
+      "p95Ms": 16.900000000001455,
+      "maxMs": 47.599999999998545,
+      "hidden": false,
+      "errors": []
+    },
+    {
+      "variant": "candidate",
+      "canvas": {
+        "width": 1280,
+        "height": 720
+      },
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A78) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "durationMs": 300015.80000000005,
+      "frames": 17997,
+      "p95Ms": 16.89999999999418,
+      "maxMs": 34.5,
+      "hidden": false,
+      "errors": []
+    }
+  ],
+  "regressionPercent": -4.305444889496357e-11,
+  "pass": true
+}
