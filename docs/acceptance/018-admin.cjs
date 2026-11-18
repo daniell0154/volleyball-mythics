@@ -48,6 +48,9 @@ async function editor(page) {
     items.map(item => { const rect = item.getBoundingClientRect(); return [rect.left, rect.top]; }));
   assert.equal(new Set(panels.map(([, top]) => top)).size, 1);
   assert.ok(panels[0][0] < panels[1][0] && panels[1][0] < panels[2][0]);
+  await page.locator(".admin-appearance").evaluate(block => block.scrollIntoView({ block: "center" }));
+  const previewTop = await page.locator(".admin-preview").evaluate(block => block.getBoundingClientRect().top);
+  assert.ok(previewTop >= 0 && previewTop < 120);
 
   const slider = page.getByRole("slider", { name: "Ajustar saque" });
   await slider.press("End");
@@ -59,6 +62,9 @@ async function editor(page) {
   const preview = page.getByRole("region", { name: /Prévia do atleta/ });
   await preview.locator("canvas").waitFor();
   await page.waitForFunction(() => document.querySelectorAll(".admin-hair img").length === 8);
+  const thumbnailRows = await page.locator(".admin-hair button").evaluateAll(cards =>
+    Object.values(Object.groupBy(cards, card => card.offsetTop)).map(row => row.length));
+  assert.deepEqual(thumbnailRows, [4, 4]);
   const canvas = await preview.locator("canvas").elementHandle();
   await trackAvatar(page);
   await preview.press("Home");

@@ -15,3 +15,5 @@ No Windows, executei `appearance` do renderer atual para os dois personagens do 
 ## 018-T3 — Editor e prévia
 
 Com Vite na porta 5177 e `node docs/acceptance/012-admin.cjs --serve`, executei `node docs/acceptance/018-admin.cjs` no Edge 157.0.4341.60, Windows. O ensaio confirmou painel de elenco, ficha e prévia na mesma linha, histórico acessível, cancelamento e descarte de alteração, sincronização do slider com o campo numérico e overall 56 para o conjunto de teste. A galeria exibiu oito miniaturas geradas pelo resolvedor de avatares. A prévia girou por arraste, por teclado e pelo botão Frente, preservou o ângulo após trocar pele e cabelo e manteve um único canvas. Sem WebGL, o resumo textual refletiu a pele selecionada e o formulário continuou editável. Gate T3 aprovado.
+
+A revisão das primeiras capturas motivou manter a prévia visível enquanto a ficha rola no desktop, reorganizar a galeria em duas fileiras de quatro e enquadrar a cabeça de lado para mostrar a extensão traseira. O ensaio de interface passou novamente com verificações da posição da prévia durante a rolagem e da grade da galeria.

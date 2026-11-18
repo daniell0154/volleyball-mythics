@@ -117,7 +117,7 @@ export function CharacterPreview({ assetKey, team, interactive = false, summary,
     lightPreview(scene);
     const camera = new THREE.PerspectiveCamera(27, 112 / 96, 0.1, 10);
     const y = appearance(galleryKey).height * 1.78;
-    camera.position.set(.27, y + .07, 1.22);
+    camera.position.set(1.1, y + .07, .58);
     camera.lookAt(0, y, 0);
     const images: HairThumbnails = {};
     try {

@@ -205,10 +205,11 @@ export function Admin({ services }: { services?: AdminServices }) {
               const active = versions.find(version => version.enabled);
               const latest = active ?? versions[0];
               const rosterPayload = saved?.payload ?? latest!.payload;
+              const state = [saved ? "Rascunho" : "", active ? "Publicado" : latest ? "Inativo" : ""].filter(Boolean).join(" · ");
               return <li key={id}>
                 <button className="admin-roster-entry" aria-pressed={selectedEntry === (saved ? id : id + ":" + latest!.version)}
                   disabled={busy || loading} onClick={() => saved ? open(saved, id) : openVersion(latest!)}>
-                  <span><strong>{rosterPayload.name}</strong><small>{saved ? "Rascunho" : active ? "Publicado" : "Inativo"}</small></span>
+                  <span><strong>{rosterPayload.name}</strong><small>{state}</small></span>
                   <span className="admin-roster-score" aria-label={`Overall ${overall(rosterPayload)}`}>{overall(rosterPayload)}</span>
                 </button>
                 {versions.length > 0 && <details className="admin-history">
