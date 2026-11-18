@@ -23,14 +23,17 @@
   </main>
 </div>
 <script type="module">
-  const variant = new URLSearchParams(location.search).get("variant");
+  const query = new URLSearchParams(location.search);
+  const variant = query.get("variant");
   const baseline = variant === "baseline";
   const rendererPath = baseline
     ? "/.test-build/016-baseline/apps/web/src/scene/createScene.ts"
     : "/apps/web/src/scene/createScene.ts";
   const { createScene } = await import(/* @vite-ignore */ rendererPath);
   const traces = await fetch("./014-traces-4.json").then(response => response.json());
-  const trace = traces.find(entry => entry.side === "A" && entry.defending === "both").frames.map(frame => ({
+  const side = query.get("serveSide");
+  const reference = traces.find(entry => side ? entry.side === side && entry.defending === true : entry.side === "A" && entry.defending === "both");
+  const trace = reference.frames.map(frame => ({
     ...frame,
     athletes: frame.athletes.map((athlete, index) => ({
       ...athlete,
@@ -49,8 +52,9 @@
     controls.hidden = false;
   }
   const adapter = createScene(host, { reserveCueMargin: !baseline });
-  adapter.setFollowPlayer(trace[0].athletes.find(athlete => athlete.team === "A").id);
-  adapter.setReducedMotion(true);
+  const viewSide = query.get("viewSide") || side || "A";
+  adapter.setFollowPlayer(trace[0].athletes.find(athlete => athlete.team === viewSide).id);
+  adapter.setReducedMotion(query.get("motion") !== "follow");
   adapter.setQuality("low");
   const resize = new ResizeObserver(() => adapter.resize(host.clientWidth, host.clientHeight, { top: hud.offsetHeight, bottom: controls.offsetHeight }));
   resize.observe(host);
