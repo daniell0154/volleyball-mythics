@@ -1,16 +1,8 @@
 import * as THREE from "three";
+import { appearance } from "./avatarAppearance.js";
+export { appearance } from "./avatarAppearance.js";
 
-export function appearance(assetKey: string) {
-  const match = /^procedural:(?:v1|athletic-v2):(male|female):([0-9]{1,10})$/.exec(assetKey);
-  if (!match || Number(match[2]) > 4294967295) throw new Error("Unknown avatar asset");
-  let seed = Number(match[2]) >>> 0;
-  const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  const pick = (values: string[]) => values[Math.floor(random() * values.length)]!;
-  return { gender: match[1]!, skin: pick(["#f1c7a5", "#d8a07b", "#ab714e", "#704931"]), hair: pick(["#261b16", "#543628", "#b48a4b", "#171923"]), accent: pick(["#fbd24c", "#74e6cd", "#ef96c3", "#d6e3fb"]), height: 0.95 + random() * 0.1, hairStyle: Math.floor(random() * 3) };
-}
-
-export function createAvatar(assetKey: string, team: "A" | "B"): THREE.Group {
-  const look = appearance(assetKey);
+export function createAvatar(assetKey: string, team: "A" | "B", look = appearance(assetKey)): THREE.Group {
   const group = new THREE.Group();
   group.userData.assetKey = assetKey;
   group.userData.gender = look.gender;
@@ -33,10 +25,14 @@ export function createAvatar(assetKey: string, team: "A" | "B"): THREE.Group {
   }
   box(0.14, 0.15, 0.15, look.skin, 0, 1.5, 0);
   box(0.36, 0.38, 0.35, look.skin, 0, 1.73, 0);
-  box(0.39, 0.1 + look.hairStyle * 0.035, 0.39, look.hair, 0, 1.92, 0);
+  if (look.hairId === "curly") {
+    for (const x of [-.13, 0, .13]) for (const z of [-.12, 0, .12]) {
+      box(.17, .15, .17, look.hair, x, 1.95, z);
+    }
+  } else if (look.hairId !== "bald") box(0.39, 0.1 + look.hairStyle * 0.035, 0.39, look.hair, 0, 1.92, 0);
   if (look.hairStyle === 1) box(0.21, 0.1, 0.37, look.hair, -0.08, 1.99, 0);
   if (look.hairStyle === 2) box(0.37, 0.22, 0.1, look.hair, 0, 1.8, -0.18);
-  if (look.gender === "female") box(0.22, 0.42, 0.18, look.hair, 0, 1.65, -0.26);
+  if (look.longHair) box(0.22, 0.42, 0.18, look.hair, 0, 1.65, -0.26);
   for (const x of [-0.09, 0.09]) box(0.045, 0.045, 0.025, "#182033", x, 1.76, 0.18);
   group.scale.setScalar(look.height);
   group.rotation.y = team === "A" ? 0 : Math.PI;
