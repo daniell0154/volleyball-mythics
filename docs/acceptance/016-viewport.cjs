@@ -37,12 +37,37 @@ async function checkCourt(page) {
     const hud = document.querySelector(".match-hud");
     const controls = document.querySelector(".match-controls");
     if (!court || !canvas || !hud || !controls) return false;
+    const viewport = document.querySelector(".match-viewport").getBoundingClientRect();
     const area = court.getBoundingClientRect(), draw = canvas.getBoundingClientRect();
-    return area.height > 0 && Math.abs(draw.height - area.height) < 1 &&
-      Math.abs(draw.width - area.width) < 1 &&
-      area.top >= hud.getBoundingClientRect().bottom && area.bottom <= controls.getBoundingClientRect().top;
+    const cue = court.querySelector("[data-ball-cue]");
+    const sameSize = [area, draw].every(rect => Math.abs(rect.height - viewport.height) < 1 &&
+      Math.abs(rect.width - viewport.width) < 1 && rect.top === viewport.top && rect.left === viewport.left);
+    if (!sameSize || !cue || cue.style.display === "none") return false;
+    const ball = cue.getBoundingClientRect();
+    return ball.top >= hud.getBoundingClientRect().bottom && ball.bottom <= controls.getBoundingClientRect().top;
   });
   return canvas.boundingBox();
+}
+
+async function checkContrast(page) {
+  const ratios = await page.evaluate(() => {
+    const color = (selector, property) => getComputedStyle(document.querySelector(selector))[property];
+    const luminance = color => color.match(/[\d.]+/g).slice(0, 3)
+      .map(channel => Number(channel) / 255)
+      .map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4)
+      .reduce((total, channel, index) => total + channel * [.2126, .7152, .0722][index], 0);
+    return [
+      [".scoreboard strong", ".scoreboard"], [".match-phase", ".scoreboard"],
+      [".match-identity", ".match-identity"], [".move-tip", ".match-toolbar"],
+      [".match-toolbar button[aria-expanded]:not(.expand-actions)", ".match-toolbar button[aria-expanded]:not(.expand-actions)"],
+    ].map(([text, background]) => {
+      const values = [luminance(color(text, "color")), luminance(color(background, "backgroundColor"))];
+      return (Math.max(...values) + .05) / (Math.min(...values) + .05);
+    });
+  });
+  const minimum = Math.min(...ratios);
+  assert.ok(minimum >= 4.5, JSON.stringify(ratios));
+  return minimum;
 }
 
 async function run() {
@@ -56,12 +81,22 @@ async function run() {
     await page.getByRole("button", { name: "Iniciar partida" }).click();
     await checkViewport(page);
     const closed = await checkCourt(page);
+    const minimumContrast = await checkContrast(page);
+    await page.getByRole("button", { name: "Sacar · L" }).click();
+    await page.getByText("Em jogo", { exact: true }).waitFor();
+    await page.screenshot({ path: "docs/acceptance/016-match.png" });
 
     const options = page.getByRole("button", { name: "Opções", exact: true });
     await options.click();
     const opened = await checkCourt(page);
-    assert.ok(opened.height < closed.height);
+    assert.deepEqual(opened, closed);
     const enter = page.getByRole("button", { name: "Tela cheia do navegador" });
+    const tabStops = new Set();
+    for (let step = 0; step < 16 && !tabStops.has("Tela cheia do navegador"); step++) {
+      await page.keyboard.press("Tab");
+      tabStops.add(await page.evaluate(() => document.activeElement.getAttribute("aria-label") || document.activeElement.textContent.trim()));
+    }
+    assert.ok(tabStops.has("Volume dos sinais sonoros") && tabStops.has("Tela cheia do navegador"), [...tabStops].join(", "));
     await enter.click();
     await page.getByRole("button", { name: "Sair da tela cheia" }).waitFor();
     assert.equal(await page.evaluate(() => document.fullscreenElement?.className), "match-viewport");
@@ -82,7 +117,7 @@ async function run() {
     await page.locator(".app-header").waitFor();
     assert.equal(await page.getByLabel("Seu apelido", { exact: true }).evaluate(element => element === document.activeElement), true);
     assert.deepEqual(errors, []);
-    console.log(`016-T1 viewport, fullscreen, recusa e retorno ao lobby: OK (Edge ${browser.version()})`);
+    console.log(`016 viewport, Tab, fullscreen, recusa e retorno ao lobby: OK (Edge ${browser.version()}, contraste mínimo ${minimumContrast.toFixed(2)}:1)`);
   } finally {
     await browser.close();
   }

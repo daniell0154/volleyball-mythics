@@ -10,9 +10,9 @@ Layout exclusivo da partida desde a transição da sala, incluindo suspensão e 
 
 ## 016-T2 — HUD e área da quadra
 
-Placar compacto em cima. Ações, dicas, opções e saída ficam na faixa inferior. O espaço entre as faixas determina a resolução e a projeção via `ResizeObserver`; o indicador mantém sua margem contra as bordas da quadra. Telas curtas/estreitas têm expansão das ações e rolagem restrita às faixas quando necessário.
+O proprietário esclareceu que a imagem do jogo deve preencher toda a viewport, com controles minimalistas sobre o render. A revisão substituiu as faixas que reservavam espaço fora do canvas por placar superior e dock inferior flutuantes. As opções e as ações no modo compacto se expandem quando abertas.
 
-`npm run test --workspace @volleyball-mythics/web`: 27 testes passaram, incluindo a projeção dos traces da 014 para ambos os lados e câmera estável/móvel. Bola projetada com no mínimo 12 CSS px nos quadros verificados; indicador dentro da quadra. `node docs/acceptance/016-viewport.cjs`, Edge 157 no Windows: canvas ajustado entre as faixas ao abrir/fechar opções e foco na quadra ao fechar com Escape. Gate funcional T2 aprovado. Percurso ampliado em T3 e avaliação visual/desempenho em T4.
+`ResizeObserver` mede as sobreposições e ajusta o deslocamento da projeção, mantendo a resolução do canvas. `npm run test --workspace @volleyball-mythics/web`: 27 testes passaram, incluindo a projeção dos traces da 014, ambos os lados e câmera estável/móvel. Bola projetada com no mínimo 12 CSS px nos quadros verificados. `node docs/acceptance/016-viewport.cjs`, Edge 157 no Windows: canvas em toda a viewport antes e depois de abrir opções, indicador entre as sobreposições e Escape retornando o foco à quadra. Gate funcional T2 aprovado. Avaliação visual/desempenho em T4.
 
 ## 016-T3 — Integração
 

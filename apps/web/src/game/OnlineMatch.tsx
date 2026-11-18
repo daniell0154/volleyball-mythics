@@ -6,8 +6,9 @@ import { SnapshotBuffer } from "../network/interpolation.js";
 import { createScene } from "../scene/createScene.js";
 import { enableFeedbackSound, playFeedbackSound } from "./feedbackSound.js";
 import { inputIntent } from "./inputIntent.js";
-import {MatchHud} from "./MatchHud.js";
+import { MatchHud } from "./MatchHud.js";
 import { matchGuidance } from "./matchGuidance.js";
+import type { CourtInsets } from "./presentation.js";
 
 interface OnlineMatchProps {
   snapshot: MatchSnapshot | null;
@@ -30,7 +31,10 @@ interface OnlineMatchProps {
 export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable,
   characterName = "Seu atleta", roomLabel = "", status, commandError, fullscreen, onLeave, leaveDisabled, result }: OnlineMatchProps) {
   const host = useRef<HTMLDivElement>(null);
+  const hud = useRef<HTMLElement>(null);
   const controls = useRef<HTMLElement>(null);
+  const options = useRef<HTMLDivElement>(null);
+  const courtInsets = useRef<CourtInsets>({ top: 0, bottom: 0 });
   const resultPanel = useRef<HTMLDivElement>(null);
   const hadResult = useRef(false);
   const sceneRef = useRef<ReturnType<typeof createScene> | null>(null);
@@ -41,7 +45,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   const focusCourt = () => (resultPanel.current ?? host.current)?.focus({ preventScroll: true });
   const closeOptions = () => {
     setOptionsOpen(false);
-    if (controls.current) controls.current.scrollTop = 0;
+    if (options.current) options.current.scrollTop = 0;
     focusCourt();
   };
   useEffect(() => {
@@ -52,7 +56,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     if (showingResult || hadResult.current) {
       setOptionsOpen(false);
       setActionsExpanded(false);
-      if (controls.current) controls.current.scrollTop = 0;
+      if (options.current) options.current.scrollTop = 0;
       focusCourt();
     }
     hadResult.current = showingResult;
@@ -96,7 +100,16 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     let scene: ReturnType<typeof createScene>;
     try { scene = createScene(target, { reserveCueMargin: true });setGraphicsError(""); } catch { setGraphicsError("A quadra 3D precisa de WebGL. Habilite a aceleração gráfica e recarregue."); return; }
     sceneRef.current = scene;
-    const resize = new ResizeObserver(([entry]) => { if (entry) scene.resize(entry.contentRect.width, entry.contentRect.height); }); resize.observe(target);
+    const resize = new ResizeObserver(() => {
+      const width = target.clientWidth, height = target.clientHeight;
+      const top = Math.min(hud.current?.offsetHeight ?? 0, Math.max(0, height - 1));
+      const bottom = Math.min(controls.current?.offsetHeight ?? 0, Math.max(0, height - top - 1));
+      courtInsets.current = { top, bottom };
+      scene.resize(width, height, courtInsets.current);
+    });
+    resize.observe(target);
+    if (hud.current) resize.observe(hud.current);
+    if (controls.current) resize.observe(controls.current);
     let raf = 0;
     const render = (now: number) => { const frame = buffer.current.sample(now); if (frame) scene.update(frame); raf = requestAnimationFrame(render); }; raf = requestAnimationFrame(render);
     return () => { cancelAnimationFrame(raf); resize.disconnect(); scene.dispose(); sceneRef.current = null; };
@@ -125,42 +138,48 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   const serving = playing && snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
   const abilityCooldown = Math.ceil(snapshot?.cooldowns[userId] ?? 0);
   const trigger = (code: string) => { focusCourt(); keyboard.current.press(code); keyboard.current.release(code); };
+  const hint = status || feedback || intent?.text || (serving ? "Seu saque" : "");
+  const leaveLabel = !connection ? "Voltar ao lobby" : result ? "Sair da sala" : "Abandonar partida";
   return <section aria-label="Partida online" className="online-match" onPointerDown={enableFeedbackSound} onKeyDown={event => {
     enableFeedbackSound();
     if (event.key === "Escape" && optionsOpen) closeOptions();
   }}>
-    <MatchHud snapshot={snapshot} team={team} slot={slot} characterName={characterName} roomLabel={roomLabel}/>
+    <MatchHud snapshot={snapshot} team={team} slot={slot} hudRef={hud}/>
     <div className="match-stage">
       {result && <div ref={resultPanel} className="match-stage-panel" tabIndex={-1} aria-label="Resultado e revanche">{result}</div>}
-      <div ref={host} hidden={Boolean(result)} className="court-host" tabIndex={0} onPointerMove={event => {
+      <div ref={host} className="court-host" tabIndex={showingResult ? -1 : 0} onPointerMove={event => {
         if (!cursorAim || snapshot?.rulesVersion !== 4 || document.activeElement !== host.current) return;
         const rect = event.currentTarget.getBoundingClientRect();
-        if (rect.width && rect.height) keyboard.current.setCursorAim((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
+        const { top, bottom } = courtInsets.current;
+        const height = rect.height - top - bottom;
+        if (rect.width && height > 0) keyboard.current.setCursorAim((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top-top)/height*2);
       }} onClick={focusCourt} aria-label="Quadra em terceira pessoa. Clique para usar o teclado." />
       {graphicsError && !result && <div className="match-stage-panel"><div className="notice error" role="alert">
         <strong>Modo gráfico indisponível</strong><p>{graphicsError}</p><p>O placar e o botão de saída continuam disponíveis.</p>
       </div></div>}
     </div>
     <footer ref={controls} className="match-controls">
+      {hint && <span className="match-hint" role="status">{hint}</span>}
+      {(commandError || error) && <p className="notice error" role="alert">{commandError || error}</p>}
       <div className="match-toolbar">
+        <span className="move-tip"><kbd>WASD</kbd> Mover</span>
         <button type="button" className="expand-actions" aria-expanded={actionsExpanded} aria-controls={actionsId} onClick={() => setActionsExpanded(!actionsExpanded)}>Ações</button>
-        <span className="match-hint" role="status">{status || feedback || intent?.text || `WASD move · ${matchGuidance(snapshot, team, slot) ?? ""}`}</span>
+        <div id={actionsId} className="action-bar" data-expanded={actionsExpanded} role="group" aria-label="Ações da partida">
+          <button aria-label="Saltar · Espaço" disabled={!playing} onClick={() => trigger("Space")}><kbd>Espaço</kbd> Saltar</button>
+          {snapshot?.phase === "serving" ? <button aria-label="Sacar · L" disabled={!serving} onClick={() => trigger("KeyL")}><kbd>L</kbd> Sacar</button>
+            : <button aria-label="Atacar · L" disabled={!playing} onClick={() => trigger("KeyL")}><kbd>L</kbd> Atacar</button>}
+          <button aria-label="Receber / bloquear · J" disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyJ")}><kbd>J</kbd> Receber</button>
+          <button aria-label="Levantar · K" disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyK")}><kbd>K</kbd> Levantar</button>
+          <button aria-label={`Especial · ${abilityCooldown > 0 ? `${abilityCooldown}s` : "U"}`} disabled={!playing || !abilityAvailable || abilityCooldown > 0} onClick={() => trigger("KeyU")}><kbd>{abilityCooldown > 0 ? `${abilityCooldown}s` : "U"}</kbd> Especial</button>
+        </div>
         <button type="button" aria-expanded={optionsOpen} aria-controls={optionsId} onClick={() => {
           if (optionsOpen) closeOptions();
           else { keyboard.current.clear(); setOptionsOpen(true); }
         }}>Opções</button>
-        {onLeave && <button type="button" disabled={leaveDisabled} onClick={onLeave}>{!connection ? "Voltar ao lobby" : result ? "Sair da sala" : "Abandonar partida"}</button>}
+        {onLeave && <button type="button" aria-label={leaveLabel} title={leaveLabel} disabled={leaveDisabled} onClick={onLeave}>{!connection ? "Voltar" : "Sair"}</button>}
       </div>
-      {(commandError || error) && <p className="notice error" role="alert">{commandError || error}</p>}
-      <div id={actionsId} className="action-bar" data-expanded={actionsExpanded} role="group" aria-label="Ações da partida">
-        <button disabled={!playing} onClick={() => trigger("Space")}>Saltar · Espaço</button>
-        {snapshot?.phase === "serving" ? <button disabled={!serving} onClick={() => trigger("KeyL")}>Sacar · L</button>
-          : <button disabled={!playing} onClick={() => trigger("KeyL")}>Atacar · L</button>}
-        <button disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyJ")}>Receber / bloquear · J</button>
-        <button disabled={!playing||snapshot?.phase !== "rally"} onClick={() => trigger("KeyK")}>Levantar · K</button>
-        <button disabled={!playing || !abilityAvailable || abilityCooldown > 0} onClick={() => trigger("KeyU")}>Especial · {abilityCooldown > 0 ? `${abilityCooldown}s` : "U"}</button>
-      </div>
-      <div id={optionsId} className="game-options" hidden={!optionsOpen}>
+      <div ref={options} id={optionsId} className="game-options" hidden={!optionsOpen}>
+       <p className="helper">{characterName}{roomLabel && ` · ${roomLabel}`}</p>
        <div className="options-grid">
       <button onClick={() => setQuality(quality === "low" ? "high" : "low")}>Qualidade: {quality === "low" ? "baixa" : "alta"}</button>
       <label>Volume dos sinais · {volume===0?"mudo":volume+"%"}<input aria-label="Volume dos sinais sonoros" aria-valuetext={volume===0?"Mudo":volume+" por cento"} type="range" min="0" max="100" value={volume} onChange={(event) => { const next = Number(event.target.value); setVolume(next); try { localStorage.setItem("volleyball-mythics-volume", String(next)); } catch {} }} /></label>
@@ -169,7 +188,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
         {fullscreen}
         <button onClick={closeOptions}>Fechar opções</button>
        </div>
-       <p className="helper">As opções não pausam a partida. WASD move. {snapshot?.rulesVersion === 4 && (cursorAim ? "Mire com o cursor na quadra. C centraliza. Saque no fundo." : "Mire com as setas. C centraliza. Saque no fundo.")}</p>
+       <p className="helper">{matchGuidance(snapshot, team, slot)} As opções não pausam a partida. {snapshot?.rulesVersion === 4 && (cursorAim ? "Mire com o cursor na quadra. C centraliza." : "Mire com as setas. C centraliza.")}</p>
       </div>
     </footer>
   </section>;

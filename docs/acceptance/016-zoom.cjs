@@ -42,6 +42,8 @@ async function run() {
     await checkCourt(page);
     assert.equal(await page.locator(".match-controls").evaluate(element => element.scrollTop), 0);
     assert.equal(await page.locator(".court-host").evaluate(element => element === document.activeElement), true);
+    await expand.press("Enter");
+    assert.equal(await expand.getAttribute("aria-expanded"), "false");
     const cdp = await context.newCDPSession(page);
     const screenshot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
     await writeFile("docs/acceptance/016-zoom.png", Buffer.from(screenshot.data, "base64"));

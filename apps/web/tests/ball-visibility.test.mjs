@@ -15,22 +15,23 @@ test('ball has a minimum projected 12 CSS pixels in both views; offscreen cue st
  }
 });
 
-test('the 016 projection keeps rally traces and cue in the measured court between HUD bands', () => {
+test('the full canvas projection keeps rally traces and cue between HUD overlays', () => {
   const traces = JSON.parse(readFileSync(new URL('../../../docs/benchmarks/014-traces-4.json', import.meta.url)));
   for (const team of ['A', 'B']) {
     const trace = traces.find(trace => trace.side === team && trace.defending === true).frames;
-    for (const [width, height] of [[1280, 570], [1920, 930], [640, 240], [320, 120]]) {
+    for (const [width, height, top, bottom] of [[1280, 720, 47, 58], [1920, 1080, 47, 58], [631, 312, 54, 93], [320, 360, 54, 135]]) {
       for (const stable of [false, true]) {
         const camera = createCamera();
-        fitStableCamera(camera, team, width, height, 16);
+        const insets = { top, bottom };
+        fitStableCamera(camera, team, width, height, 16, insets);
         for (const frame of trace.filter(frame => ['serving', 'rally'].includes(frame.phase))) {
           const ball = frame.ball;
           if (!stable) followRallyCamera(camera, frame.athletes.find(athlete => athlete.team === team).position, ball, team, .05);
-          const cue = ballScreenCue(camera, ball, width, height, 16);
+          const cue = ballScreenCue(camera, ball, width, height, 16, insets);
           const depth = -new Vector3(ball.x, ball.y, ball.z).applyMatrix4(camera.matrixWorldInverse).z;
-          const pixels = .22 * visualBallScale(camera, ball, height) * height / (2 * depth * Math.tan(camera.fov * Math.PI / 360));
+          const pixels = .22 * visualBallScale(camera, ball, height) * height * camera.projectionMatrix.elements[5] / (2 * depth);
           assert.ok(pixels >= 12 - 1e-8);
-          assert.ok(cue.x >= 16 && cue.y >= 16 && cue.x <= width - 16 && cue.y <= height - 16);
+          assert.ok(cue.x >= 16 && cue.y >= top + 16 && cue.x <= width - 16 && cue.y <= height - bottom - 16);
           if (Math.abs(ball.x) <= 4.5 && Math.abs(ball.z) <= 9) assert.equal(cue.offscreen, false, JSON.stringify({ team, width, height, ball }));
         }
       }
