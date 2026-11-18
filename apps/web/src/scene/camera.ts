@@ -19,15 +19,18 @@ export function followCamera(camera: PerspectiveCamera, player: { x: number; y: 
   camera.fov = 65; camera.updateProjectionMatrix(); camera.lookAt(current);
 }
 
-export function fitCamera(camera: PerspectiveCamera, width: number, height: number): void {
+export function fitCamera(camera: PerspectiveCamera, width: number, height: number, margin = 0): void {
   camera.aspect = width / height;
-  camera.fov = MathUtils.radToDeg(2 * Math.atan(Math.tan(MathUtils.degToRad(24)) * Math.max(1, (16 / 9) / camera.aspect)));
+  const effectiveWidth = width - 2 * Math.min(margin, width / 8);
+  const effectiveHeight = height - 2 * Math.min(margin, height / 8);
+  const scale = Math.max(height / effectiveHeight, (16 / 9) * height / effectiveWidth);
+  camera.fov = MathUtils.radToDeg(2 * Math.atan(Math.tan(MathUtils.degToRad(24)) * scale));
   camera.updateProjectionMatrix();
 }
 
-export function fitStableCamera(camera:PerspectiveCamera,team:"A"|"B",width:number,height:number):void{
+export function fitStableCamera(camera:PerspectiveCamera,team:"A"|"B",width:number,height:number,margin=0):void{
   camera.position.set(0,22,team==="A"?-25:25);camera.lookAt(0,1,0);
-  camera.userData.following=false;fitCamera(camera,width,height);camera.updateMatrixWorld();
+  camera.userData.following=false;fitCamera(camera,width,height,margin);camera.updateMatrixWorld();
 }
 
 /** Elevated, team-aligned view: court and high arcs stay readable without camera bob. */

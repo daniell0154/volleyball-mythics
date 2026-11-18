@@ -27,6 +27,23 @@ async function checkViewport(page) {
   assert.equal(sizes.overflow, "hidden");
 }
 
+async function checkCourt(page) {
+  const canvas = page.locator(".court-host canvas");
+  await canvas.waitFor();
+  await page.waitForFunction(() => {
+    const court = document.querySelector(".court-host");
+    const canvas = court?.querySelector("canvas");
+    const hud = document.querySelector(".match-hud");
+    const controls = document.querySelector(".match-controls");
+    if (!court || !canvas || !hud || !controls) return false;
+    const area = court.getBoundingClientRect(), draw = canvas.getBoundingClientRect();
+    return area.height > 0 && Math.abs(draw.height - area.height) < 1 &&
+      Math.abs(draw.width - area.width) < 1 &&
+      area.top >= hud.getBoundingClientRect().bottom && area.bottom <= controls.getBoundingClientRect().top;
+  });
+  return canvas.boundingBox();
+}
+
 async function run() {
   const browser = await chromium.launch({ channel: process.env.VOLLEYBALL_BROWSER || "msedge", headless: true });
   try {
@@ -37,7 +54,12 @@ async function run() {
     await page.getByRole("button", { name: "Pronto para jogar" }).click();
     await page.getByRole("button", { name: "Iniciar partida" }).click();
     await checkViewport(page);
+    const closed = await checkCourt(page);
 
+    const options = page.getByRole("button", { name: "Opções", exact: true });
+    await options.click();
+    const opened = await checkCourt(page);
+    assert.ok(opened.height < closed.height);
     const enter = page.getByRole("button", { name: "Tela cheia do navegador" });
     await enter.click();
     await page.getByRole("button", { name: "Sair da tela cheia" }).waitFor();
@@ -50,6 +72,10 @@ async function run() {
     await enter.click();
     await page.getByText("Tela cheia do navegador indisponível.", { exact: false }).waitFor();
     await checkViewport(page);
+    await page.keyboard.press("Escape");
+    assert.equal(await options.getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator(".court-host").evaluate(element => element === document.activeElement), true);
+    await checkCourt(page);
 
     await page.getByRole("button", { name: /Abandonar partida|Sair da sala/ }).click();
     await page.locator(".app-header").waitFor();
@@ -62,4 +88,4 @@ async function run() {
 }
 
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { openPlayer, checkViewport };
+module.exports = { openPlayer, checkViewport, checkCourt };
