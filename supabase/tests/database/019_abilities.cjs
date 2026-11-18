@@ -50,10 +50,14 @@ async function run() {
     await db.exec(flags(false));
     const enabled = (await list()).rows.filter(row => row.enabled);
     assert.deepEqual(enabled.map(row => row.id), ["free_point_out", "teammate_rant"]);
+    assert.deepEqual((await list()).rows.filter(row => !row.enabled).map(row => row.id),
+      ["butter_fingers", "coffee_break", "my_ball"]);
     assert.ok(!(await list()).rows.some(row => row.id === "speed_boost_fixture"));
     assert.deepEqual(enabled[1].ability_config, before.ability_config);
     await assert.rejects(db.exec("update roster_abilities set enabled=false"), error => error.code === "42501");
     await assert.rejects(write("save", 0, { ...payload, abilityId: "speed_boost_fixture" }),
+      error => error.message === "ability_unavailable");
+    await assert.rejects(write("save", 0, { ...payload, abilityId: "coffee_break" }),
       error => error.message === "ability_unavailable");
     await assert.rejects(write("save", 0, { ...payload, abilityConfig: {} }), error => error.code === "22023");
     assert.deepEqual((await write("save", 0)).rows[0].result.payload, payload);

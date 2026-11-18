@@ -5,7 +5,12 @@ import {BotController} from "./bots/controller.js";
 import { DEFAULT_RULES, ballConfigFromRules, moveAthlete, stepBall, createMatch, transition, createBallContactState, applyContact, resolveGround, validateAbilityDefinition, rallyProfile, rallyVelocity, actionRange, type RallyProfile, type AbilityDefinition, type BallState, type MatchState, type BallContactState } from "@volleyball-mythics/domain";
 import type { InputPayload, MatchSnapshot, RoomState, Vector3, Team, CharacterAttributes, VisualAction, VisualActionKind } from "@volleyball-mythics/protocol";
 export interface Athlete { id: string; team: Team; slot: number; position: Vector3; velocityY: number; assetKey?: string; ability?: AbilityDefinition; attributes: CharacterAttributes }
-interface ActiveEffect { expiresAtTick: number; multiplier: number; attributes: readonly string[] }
+interface ActiveEffect {
+  expiresAtTick: number;
+  multiplier: number;
+  attributes: readonly ("speed" | "receive")[];
+  allContactRanges?: true;
+}
 export interface RunningMatch {
   bots?:BotController;
   room: RoomState; state: MatchState; tick: number; phaseTicks: number; startedAt: string;
@@ -164,7 +169,9 @@ export class MatchRuntime {
     if (match.state.phase !== "rally" || match.touching.has(athlete.id) || match.tick < (match.contactRecovery.get(athlete.id) ?? 0)) return;
     const action = input.actions.includes("attack") ? "attack" : input.actions.includes("set") ? "set" : input.actions.includes("receive") ? "receive" : null;
     if (!action) return;
-    const receiveMultiplier = match.activeEffects.get(athlete.id)?.attributes.includes("receive") ? match.activeEffects.get(athlete.id)!.multiplier : 1;
+    const effect = match.activeEffects.get(athlete.id);
+    const receiveMultiplier = effect?.attributes.includes("receive") && (action === "receive" || effect.allContactRanges)
+      ? effect.multiplier : 1;
     const attribute = action === "set" ? athlete.attributes.set : action === "attack" ? athlete.attributes.attack : athlete.attributes.receive;
     if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > actionRange(match.rallyProfile,attribute) * receiveMultiplier) { match.metrics.rejectedRange(); this.onAction(athlete.id, "Chegue mais perto da bola."); return; }
     const isBlock = action === "receive" && athlete.position.y > 0.2 && Math.abs(athlete.position.z) < 1 && match.ball.position.y >= DEFAULT_RULES.netHeight;
@@ -183,16 +190,6 @@ export class MatchRuntime {
     if (!ability) { this.onAction(athlete.id, "Habilidade indisponível."); return; }
     if (!ability.validPhases.includes(match.state.phase as "rally")) { this.onAction(athlete.id, "Use a habilidade durante a jogada."); return; }
     if (match.tick < (match.abilityCooldowns.get(athlete.id) ?? 0)) { this.onAction(athlete.id, "Habilidade em recarga."); return; }
-    if (ability.id === "teammate_rant") {
-      const teammate = match.athletes.find((other) => other.team === athlete.team && other.id !== athlete.id);
-      if (!teammate) { this.onAction(athlete.id, "Habilidade indisponível sem companheiro."); return; }
-      match.activeEffects.set(teammate.id, { expiresAtTick: match.tick + ability.durationSeconds * 60, multiplier: ability.multiplier, attributes: ability.affectedAttributes });
-      match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
-      this.visual(match, athlete, "rant", teammate.position);
-      this.onAction(athlete.id, "Bronca! Seu parceiro recebeu um debuff temporário.");
-      this.onAction(teammate.id, "Bronca do Samuel: velocidade e recepção reduzidas.");
-      return;
-    }
     if (ability.id === "free_point_out") {
       if (distance(match.ball.position, { ...athlete.position, y: athlete.position.y + 1.1 }) > 1.9) { this.onAction(athlete.id, "Chegue mais perto da bola para usar a habilidade."); return; }
       match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
@@ -202,10 +199,46 @@ export class MatchRuntime {
       this.point(match, athlete.team === "A" ? "B" : "A", "ability_free_point");
       return;
     }
-    if (ability.id === "speed_boost_fixture") {
-      match.activeEffects.set(athlete.id, { expiresAtTick: match.tick + ability.durationSeconds * 60, multiplier: ability.multiplier, attributes: [ability.attribute] });
-      match.abilityCooldowns.set(athlete.id, match.tick + ability.cooldownSeconds * 60);
-      this.onAction(athlete.id, "Aumento de velocidade de teste ativado.");
+    const partner = ability.target === "teammate"
+      ? match.room.members.find(member => member.connected && member.team === athlete.team && participantId(member) !== athlete.id)
+      : undefined;
+    const target = partner ? match.athletes.find(actor => actor.id === participantId(partner))
+      : ability.target === "self" ? athlete : undefined;
+    if (!target) { this.onAction(athlete.id, "Habilidade indisponível sem parceiro ativo."); return; }
+    if (match.activeEffects.has(target.id)) {
+      this.onAction(athlete.id, "O alvo já tem um efeito temporário ativo.");
+      return;
+    }
+    const attributes = ability.id === "teammate_rant" ? ability.affectedAttributes : [ability.attribute];
+    match.activeEffects.set(target.id, {
+      expiresAtTick: match.tick + Math.ceil(ability.durationSeconds * 60),
+      multiplier: ability.multiplier,
+      attributes,
+      ...(ability.id === "teammate_rant" ? { allContactRanges: true } : {}),
+    });
+    match.abilityCooldowns.set(athlete.id, match.tick + Math.ceil(ability.cooldownSeconds * 60));
+    const change = Math.round(Math.abs(ability.multiplier - 1) * 100);
+    switch (ability.id) {
+      case "teammate_rant":
+        this.visual(match, athlete, "rant", target.position);
+        this.onAction(athlete.id, "Bronca! Seu parceiro recebeu um debuff temporário.");
+        this.onAction(target.id, "Bronca do Samuel: velocidade e recepção reduzidas.");
+        break;
+      case "coffee_break":
+        this.onAction(athlete.id, `☕ Velocidade +${change}%`);
+        break;
+      case "butter_fingers":
+        this.onAction(athlete.id, `🧤 Recepção −${change}%`);
+        break;
+      case "my_ball": {
+        const recipient = `${partner?.controller === "bot" ? "Bot " : "Parceiro "}${target.team}${target.slot + 1}`;
+        this.onAction(athlete.id, `Minha Bola! ${recipient}: recepção +${change}%.`);
+        this.onAction(target.id, `Minha Bola! Recepção +${change}%.`);
+        break;
+      }
+      case "speed_boost_fixture":
+        this.onAction(athlete.id, "Aumento de velocidade de teste ativado.");
+        break;
     }
   }
   private visual(match: RunningMatch, athlete: Athlete, kind: VisualActionKind, target = match.ball.position): void {
