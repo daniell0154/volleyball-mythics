@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { CatalogEntry, ClientMessage, RoomState, MatchSnapshot, MatchEnded } from "@volleyball-mythics/protocol";
 import { RoomConnection } from "../network/connection.js";
 import { ResultPanel } from "../results/ResultPanel.js";
@@ -6,9 +6,10 @@ import {createLobbyServices,type LobbyServices} from "./services.js";
 import {CharacterShowcase,characterKey} from "./CharacterShowcase.js";
 import {RoomLobby} from "./RoomLobby.js";
 import {commandMessage} from "./guidance.js";
+import { MatchViewport } from "../game/MatchViewport.js";
 const OnlineMatch=lazy(()=>import("../game/OnlineMatch.js").then(module=>({default:module.OnlineMatch})));
 
-export function Lobby({services}:{services?:LobbyServices}={}) {
+export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNode}={}) {
   const [backend]=useState(()=>services??createLobbyServices());
   const connection = useRef<RoomConnection | null>(null);
   const roomRef = useRef<RoomState | null>(null);
@@ -40,6 +41,16 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
   const [snapshot, setSnapshot] = useState<MatchSnapshot | null>(null);
   const [result, setResult] = useState<MatchEnded | null>(null);
   const [feedback, setFeedback] = useState("");
+  const lobby = useRef<HTMLElement>(null);
+  const wasInMatch = useRef(false);
+  const inMatch = room !== null && room.status !== "lobby";
+  useLayoutEffect(() => {
+    if (!inMatch && wasInMatch.current) {
+      const nickname = lobby.current?.querySelector<HTMLInputElement>('input[autocomplete="nickname"]');
+      (nickname ?? lobby.current)?.focus({ preventScroll: true });
+    }
+    wasInMatch.current = inMatch;
+  }, [inMatch]);
   const loadCatalog=async()=>{
     const generation=++catalogGeneration.current;setCatalogStatus("loading");
     try{const entries=await backend.loadCatalog();if(alive.current&&generation===catalogGeneration.current){catalogRef.current=entries;setCatalog(entries);setCatalogStatus("ready");}}
@@ -101,7 +112,19 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
   const self = room?.members.find((m) => m.userId === userId);
   const selected = catalog.find((c) => c.id === self?.character?.id && c.version === self?.character?.version);
   const enter=async(type:"createRoom"|"joinRoom",payload:unknown)=>{if(!connected&&!await connect())return;if(!await command(type,payload))return;const featured=catalogRef.current.find(c=>characterKey(c)===featuredKey)??catalogRef.current[0];if(featured)await command("selectCharacter",{characterId:featured.id,version:featured.version});};
-  return <section className="app-shell">
+  if (room && inMatch) return <MatchViewport>{fullscreen => <>
+    <div className="match-room-bar">
+      <p className="helper">Sala {room.code} · {room.mode}{room.matchKind==="vsBots"?" · Contra bots · "+(room.difficulty==="easy"?"Fácil":room.difficulty==="hard"?"Difícil":"Normal"):" · Quatro humanos"}</p>
+      {fullscreen}
+      <button disabled={!connected} onClick={() => void command("leave")}>{room.status === "finished" ? "Sair da sala" : "Abandonar partida"}</button>
+    </div>
+    {reconnectStatus && <p className="notice" role="status">{reconnectStatus}</p>}
+    {error && <p className="notice error" role="alert">{error}</p>}
+    {commandError&&<p className="notice error" role="alert">{commandError.message}</p>}
+    {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}
+    {connected && connection.current && self && <Suspense fallback={<p role="status">Preparando quadra…</p>}><OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} characterName={selected?.name??"Seu atleta"} abilityAvailable={Boolean(selected?.abilityId&&!(selected.abilityConfig?.target==="teammate"&&room.mode==="1v1"))}/></Suspense>}
+  </>}</MatchViewport>;
+  return <>{header}<section className="app-shell" ref={lobby} tabIndex={-1}>
     {error && <p className="notice error" role="alert">{error}</p>}
     {reconnectStatus && <p className="notice" role="status">{reconnectStatus}</p>}
     {!room?<div className="entry-grid"><div className="entry-copy">
@@ -118,13 +141,7 @@ export function Lobby({services}:{services?:LobbyServices}={}) {
        {commandError?.action==="joinRoom"&&<p className="notice error" role="alert">{commandError.message}</p>}
        <p className="helper">Você joga como visitante. Seu apelido deve ter de 2 a 24 caracteres.</p>{connected&&<span className="connected-label">Conectado como {name}</span>}
       </form>
-    </div><CharacterShowcase catalog={catalog} status={catalogStatus} selectedKey={featuredKey} onSelect={character=>setFeaturedKey(characterKey(character))} onRetry={()=>void loadCatalog()}/></div>:room.status==="lobby"?<RoomLobby room={room} userId={userId} catalog={catalog} catalogStatus={catalogStatus} onRetry={()=>void loadCatalog()} command={command} pending={pending} error={commandError}/>:<div>
-      <p className="helper">Sala {room.code} · {room.mode}{room.matchKind==="vsBots"?" · Contra bots · "+(room.difficulty==="easy"?"Fácil":room.difficulty==="hard"?"Difícil":"Normal"):" · Quatro humanos"}</p>
-      <button disabled={!connected} onClick={() => command("leave")}>{room.status === "active" || room.status === "suspended" ? "Abandonar partida" : "Sair da sala"}</button>
-      {commandError&&<p className="notice error" role="alert">{commandError.message}</p>}
-      {room.status === "finished" && result && self && <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} />}
-      {connected && connection.current && self && <Suspense fallback={<p role="status">Preparando quadra…</p>}><OnlineMatch key={snapshot?.matchId ?? room.roomId} snapshot={snapshot} connection={connection.current} userId={userId} team={self.team} slot={self.slot} feedback={feedback} characterName={selected?.name??"Seu atleta"} abilityAvailable={Boolean(selected?.abilityId&&!(selected.abilityConfig?.target==="teammate"&&room.mode==="1v1"))}/></Suspense>}
-    </div>}
+    </div><CharacterShowcase catalog={catalog} status={catalogStatus} selectedKey={featuredKey} onSelect={character=>setFeaturedKey(characterKey(character))} onRetry={()=>void loadCatalog()}/></div>:<RoomLobby room={room} userId={userId} catalog={catalog} catalogStatus={catalogStatus} onRetry={()=>void loadCatalog()} command={command} pending={pending} error={commandError}/>}
     {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
-  </section>;
+  </section></>;
 }
