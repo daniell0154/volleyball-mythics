@@ -51,7 +51,7 @@
     hud.hidden = false;
     controls.hidden = false;
   }
-  const adapter = createScene(host, { reserveCueMargin: !baseline });
+  const adapter = createScene(host, { reserveCueMargin: !baseline, cameraProfile: query.get("camera") === "close" ? "close" : "elevated" });
   const viewSide = query.get("viewSide") || side || "A";
   adapter.setFollowPlayer(trace[0].athletes.find(athlete => athlete.team === viewSide).id);
   adapter.setReducedMotion(query.get("motion") !== "follow");
