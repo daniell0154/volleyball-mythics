@@ -1,4 +1,7 @@
 # Ordem de execução SDD
+
+Planejamento preparado antes da implementação da 016. A sequência proposta após a partida em tela inteira é [017 — câmera próxima e leitura da bola](017-close-rally-camera/spec.md), [018 — editor visual de atletas](018-visual-roster-editor/spec.md) e [019 — novas habilidades e sorteio](019-random-roster-abilities/spec.md). A 017 usa a área segura da 016. A 018 depende tecnicamente da 012, e a 019 usa a ficha da 018. Cada pasta contém o plano técnico, as tarefas e o espaço para registrar evidências na execução.
+
 Novo ciclo solicitado em 2026-11-17: **012 admin do elenco → 013 somente 2v2/remover demo → 014 gameplay, saque e visibilidade da bola → 015 bots/dificuldade → 016 partida em tela inteira**. Ler [plano do ciclo](../docs/MELHORIAS-012-016.md) e [contratos futuros](future-contracts-012-016.md). São planos, não funcionalidades implementadas. Antes de executar 012, confirmar 011 integrada em main; cada seguinte exige a anterior integrada. Just Volleyball é referência de gameplay da 014. O pedido de criar estes planos não inicia suas implementações.
 
 Ler constitution → REFINAMENTO → contracts → spec/plan/tasks da feature.
