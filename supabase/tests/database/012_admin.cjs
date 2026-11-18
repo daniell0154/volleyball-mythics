@@ -35,9 +35,24 @@ const assert=require('node:assert/strict');
  await write('disable',4);
  assert.equal((await db.query("select count(*)::int as n from characters where id='fixture-admin' and enabled")).rows[0].n,0);
  assert.equal((await db.query("select count(*)::int as n from roster_audit where character_id='fixture-admin'")).rows[0].n,5);
+ const visualWrite=(action,expected,assetKey)=>db.query('select roster_write($1,$2,$3,$4::jsonb) as result',
+  [action,'visual-fixture',expected,assetKey===undefined?null:JSON.stringify({...payload,assetKey})]);
+ for(const invalid of ['procedural:v1:female:4294967296','procedural:visual-v3:classic:male:4294967296:warm:short',
+  'procedural:visual-v3:unknown:male:12:warm:short','procedural:visual-v3:classic:male:12:unknown:short',
+  'procedural:visual-v3:classic:male:12:warm:unknown','procedural:visual-v3:classic:male:12:warm:short\n',12]){
+  await assert.rejects(visualWrite('save',0,invalid),e=>e.code==='22023');
+ }
+ const legacy='procedural:v1:female:0000000012', current='procedural:visual-v3:classic:female:12:deep:swept-long';
+ assert.equal((await visualWrite('save',0,legacy)).rows[0].result.payload.assetKey,legacy);
+ await visualWrite('publish',1);
+ assert.equal((await visualWrite('save',2,current)).rows[0].result.payload.assetKey,current);
+ await visualWrite('publish',3);
+ assert.deepEqual((await db.query("select version,asset_key,enabled from characters where id='visual-fixture' order by version")).rows,[
+  {version:1,asset_key:legacy,enabled:false},{version:2,asset_key:current,enabled:true},
+ ]);
  await db.exec(`set request.jwt.claims='{"is_anonymous":true}'`);
  await assert.rejects(write('save',5),e=>e.code==='42501');
  await db.exec(`set request.jwt.claims='{"is_anonymous":false}'; reset role; delete from roster_admins; set role authenticated`);
  await assert.rejects(write('save',5),e=>e.code==='42501');
- console.log('012-T1/T2 passed: RLS, unauthorized writes, validated payloads, hidden drafts, competing publish, optimistic conflict, versioning, overall, disable, audit, revocation');
+ console.log('012/018 passed: RLS, validated payloads, optimistic revisions, audit, revocation and legacy/visual-v3 round trips');
 }finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

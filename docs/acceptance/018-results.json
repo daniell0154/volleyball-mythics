@@ -1,0 +1,29 @@
+{
+  "browser": "157.0.4341.60",
+  "published": {
+    "overall": 56,
+    "assetKey": "procedural:visual-v3:athletic:female:1:deep:curly"
+  },
+  "desktop": [
+    1440,
+    1080
+  ],
+  "narrow": [
+    390,
+    844
+  ],
+  "tabStops": 40,
+  "nativeZoom": {
+    "browser": "159.0.8154.6",
+    "width": 631,
+    "height": 312,
+    "dpr": 2,
+    "scrollWidth": 631
+  },
+  "teams": [
+    "A",
+    "B"
+  ],
+  "athletes": 4,
+  "auth": "fixture local; RPC e runtime reais"
+}

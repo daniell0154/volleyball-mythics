@@ -1,9 +1,8 @@
 import * as THREE from "three";
-import { appearance } from "./avatar.js";
+import { appearance } from "./avatarAppearance.js";
 
 /** Local coordinates in metres. Each joint owns the limb below it. No physics. */
-export function createAthleticAvatar(assetKey: string, team: "A" | "B"): THREE.Group {
-  const look = appearance(assetKey);
+export function createAthleticAvatar(assetKey: string, team: "A" | "B", look = appearance(assetKey)): THREE.Group {
   const root = new THREE.Group();
   root.userData = { assetKey, gender: look.gender, modelVersion: "athletic-v2" };
   const material = (color: string) => new THREE.MeshStandardMaterial({ color, roughness: .82 });
@@ -34,8 +33,12 @@ export function createAthleticAvatar(assetKey: string, team: "A" | "B"): THREE.G
   mesh(neck,new THREE.CylinderGeometry(.065,.075,.10,10),skin,0,.035);
   const head = joint(neck,"head",0,.17);
   oval(head,skin,0,.035,0,.135,.175,.125);
-  oval(head,hair,0,.155,-.012,.14,.065 + look.hairStyle*.012,.13);
-  if (look.hairStyle === 2 || look.gender === "female") oval(head,hair,0,.06,-.11,.12,look.gender === "female" ? .19 : .10,.055);
+  if (look.hairId === "curly") {
+    for (const x of [-.09, 0, .09]) for (const z of [-.08, 0, .08]) {
+      oval(head, hair, x, .18, z, .067, .063, .066);
+    }
+  } else if (look.hairId !== "bald") oval(head,hair,0,.155,-.012,.14,.065 + look.hairStyle*.012,.13);
+  if (look.hairStyle === 2 || look.longHair) oval(head,hair,0,.06,-.11,.12,look.longHair ? .19 : .10,.055);
   for (const s of [-1,1]) {
     oval(head,skin,s*.135,.035,0,.025,.045,.025);
     oval(head,ink,s*.052,.055,.117,.015,.018,.009);
