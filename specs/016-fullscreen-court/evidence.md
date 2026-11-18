@@ -14,5 +14,13 @@ Placar compacto em cima. Ações, dicas, opções e saída ficam na faixa inferi
 
 `npm run test --workspace @volleyball-mythics/web`: 27 testes passaram, incluindo a projeção dos traces da 014 para ambos os lados e câmera estável/móvel. Bola projetada com no mínimo 12 CSS px nos quadros verificados; indicador dentro da quadra. `node docs/acceptance/016-viewport.cjs`, Edge 157 no Windows: canvas ajustado entre as faixas ao abrir/fechar opções e foco na quadra ao fechar com Escape. Gate funcional T2 aprovado. Percurso ampliado em T3 e avaliação visual/desempenho em T4.
 
+## 016-T3 — Integração
+
+- `node docs/acceptance/016-journey.cjs`, Edge 157.0.4341.60 no Windows: quatro clientes humanos iniciaram em 1280×720 e sacaram, um WebSocket foi fechado e o cliente voltou à mesma partida mantendo o canvas. O time B foi verificado em 1920×1080 após resize, troca de qualidade e câmera estável. Abandono devolveu o jogador ao lobby e exibiu resultado para o outro time.
+- Solo contra bots: partida com quatro atletas terminou por pontos, resultado recebeu foco e o voto iniciou outro matchId com placar 0×0, na mesma viewport.
+- Dupla contra bots: ações expansíveis por teclado em 640×360/DPR 2. Com WebGL forçado a falhar no outro cliente, placar e saída permaneceram disponíveis.
+- `node docs/acceptance/016-zoom.cjs`, Chrome for Testing 159.0.8154.6: zoom nativo de 200%, área CSS 631×312/DPR 2, zero excesso horizontal no documento e controles. Saque por teclado, opções, ajuste de volume, Escape, foco na quadra e retorno do rodapé ao início verificados.
+- `npm run typecheck` e `npm run build` passaram. Vite reportou o aviso de chunks acima de 500 kB. Os ensaios de rede usam transporte/runtime locais, Auth de fixture e persistência simulada, sem alegar verificação de produção. Gate funcional T3 aprovado.
+
 Para cada tarefa registrar: requisito, commit/build, comando/cenário, ambiente, resultado observado, limitações e decisão de gate. Aprovação humana deve identificar o comentário real e o que foi revisado.
 

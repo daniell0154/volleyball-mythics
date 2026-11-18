@@ -90,5 +90,5 @@ body:has(.match-viewport) { overflow: hidden; }
   .match-hint { order: -1; flex-basis: 100%; }
   .expand-actions { display: inline-block; }
   .action-bar[data-expanded=false] { display: none; }
-  .action-bar button { flex-basis: 45%; }
+  .action-bar button { flex-basis: max(140px, 29%); }
 }

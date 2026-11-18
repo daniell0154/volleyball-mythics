@@ -2,12 +2,13 @@ const assert = require("node:assert/strict");
 const { resolve } = require("node:path");
 const { chromium } = require(resolve(".test-build/browser/node_modules/playwright"));
 
-async function openPlayer(browser, name, options = {}) {
+async function openPlayer(browser, name, options = {}, preparePage = async () => {}) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...options });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.routeWebSocket("ws://127.0.0.1:5180/**", socket => socket.send(JSON.stringify({ type: "connected" })));
+  await preparePage(page);
   await page.goto("http://127.0.0.1:5180/docs/acceptance/015-preview/");
   await page.getByLabel("Seu apelido", { exact: true }).fill(name);
   return { page, context, errors };

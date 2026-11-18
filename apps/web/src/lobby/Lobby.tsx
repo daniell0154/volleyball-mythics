@@ -61,7 +61,7 @@ export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNo
   const scheduleRetry = () => {
     if (manualClose.current || !alive.current || !roomRef.current || retryTimer.current !== undefined) return;
     if (!retryDeadline.current) retryDeadline.current = Date.now() + 20000;
-    if (Date.now() >= retryDeadline.current) { setReconnectStatus("Não foi possível reconectar no prazo. Entre novamente para consultar o resultado."); setUserId(""); return; }
+    if (Date.now() >= retryDeadline.current) { setReconnectStatus("Não foi possível reconectar no prazo. Volte ao lobby para entrar novamente."); return; }
     setReconnectStatus("Conexão interrompida. Reconectando…");
     retryTimer.current = setTimeout(() => { retryTimer.current = undefined; void connectLatest.current(); }, 1000);
   };
@@ -72,7 +72,9 @@ export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNo
     try {
       const token=await backend.prepareSession();
       await backend.saveName(name);
+      if (manualClose.current || !alive.current) return false;
       const socket = new RoomConnection(backend.serverUrl(), (type, payload) => {
+        if (manualClose.current || !alive.current || connection.current !== socket) return;
         if (type === "roomState") { roomRef.current = payload as RoomState | null; setRoom(roomRef.current); if (!payload) { setSnapshot(null); setResult(null); } }
         if (type === "catalog") {catalogGeneration.current++;catalogRef.current=payload as CatalogEntry[];setCatalog(catalogRef.current);setCatalogStatus("ready");}
         if (type === "snapshot") { const frame = payload as MatchSnapshot; setSnapshot(frame); setResult((current) => current && current.matchId !== frame.matchId ? null : current); }
@@ -95,10 +97,17 @@ export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNo
         }
       });
       connection.current = socket;
-      const identity = await socket.authenticate(token); setUserId(identity.userId); setConnected(true); retryDeadline.current = 0;
+      const identity = await socket.authenticate(token);
+      if (manualClose.current || !alive.current || connection.current !== socket) return false;
+      setUserId(identity.userId); setConnected(true); retryDeadline.current = 0;
       if (roomRef.current?.status !== "suspended") setReconnectStatus("");
       return true;
-    } catch (e) { connection.current?.close(); setError("Não foi possível entrar. Verifique a conexão e tente novamente."); scheduleRetry(); return false; }
+    } catch (e) {
+      if (!manualClose.current && alive.current) {
+        connection.current?.close(); setError("Não foi possível entrar. Verifique a conexão e tente novamente."); scheduleRetry();
+      }
+      return false;
+    }
     finally { connecting.current = false; if (alive.current) setBusy(false); }
   };
   connectLatest.current = connect;
@@ -112,16 +121,38 @@ export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNo
   const self = room?.members.find((m) => m.userId === userId);
   const selected = catalog.find((c) => c.id === self?.character?.id && c.version === self?.character?.version);
   const enter=async(type:"createRoom"|"joinRoom",payload:unknown)=>{if(!connected&&!await connect())return;if(!await command(type,payload))return;const featured=catalogRef.current.find(c=>characterKey(c)===featuredKey)??catalogRef.current[0];if(featured)await command("selectCharacter",{characterId:featured.id,version:featured.version});};
+  const disconnect = () => {
+    manualClose.current = true;
+    clearTimeout(retryTimer.current);
+    retryTimer.current = undefined;
+    retryDeadline.current = 0;
+    connection.current?.close();
+    connection.current = null;
+    roomRef.current = null;
+    setConnected(false);
+    setUserId("");
+    setRoom(null);
+    setSnapshot(null);
+    setResult(null);
+    setReconnectStatus("");
+    setError("");
+    setCommandError(null);
+  };
+  const leaveMatch = () => {
+    if (connected) void command("leave");
+    else disconnect();
+  };
   if (room && inMatch) return <MatchViewport>{fullscreen => <>
-    {connected && connection.current && self ? <Suspense fallback={<p role="status">Preparando quadra…</p>}>
-      <OnlineMatch key={room.roomId} snapshot={snapshot} connection={connection.current} userId={userId}
+    {self ? <Suspense fallback={<div className="match-room-bar"><p role="status">Preparando quadra…</p><button onClick={leaveMatch}>Sair da sala</button></div>}>
+      <OnlineMatch key={room.roomId} snapshot={snapshot} connection={connected ? connection.current : null} userId={userId}
         team={self.team} slot={self.slot} feedback={feedback} characterName={selected?.name??"Seu atleta"}
         abilityAvailable={Boolean(selected?.abilityId&&!(selected.abilityConfig?.target==="teammate"&&room.mode==="1v1"))}
         roomLabel={`Sala ${room.code} · ${room.matchKind==="vsBots"?"Contra bots · "+(room.difficulty==="easy"?"Fácil":room.difficulty==="hard"?"Difícil":"Normal"):"2v2 online"}`}
         status={reconnectStatus} commandError={commandError?.message ?? ""}
-        fullscreen={fullscreen} onLeave={() => void command("leave")}
-        result={room.status === "finished" && result ? <ResultPanel result={result} team={self.team} userId={userId} onVote={() => void command("rematchVote")} /> : null}/>
-    </Suspense> : <div className="match-room-bar" role="status">{reconnectStatus || error || "Preparando quadra…"}</div>}
+        fullscreen={fullscreen} onLeave={leaveMatch} leaveDisabled={Boolean(pending)}
+        result={room.status === "finished" && result ? <ResultPanel result={result} team={self.team} userId={userId}
+          voteDisabled={!connected || Boolean(pending)} onVote={() => void command("rematchVote")} /> : null}/>
+    </Suspense> : <div className="match-room-bar"><p role="status">{reconnectStatus || error || "Preparando quadra…"}</p><button onClick={leaveMatch}>Voltar ao lobby</button></div>}
   </>}</MatchViewport>;
   return <>{header}<section className="app-shell" ref={lobby} tabIndex={-1}>
     {error && <p className="notice error" role="alert">{error}</p>}
@@ -141,6 +172,6 @@ export function Lobby({services,header}:{services?:LobbyServices;header?:ReactNo
        <p className="helper">Você joga como visitante. Seu apelido deve ter de 2 a 24 caracteres.</p>{connected&&<span className="connected-label">Conectado como {name}</span>}
       </form>
     </div><CharacterShowcase catalog={catalog} status={catalogStatus} selectedKey={featuredKey} onSelect={character=>setFeaturedKey(characterKey(character))} onRetry={()=>void loadCatalog()}/></div>:<RoomLobby room={room} userId={userId} catalog={catalog} catalogStatus={catalogStatus} onRetry={()=>void loadCatalog()} command={command} pending={pending} error={commandError}/>}
-    {userId && <button onClick={() => { manualClose.current = true; clearTimeout(retryTimer.current); connection.current?.close(); }}>Desconectar</button>}
+    {userId && <button onClick={disconnect}>Desconectar</button>}
   </section></>;
 }

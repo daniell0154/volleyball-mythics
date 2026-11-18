@@ -11,7 +11,7 @@ import { matchGuidance } from "./matchGuidance.js";
 
 interface OnlineMatchProps {
   snapshot: MatchSnapshot | null;
-  connection: RoomConnection;
+  connection: RoomConnection | null;
   userId: string;
   team: Team;
   slot: number;
@@ -23,25 +23,44 @@ interface OnlineMatchProps {
   commandError?: string;
   fullscreen?: ReactNode;
   onLeave?(): void;
+  leaveDisabled?: boolean;
   result?: ReactNode;
 }
 
 export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback, abilityAvailable,
-  characterName = "Seu atleta", roomLabel = "", status, commandError, fullscreen, onLeave, result }: OnlineMatchProps) {
+  characterName = "Seu atleta", roomLabel = "", status, commandError, fullscreen, onLeave, leaveDisabled, result }: OnlineMatchProps) {
   const host = useRef<HTMLDivElement>(null);
+  const controls = useRef<HTMLElement>(null);
+  const resultPanel = useRef<HTMLDivElement>(null);
+  const hadResult = useRef(false);
+  const sceneRef = useRef<ReturnType<typeof createScene> | null>(null);
   const optionsId = useId();
   const actionsId = useId();
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [actionsExpanded, setActionsExpanded] = useState(false);
-  const focusCourt = () => host.current?.focus({ preventScroll: true });
-  const closeOptions = () => { setOptionsOpen(false); focusCourt(); };
+  const focusCourt = () => (resultPanel.current ?? host.current)?.focus({ preventScroll: true });
+  const closeOptions = () => {
+    setOptionsOpen(false);
+    if (controls.current) controls.current.scrollTop = 0;
+    focusCourt();
+  };
   useEffect(() => {
     if (document.activeElement === host.current?.closest(".match-viewport")) focusCourt();
   }, []);
+  const showingResult = Boolean(result);
+  useEffect(() => {
+    if (showingResult || hadResult.current) {
+      setOptionsOpen(false);
+      setActionsExpanded(false);
+      if (controls.current) controls.current.scrollTop = 0;
+      focusCourt();
+    }
+    hadResult.current = showingResult;
+  }, [showingResult]);
   const buffer = useRef(new SnapshotBuffer());
   const keyboard = useRef(new KeyboardInput());
   const phase = useRef("");
-  const lastScore = useRef("");
+  const lastScore = useRef<{ matchId: string; value: string } | null>(null);
   const [error, setError] = useState("");
   const [graphicsError,setGraphicsError]=useState("");
   const [cursorAim,setCursorAim]=useState(false);
@@ -67,8 +86,8 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     buffer.current.push(snapshot, performance.now()); phase.current = snapshot.phase;
     keyboard.current.synchronizeSequence(snapshot.lastProcessedSeq[userId] ?? 0);
     const score = `${snapshot.score.A}:${snapshot.score.B}`;
-    if (lastScore.current && score !== lastScore.current) playFeedbackSound(volume);
-    lastScore.current = score;
+    if (lastScore.current?.matchId === snapshot.matchId && score !== lastScore.current.value) playFeedbackSound(volume);
+    lastScore.current = { matchId: snapshot.matchId, value: score };
   } }, [snapshot, userId, volume]);
   useEffect(() => setError(""), [snapshot?.phase]);
   useEffect(() => {
@@ -76,25 +95,34 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
     const target = host.current;
     let scene: ReturnType<typeof createScene>;
     try { scene = createScene(target, { reserveCueMargin: true });setGraphicsError(""); } catch { setGraphicsError("A quadra 3D precisa de WebGL. Habilite a aceleração gráfica e recarregue."); return; }
-    scene.setQuality(quality); scene.setFollowPlayer?.(userId);scene.setReducedMotion?.(reducedMotion);
-    const detach = attachKeyboard(target, keyboard.current);
+    sceneRef.current = scene;
     const resize = new ResizeObserver(([entry]) => { if (entry) scene.resize(entry.contentRect.width, entry.contentRect.height); }); resize.observe(target);
     let raf = 0;
     const render = (now: number) => { const frame = buffer.current.sample(now); if (frame) scene.update(frame); raf = requestAnimationFrame(render); }; raf = requestAnimationFrame(render);
+    return () => { cancelAnimationFrame(raf); resize.disconnect(); scene.dispose(); sceneRef.current = null; };
+  }, []);
+  useEffect(() => { sceneRef.current?.setFollowPlayer?.(userId); }, [userId]);
+  useEffect(() => { sceneRef.current?.setQuality(quality); }, [quality]);
+  useEffect(() => { sceneRef.current?.setReducedMotion?.(reducedMotion); }, [reducedMotion]);
+  useEffect(() => {
+    if (!connection || !host.current || graphicsError || showingResult) return;
+    setError("");
+    const detach = attachKeyboard(host.current, keyboard.current);
+    let active = true;
     const inputTimer = setInterval(() => {
       if (phase.current !== "serving" && phase.current !== "rally") { keyboard.current.clear(); return; }
       const input = keyboard.current.sample(phase.current);
       const sign = team === "A" ? -1 : 1;
       void connection.request("input", { ...input, moveX: input.moveX * sign, moveZ: input.moveZ * sign,...(input.aim?{aim:{x:input.aim.x*sign,z:input.aim.z}}:{}) }).catch((e: unknown) => {
         // A snapshot can arrive just after the server suspends/finishes the match.
-        if (e instanceof Error && e.message === "invalid_state") return;
+        if (!active || (e instanceof Error && e.message === "invalid_state")) return;
         setError(e instanceof Error ? e.message : "Falha de entrada");
       });
     }, 20);
-    return () => { cancelAnimationFrame(raf); clearInterval(inputTimer); detach(); resize.disconnect(); scene.dispose(); };
-  }, [connection, quality, userId, team,reducedMotion]);
-  const playing = !graphicsError&&(snapshot?.phase === "rally" || snapshot?.phase === "serving");
-  const serving = !graphicsError&&snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
+    return () => { active = false; clearInterval(inputTimer); detach(); };
+  }, [connection, graphicsError, showingResult, team]);
+  const playing = Boolean(connection) && !graphicsError && !showingResult && (snapshot?.phase === "rally" || snapshot?.phase === "serving");
+  const serving = playing && snapshot?.phase === "serving" && snapshot.servingSide === team && snapshot.servingSlot === slot;
   const abilityCooldown = Math.ceil(snapshot?.cooldowns[userId] ?? 0);
   const trigger = (code: string) => { focusCourt(); keyboard.current.press(code); keyboard.current.release(code); };
   return <section aria-label="Partida online" className="online-match" onPointerDown={enableFeedbackSound} onKeyDown={event => {
@@ -103,7 +131,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
   }}>
     <MatchHud snapshot={snapshot} team={team} slot={slot} characterName={characterName} roomLabel={roomLabel}/>
     <div className="match-stage">
-      {result && <div className="match-stage-panel">{result}</div>}
+      {result && <div ref={resultPanel} className="match-stage-panel" tabIndex={-1} aria-label="Resultado e revanche">{result}</div>}
       <div ref={host} hidden={Boolean(result)} className="court-host" tabIndex={0} onPointerMove={event => {
         if (!cursorAim || snapshot?.rulesVersion !== 4 || document.activeElement !== host.current) return;
         const rect = event.currentTarget.getBoundingClientRect();
@@ -113,7 +141,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
         <strong>Modo gráfico indisponível</strong><p>{graphicsError}</p><p>O placar e o botão de saída continuam disponíveis.</p>
       </div></div>}
     </div>
-    <footer className="match-controls">
+    <footer ref={controls} className="match-controls">
       <div className="match-toolbar">
         <button type="button" className="expand-actions" aria-expanded={actionsExpanded} aria-controls={actionsId} onClick={() => setActionsExpanded(!actionsExpanded)}>Ações</button>
         <span className="match-hint" role="status">{status || feedback || intent?.text || `WASD move · ${matchGuidance(snapshot, team, slot) ?? ""}`}</span>
@@ -121,7 +149,7 @@ export function OnlineMatch({ snapshot, connection, userId, team, slot, feedback
           if (optionsOpen) closeOptions();
           else { keyboard.current.clear(); setOptionsOpen(true); }
         }}>Opções</button>
-        {onLeave && <button type="button" onClick={onLeave}>{result ? "Sair da sala" : "Abandonar partida"}</button>}
+        {onLeave && <button type="button" disabled={leaveDisabled} onClick={onLeave}>{!connection ? "Voltar ao lobby" : result ? "Sair da sala" : "Abandonar partida"}</button>}
       </div>
       {(commandError || error) && <p className="notice error" role="alert">{commandError || error}</p>}
       <div id={actionsId} className="action-bar" data-expanded={actionsExpanded} role="group" aria-label="Ações da partida">
