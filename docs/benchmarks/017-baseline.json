@@ -1,0 +1,216 @@
+{
+  "base": "e819575",
+  "browser": "157.0.4341.60",
+  "width": 1280,
+  "height": 720,
+  "dpr": 1,
+  "quality": "low",
+  "source": "014-traces-4.json, 20 Hz, defending=true, quatro atletas",
+  "notes": "Altura do atleta aproximada pelo segmento vertical de 1,8 m. Margem conservadora da esfera com contorno, sem medição de oclusão.",
+  "cases": [
+    {
+      "serveSide": "A",
+      "viewSide": "A",
+      "screenshot": "017-baseline-A-serve.png",
+      "insets": {
+        "top": 42,
+        "bottom": 50
+      },
+      "frames": 123,
+      "localId": "a",
+      "minimumBallDiameterPx": 12,
+      "minimumSafeMarginPx": 169.95,
+      "outside": 0,
+      "milestones": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 28.93,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 226.8
+        },
+        {
+          "kind": "serve",
+          "tick": 183,
+          "athleteHeightPx": 28.93,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 239.31
+        },
+        {
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 229.17
+        },
+        {
+          "kind": "set",
+          "tick": 387,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 209.81
+        },
+        {
+          "kind": "attack",
+          "tick": 459,
+          "athleteHeightPx": 28.95,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 234.35
+        }
+      ]
+    },
+    {
+      "serveSide": "A",
+      "viewSide": "B",
+      "screenshot": "017-baseline-B-receive.png",
+      "insets": {
+        "top": 42,
+        "bottom": 50
+      },
+      "frames": 123,
+      "localId": "b",
+      "minimumBallDiameterPx": 12,
+      "minimumSafeMarginPx": 198.39,
+      "outside": 0,
+      "milestones": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 232.95
+        },
+        {
+          "kind": "serve",
+          "tick": 183,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 228.19
+        },
+        {
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 28.78,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 295.86
+        },
+        {
+          "kind": "set",
+          "tick": 387,
+          "athleteHeightPx": 28.74,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 265.81
+        },
+        {
+          "kind": "attack",
+          "tick": 459,
+          "athleteHeightPx": 28.53,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 301.78
+        }
+      ]
+    },
+    {
+      "serveSide": "B",
+      "viewSide": "A",
+      "screenshot": "017-baseline-A-receive.png",
+      "insets": {
+        "top": 42,
+        "bottom": 50
+      },
+      "frames": 123,
+      "localId": "a",
+      "minimumBallDiameterPx": 12,
+      "minimumSafeMarginPx": 198.39,
+      "outside": 0,
+      "milestones": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 232.95
+        },
+        {
+          "kind": "serve",
+          "tick": 183,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 228.19
+        },
+        {
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 28.78,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 295.86
+        },
+        {
+          "kind": "set",
+          "tick": 387,
+          "athleteHeightPx": 28.74,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 265.81
+        },
+        {
+          "kind": "attack",
+          "tick": 459,
+          "athleteHeightPx": 28.53,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 301.78
+        }
+      ]
+    },
+    {
+      "serveSide": "B",
+      "viewSide": "B",
+      "screenshot": "017-baseline-B-serve.png",
+      "insets": {
+        "top": 42,
+        "bottom": 50
+      },
+      "frames": 123,
+      "localId": "b",
+      "minimumBallDiameterPx": 12,
+      "minimumSafeMarginPx": 169.95,
+      "outside": 0,
+      "milestones": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 28.93,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 226.8
+        },
+        {
+          "kind": "serve",
+          "tick": 183,
+          "athleteHeightPx": 28.93,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 239.31
+        },
+        {
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 229.17
+        },
+        {
+          "kind": "set",
+          "tick": 387,
+          "athleteHeightPx": 28.96,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 209.81
+        },
+        {
+          "kind": "attack",
+          "tick": 459,
+          "athleteHeightPx": 28.95,
+          "ballDiameterPx": 12,
+          "safeMarginPx": 234.35
+        }
+      ]
+    }
+  ]
+}

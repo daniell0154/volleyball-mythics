@@ -1,0 +1,2086 @@
+{
+  "browser": "157.0.4341.60",
+  "cases": [
+    {
+      "scenario": "014",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 125.07,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 427
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 64.27,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 55
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 64.27,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 55
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 125.07,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 427
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 132.39,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 11
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 54
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 114.91,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 12
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 47
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 354
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 351
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 114.91,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 12
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 48
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 355
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 350
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 132.39,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 12
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 52
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 99
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 2560,
+        "height": 1440,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 132.39,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 15
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 70.75
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 103.75
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 105.25
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 2560,
+        "height": 1440,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 114.91,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 18
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 69.25
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 367.25
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 360.5
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 2560,
+        "height": 1440,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 114.91,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 18
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 69.25
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 368.25
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 361
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 2560,
+        "height": 1440,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 132.39,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 15.5
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 70.5
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 103.75
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 105
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 189.89,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 4.2146848510894035e-8,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 52
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 29
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 205.21,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 5.960464477539063e-8,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 83
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 95
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 10
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 205.21,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 4.2146848510894035e-8,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 84
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 95
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 13
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 99
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1280,
+        "height": 720,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 189.89,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 5.960464477539063e-8,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 52
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 31
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 99
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 190.96,
+      "minimumDiameterPx": 12.49,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 1119
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 93.43,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 68
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 93.43,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 68
+        }
+      ]
+    },
+    {
+      "scenario": "014",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 123,
+      "minimumMarginPx": 190.96,
+      "minimumDiameterPx": 12.49,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 1116
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 202.7,
+      "minimumDiameterPx": 12.78,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 34
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 95
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 162
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 195
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 174.66,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 81
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 991
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 936
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 174.66,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 79
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 989
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 936
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 202.7,
+      "minimumDiameterPx": 12.78,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 34
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 96
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 162
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 196
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 3840,
+        "height": 2160,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 202.7,
+      "minimumDiameterPx": 12.78,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 43
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97.5
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 171
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 207
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 3840,
+        "height": 2160,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 174.66,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 89.75
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 1009
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 956
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 3840,
+        "height": 2160,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 174.66,
+      "minimumDiameterPx": 13.19,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 89.5
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 1009.75
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 955.75
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "high",
+      "stable": false,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 3840,
+        "height": 2160,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 202.7,
+      "minimumDiameterPx": 12.78,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 43
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 171.25
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 207
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 300.03,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 4.2146848510894035e-8,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 6
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 5
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 94
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 100
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 324.51,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 5.960464477539063e-8,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 42
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 100
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 4
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 324.51,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 4.2146848510894035e-8,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 42
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 100
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 4
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": true,
+      "viewport": {
+        "width": 1920,
+        "height": 1080,
+        "top": 42,
+        "bottom": 50
+      },
+      "device": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 2
+      },
+      "resize": false,
+      "frames": 138,
+      "minimumMarginPx": 300.03,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 5.960464477539063e-8,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 5
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 3
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 95
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 99
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 640,
+        "height": 360,
+        "top": 60,
+        "bottom": 86
+      },
+      "device": {
+        "width": 640,
+        "height": 360,
+        "dpr": 2
+      },
+      "resize": true,
+      "frames": 138,
+      "minimumMarginPx": 45.78,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 40
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 12
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 33
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 95
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "A",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 640,
+        "height": 360,
+        "top": 60,
+        "bottom": 86
+      },
+      "device": {
+        "width": 640,
+        "height": 360,
+        "dpr": 2
+      },
+      "resize": true,
+      "frames": 138,
+      "minimumMarginPx": 43.02,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 33
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 29
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 101
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 99
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "A",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 640,
+        "height": 360,
+        "top": 60,
+        "bottom": 86
+      },
+      "device": {
+        "width": 640,
+        "height": 360,
+        "dpr": 2
+      },
+      "resize": true,
+      "frames": 138,
+      "minimumMarginPx": 43.02,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "←",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 33
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 28
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 0
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 101
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    },
+    {
+      "scenario": "direcionado",
+      "serveSide": "B",
+      "viewSide": "B",
+      "quality": "low",
+      "stable": false,
+      "viewport": {
+        "width": 640,
+        "height": 360,
+        "top": 60,
+        "bottom": 86
+      },
+      "device": {
+        "width": 640,
+        "height": 360,
+        "dpr": 2
+      },
+      "resize": true,
+      "frames": 138,
+      "minimumMarginPx": 45.78,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "cueOutside": 0,
+      "maxStableDelta": 0,
+      "arrow": "→",
+      "arrowInside": true,
+      "contacts": [
+        {
+          "kind": "serve-ready",
+          "tick": 180,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 40
+        },
+        {
+          "kind": "serve",
+          "tick": 211,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 13
+        },
+        {
+          "kind": "receive",
+          "tick": 330,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 34
+        },
+        {
+          "kind": "set",
+          "tick": 422,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 98
+        },
+        {
+          "kind": "attack",
+          "tick": 495,
+          "behindPlayer": true,
+          "facesNet": true,
+          "ballPixels": 97
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

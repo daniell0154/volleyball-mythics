@@ -1,6 +1,6 @@
 # 017 — Câmera próxima e leitura da bola
 
-Planejada · R17
+Implementada · R17
 
 O jogador deve reconhecer o próprio atleta em primeiro plano e acompanhar a bola desde o saque até a recepção. A SPEC 016 define o retângulo livre entre as faixas do HUD. Calibrar a aproximação depois de integrar esse layout.
 

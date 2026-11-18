@@ -1,0 +1,305 @@
+{
+  "width": 1280,
+  "height": 720,
+  "source": "017-baseline.json e 014-traces-4.json",
+  "variants": [
+    {
+      "profile": {
+        "setback": 5.8,
+        "height": 3.2
+      },
+      "cases": [
+        {
+          "serveSide": "A",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 125.07,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 184.18,
+          "gainPercent": 536.64
+        },
+        {
+          "serveSide": "A",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 64.27,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 175.62,
+          "gainPercent": 510.2
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 64.27,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 175.62,
+          "gainPercent": 510.2
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 125.07,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 184.18,
+          "gainPercent": 536.64
+        }
+      ],
+      "pass": true
+    },
+    {
+      "profile": {
+        "setback": 5.8,
+        "height": 5
+      },
+      "cases": [
+        {
+          "serveSide": "A",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 149.17,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 144.91,
+          "gainPercent": 400.91
+        },
+        {
+          "serveSide": "A",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 125.84,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 135.46,
+          "gainPercent": 370.69
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 125.84,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 135.46,
+          "gainPercent": 370.69
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 149.17,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 144.91,
+          "gainPercent": 400.91
+        }
+      ],
+      "pass": true
+    },
+    {
+      "profile": {
+        "setback": 8,
+        "height": 3.2
+      },
+      "cases": [
+        {
+          "serveSide": "A",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 144.76,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 140.66,
+          "gainPercent": 386.2
+        },
+        {
+          "serveSide": "A",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 62.12,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 143.82,
+          "gainPercent": 399.73
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 62.12,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 143.82,
+          "gainPercent": 399.73
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 144.76,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 140.66,
+          "gainPercent": 386.2
+        }
+      ],
+      "pass": true
+    },
+    {
+      "profile": {
+        "setback": 8,
+        "height": 5
+      },
+      "cases": [
+        {
+          "serveSide": "A",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 148.54,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 121.8,
+          "gainPercent": 321.02
+        },
+        {
+          "serveSide": "A",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 111.56,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 123.77,
+          "gainPercent": 330.07
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "A",
+          "frames": 123,
+          "minimumMarginPx": 111.56,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "receive",
+          "tick": 291,
+          "athleteHeightPx": 123.77,
+          "gainPercent": 330.07
+        },
+        {
+          "serveSide": "B",
+          "viewSide": "B",
+          "frames": 123,
+          "minimumMarginPx": 148.54,
+          "minimumDiameterPx": 12,
+          "outside": 0,
+          "offscreenCue": 0,
+          "kind": "serve-ready",
+          "tick": 180,
+          "athleteHeightPx": 121.8,
+          "gainPercent": 321.02
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "selected": [
+    {
+      "serveSide": "A",
+      "viewSide": "A",
+      "frames": 123,
+      "minimumMarginPx": 125.07,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "offscreenCue": 0,
+      "kind": "serve-ready",
+      "tick": 180,
+      "athleteHeightPx": 184.18,
+      "gainPercent": 536.64
+    },
+    {
+      "serveSide": "A",
+      "viewSide": "B",
+      "frames": 123,
+      "minimumMarginPx": 64.27,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "offscreenCue": 0,
+      "kind": "receive",
+      "tick": 291,
+      "athleteHeightPx": 175.62,
+      "gainPercent": 510.2
+    },
+    {
+      "serveSide": "B",
+      "viewSide": "A",
+      "frames": 123,
+      "minimumMarginPx": 64.27,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "offscreenCue": 0,
+      "kind": "receive",
+      "tick": 291,
+      "athleteHeightPx": 175.62,
+      "gainPercent": 510.2
+    },
+    {
+      "serveSide": "B",
+      "viewSide": "B",
+      "frames": 123,
+      "minimumMarginPx": 125.07,
+      "minimumDiameterPx": 12,
+      "outside": 0,
+      "offscreenCue": 0,
+      "kind": "serve-ready",
+      "tick": 180,
+      "athleteHeightPx": 184.18,
+      "gainPercent": 536.64
+    }
+  ]
+}

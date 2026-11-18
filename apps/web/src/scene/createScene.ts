@@ -1,12 +1,15 @@
 import * as THREE from "three";
 import { createCamera, fitCourtViewport, followRallyCamera,fitStableCamera } from "./camera.js";
+import { CloseRallyCamera } from "./closeRallyCamera.js";
 import {visualBallScale,ballScreenCue} from "./ballVisibility.js";
 import { disposeAvatar } from "./avatar.js";
 import { createPresentationAvatar } from "./avatarManifest.js";
 import { AvatarAnimator } from "./animateAvatar.js";
 import type { CourtInsets, SceneAdapter, SceneSnapshot } from "../game/presentation.js";
 
-export function createScene(host: HTMLElement, { reserveCueMargin = false } = {}): SceneAdapter {
+export function createScene(host: HTMLElement, { reserveCueMargin = false, cameraProfile = "close" }: {
+  reserveCueMargin?: boolean; cameraProfile?: "close" | "elevated";
+} = {}): SceneAdapter {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   host.append(renderer.domElement);
   const originalPosition = host.style.position;
@@ -16,6 +19,7 @@ export function createScene(host: HTMLElement, { reserveCueMargin = false } = {}
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#90c9ed");
   const camera = createCamera();
+  const closeCamera = new CloseRallyCamera();
   scene.add(new THREE.HemisphereLight(0xffffff, 0x425a36, 2.5));
   const sun = new THREE.DirectionalLight(0xffffff, 2);
   sun.position.set(10, 25, 8); scene.add(sun);
@@ -80,17 +84,21 @@ export function createScene(host: HTMLElement, { reserveCueMargin = false } = {}
       if (disposed || viewportWidth <= 0 || viewportHeight <= 0) return;
       if (matchId !== snapshot.matchId) {
         for (const entry of athletes.values()) { scene.remove(entry.model); disposeAvatar(entry.model); }
-        athletes.clear(); matchId = snapshot.matchId;
+        athletes.clear(); matchId = snapshot.matchId; closeCamera.reset();
       }
       const now = performance.now();
       const followed = snapshot.athletes.find((a) => a.id === followId);
-      if (followed&&!reducedMotion) followRallyCamera(camera, followed.position,snapshot.ball, followed.team, (now - lastFrame) / 1000);
+      if (followed && !reducedMotion) {
+        const dt = (now - lastFrame) / 1000;
+        if (cameraProfile === "close") closeCamera.update(camera, followed.position, snapshot.ball, followed.team, dt, viewportWidth, viewportHeight, insets);
+        else followRallyCamera(camera, followed.position, snapshot.ball, followed.team, dt);
+      }
       if(followed&&reducedMotion&&stableTeam!==followed.team){fitStableCamera(camera,followed.team,viewportWidth,viewportHeight,margin,insets);stableTeam=followed.team;}
       marker.visible=Boolean(followed);
       if(followed){marker.position.set(followed.position.x,0,followed.position.z);marker.rotation.y=followed.team==="A"?0:Math.PI;if(markerLabel)markerLabel.position.y=followed.position.y+2.25;}
       lastFrame = now;
       ball.position.copy(snapshot.ball);
-      camera.updateMatrixWorld();ball.scale.setScalar(visualBallScale(camera,snapshot.ball,viewportHeight));
+      ball.scale.setScalar(visualBallScale(camera,snapshot.ball,viewportHeight));
       shadow.position.set(snapshot.ball.x,.035,snapshot.ball.z);shadowBorder.position.copy(shadow.position);
       shadow.material.opacity=Math.max(.25,.75-snapshot.ball.y*.035);shadowBorder.material.opacity=shadow.material.opacity;
       const screen=ballScreenCue(camera,snapshot.ball,viewportWidth,viewportHeight,margin,insets);cue.style.display="block";cue.style.left=screen.x+"px";cue.style.top=screen.y+"px";
@@ -115,8 +123,8 @@ export function createScene(host: HTMLElement, { reserveCueMargin = false } = {}
       }
       renderer.render(scene, camera);
     }, resize(width,height,nextInsets){resize(width,height,nextInsets);stableTeam=undefined;},
-    setFollowPlayer(playerId) { followId = playerId; camera.userData.following = false;stableTeam=undefined; },
-    setReducedMotion(reduced){reducedMotion=reduced;stableTeam=undefined;camera.userData.following=false;},
+    setFollowPlayer(playerId) { followId = playerId; closeCamera.reset();camera.userData.following = false;stableTeam=undefined; },
+    setReducedMotion(reduced){reducedMotion=reduced;stableTeam=undefined;closeCamera.reset();camera.userData.following=false;},
     setQuality(quality) { renderer.setPixelRatio(quality === "high" ? Math.min(devicePixelRatio, 2) : 1); resize(host.clientWidth, host.clientHeight); },
     dispose() {
       if (disposed) return;
