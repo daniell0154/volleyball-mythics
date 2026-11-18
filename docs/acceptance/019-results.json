@@ -1,0 +1,40 @@
+{
+  "browser": "157.0.4341.60",
+  "published": [
+    {
+      "abilityId": "coffee_break",
+      "version": 1,
+      "duration": 3,
+      "cooldown": 22
+    },
+    {
+      "abilityId": "butter_fingers",
+      "version": 1,
+      "duration": 4,
+      "cooldown": 18
+    },
+    {
+      "abilityId": "my_ball",
+      "version": 1,
+      "duration": 4,
+      "cooldown": 24
+    }
+  ],
+  "recoveredUnavailableDraft": true,
+  "timed": {
+    "speed": [
+      4.97,
+      5.715,
+      4.97
+    ],
+    "myBallProbeMeters": 2.35,
+    "butterProbeMeters": 2.1,
+    "collisionPreserved": true
+  },
+  "caioScore": {
+    "A": 0,
+    "B": 1
+  },
+  "botTarget": "A2",
+  "fixture": "PGlite, WebSocket v1 e runtime v4 locais, posições de bola controladas"
+}

@@ -22,6 +22,25 @@ Os efeitos expiraram aos 180, 240 e 240 ticks. A corrida e a recepção voltaram
 
 No Windows e Edge 157.0.4341.60, `node docs/acceptance/019-ability-picker.cjs` passou com Vite na porta 5177 e a fixture `node docs/acceptance/012-admin.cjs --serve`. O ensaio cobriu catálogo vazio, opção única, duas opções e sorteio desabilitado pela configuração de produção. O seletor apresentou efeito, alvo, duração e recarga, e Enter/Espaço sortearam apenas o campo da habilidade, preservando nome e atributo em edição. O teste unitário do sorteio injeta a fonte aleatória e testa todos os intervalos das alternativas. Gate T3 aprovado.
 
-## 019-T4 — Pendente
+## 019-T4 — Do rascunho ao rally
 
-Validar o percurso de salvar, reabrir, publicar e ativar cada candidato em partida com os poderes atuais. Falta cobrir no navegador a indisponibilidade entre salvar e publicar e registrar clipes. As configurações candidatas seguem desabilitadas e o sorteio de produção depende do aceite previsto na spec.
+Com as dependências de teste instaladas conforme a [018](../018-visual-roster-editor/evidence.md#018-t4--do-rascunho-à-quadra), execute `npm.cmd run build`. Inicie o Vite em `127.0.0.1:5177` com `apps/web/vite.config.ts` e rode os comandos abaixo em terminais separados. Cada execução do percurso começa com uma fixture nova, pois verifica a primeira publicação de cada ID.
+
+```powershell
+node docs/acceptance/012-admin.cjs --serve --ability-review
+# Outro terminal
+node docs/acceptance/019-ability-journey.cjs
+```
+
+No Windows e Edge 157.0.4341.60, o navegador sorteou Café no Intervalo e selecionou Mão de Manteiga e Minha Bola! manualmente. Em cada caso, o ID exibido foi o enviado ao RPC. Reabrir e salvar novamente preservaram o ID e a ficha. A primeira publicação de cada candidato criou a revisão 1 e copiou a configuração do catálogo. Entre o segundo salvamento e a publicação de Minha Bola!, a fixture desabilitou o ID no banco. O editor mostrou o aviso e a opção indisponível, preservou o nome e a seleção, e o banco manteve a revisão 2 e a ausência no catálogo de jogo. A mesma ficha foi publicada após reabilitar o ID e recarregar a lista. [Ficha e detalhes](../../docs/acceptance/019-admin.png).
+
+| Configuração ensaiada | Resultado em partida local |
+| --- | --- |
+| Café no Intervalo · +15% velocidade · 3 s / 22 s | A1 correu a 4,97 → 5,715 → 4,97 m/s conforme os snapshots. A tentativa de Minha Bola! durante o Café preservou o efeito ativo e a recarga do parceiro. |
+| Mão de Manteiga · −15% recepção · 4 s / 18 s | B1 aceitou a recepção a 2,1 m antes do efeito, recusou durante e voltou a aceitar após expirar. A Bronca foi recusada enquanto a Mão de Manteiga estava ativa e passou depois. |
+| Minha Bola! · +10% recepção do parceiro · 4 s / 24 s | A1 recusou a recepção a 2,35 m no controle, aceitou com o bônus e voltou a recusar após expirar. No modo solo, o servidor aplicou o efeito ao bot A2. |
+| Poderes legados | Samuel aplicou sua penalidade e gerou feedback e ação visual de Bronca. Caio recusou ativação distante e concedeu um ponto adversário com a bola ao alcance. |
+
+Os dois vídeos de 960×540 foram reproduzidos no Edge e conferidos por quadros do HUD e das jogadas. O clipe de A1 tem 23,36 s e mostra Café e o ensaio de Minha Bola!. O de B1 tem 22,64 s e mostra Mão de Manteiga e Bronca. Incluem entrada na sala e contagem regressiva. A fixture coloca a bola em posições controladas e limita a cadência de renderização dos quatro clientes, com os comandos, contatos, relógio e feedback do runtime v4 e WebSocket v1. [Time A](../../docs/acceptance/019-time-A.webm) · [Time B](../../docs/acceptance/019-time-B.webm) · [Relatório](../../docs/acceptance/019-results.json).
+
+O build passou com aviso de tamanho de chunk do Vite. A validação usa PGlite, migrations reais e autenticação local de teste. Gate T4 local aprovado para as configurações acima. A disponibilização dos candidatos e do sorteio em produção continua condicionada ao aceite da configuração e dos clipes pelo proprietário.
