@@ -134,8 +134,13 @@ async function compactAndFallback(browser) {
   await compact.keyboard.press("Enter");
   await compact.getByRole("button", { name: "Sacar · L" }).waitFor();
   await checkCourt(compact);
+  await compact.waitForFunction(() => !document.querySelector('.action-bar button[aria-label="Saltar · Espaço"]').disabled);
   await compact.keyboard.press("Tab");
-  assert.equal(await compact.getByRole("button", { name: "Opções", exact: true }).evaluate(element => element === document.activeElement), true);
+  assert.equal(await compact.getByRole("button", { name: "Saltar · Espaço" }).evaluate(element => element === document.activeElement), true);
+  const options = compact.getByRole("button", { name: "Opções", exact: true });
+  const optionsFocused = () => options.evaluate(element => element === document.activeElement);
+  for (let step = 0; step < 6 && !await optionsFocused(); step++) await compact.keyboard.press("Tab");
+  assert.equal(await optionsFocused(), true);
   await fallback.getByText("Modo gráfico indisponível").waitFor();
   assert.equal(await fallback.getByRole("button", { name: "Saltar · Espaço" }).isDisabled(), true);
   await fallback.getByRole("button", { name: "Abandonar partida" }).click();
