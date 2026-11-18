@@ -1,6 +1,6 @@
 # 018 — Editor visual de atletas no admin
 
-Planejada · R18
+Implementada · R18
 
 A referência é `image.png`, na pasta acima do repositório. À esquerda há uma lista compacta com “+ Novo”, identificação e overall. No centro aparecem a ficha, os sliders com valores, as amostras de pele e as miniaturas de cabelo. À direita, um painel próprio mostra o atleta de corpo inteiro e convida a girá-lo. Os painéis escuros, títulos claros e destaque dourado deixam a seleção visível.
 
