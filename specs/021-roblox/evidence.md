@@ -35,3 +35,20 @@ A revisão do proprietário identificou ponto aparecendo cedo e botões grandes.
 Limites: validação de controles e telas no Studio, sem ensaio físico de dois polegares ou consoles. A injeção direta de toque foi recusada pelo runtime por exigir capacidade RobloxScript; a navegação touch foi inspecionada em PreferredInput.Touch e os bindings de botão estão conectados. O aceite em aparelhos físicos e desempenho é da T7. O Studio emitiu avisos de um asset de avatar incompatível; após a correção de carga, o modelo completo do usuário apareceu nas capturas. Não houve erros dos scripts na execução final. O simulador foi restaurado ao viewport padrão e o Play foi encerrado. A implementação para nesta T2 por instrução do proprietário.
 
 Limites desta tarefa: comparação de módulos puros em Edit mode. O replay completo do runtime web 020, simulação interativa com quatro atletas, UI, habilidades, bots e desempenho em dispositivos seguem para tarefas posteriores. Ainda não foi executado analisador estático Luau independente. O comando de salvar o Place1 aberto retornou NeedsUserAction porque ele nunca foi salvo. A cópia local reproduzível foi gerada no repositório.
+
+## T2.1 · Lobby e HUD de entrada — 2026-11-19
+
+Implementada a arena circular azul com portal branco de Jogar, estação violeta de Assinaturas, estação dourada de Loja, rede e bolas de vôlei. A referência enviada pelo proprietário substitui o pátio inicialmente proposto. Quatro botões com ícones e contornos hexagonais ocupam a faixa inferior. As 29 paredes fecham o perímetro da arena. A quadra esportiva mantém os limites autoritativos da T2.
+
+- Ambiente usado foi Roblox Studio conectado ao place 135811647282453, em Play local. O place publicado não foi atualizado.
+- O percurso pelo clique real Jogar → Solo → iniciar → Voltar foi executado. Na entrada, lobby oculto, ações e placar visíveis. Na saída, avatar do lobby recarregado e navegação restaurada.
+- Dois acionamentos seguidos do início produziram uma única partida. Cliente bloqueia o início enquanto aguarda resposta e o servidor recusa a criação de outra sessão ativa.
+- Capturas no PC e em telefone iPhone 17 Pro em paisagem mostraram os painéis e a faixa inferior. Em telefone, os três modos usam cartões lado a lado. Algumas operações de mouse do emulador tiveram deslocamento de coordenadas, por isso o ensaio de toque físico continua na T7.
+- Os perfis de Xbox e PS5 foram exercitados no simulador. PreferredInput retornou Gamepad e houve foco visível em Voltar. Há navegação direcional nos painéis e na faixa inferior. Controle físico e leitura em TV continuam como aceite da T7.
+- Configurações aplicaram volume de 50% para 75%, com som carregado, e animação reduzida ligada. Os valores pertencem à sessão.
+- Quatro fixtures de apresentação de Assinaturas cobriram chances 50/50, giro em andamento, revelação e coleção completa. A versão jogável informa disponibilidade futura. Resultado, saldo, equipamento persistente e giro real pertencem à T3.
+- A loja mostrou o estado vazio do catálogo. O adaptador usa passes, consulta informações da plataforma, abre a confirmação nativa após escolha e aplica moldura somente após verificação de propriedade no servidor. Não há IDs de passes ou preços de lançamento configurados. Compra, cancelamento real e concessão em produção precisam de um catálogo definido para serem exercitados.
+- O console apresentou o aviso de aparência legado do asset 203785492. Os módulos do jogo executados não produziram erro. A movimentação do lobby usa contexto de entrada próprio e o avatar conserva a aparência Roblox.
+- O bundle local foi regenerado com os módulos da T2.1. O roteiro da T3 permanece pendente.
+
+Decisão do gate da T2.1 aceita o lobby, os painéis e a integração local com Solo. Loja vazia e coleção indisponível são os estados previstos nesta etapa. Os ensaios financeiros com catálogo real e os aparelhos físicos permanecem explicitamente pendentes.

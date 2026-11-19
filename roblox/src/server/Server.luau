@@ -6,19 +6,23 @@ local HttpService = game:GetService("HttpService")
 local Lighting = game:GetService("Lighting")
 local Runtime = require(script.Parent.Runtime)
 local Court = require(script.Parent.Court)
+local Lobby = require(script.Parent.Lobby)
+local LobbyServices = require(script.Parent.LobbyServices)
 local Config = require(ReplicatedStorage.MythicsShared.Config)
 local Server = {}
 
 function Server.start()
 	Players.CharacterAutoLoads = false
 	Court.build(workspace)
-	Lighting.ClockTime, Lighting.Brightness = 14, 2
+	Lobby.build()
+	Lighting.ClockTime, Lighting.Brightness = 16.5, 2
 	Lighting.Ambient = Color3.fromRGB(150, 163, 146)
 	Lighting.OutdoorAmbient = Lighting.Ambient
 	local sky = Instance.new("Atmosphere")
 	sky.Color, sky.Density, sky.Parent = Color3.fromRGB(144, 201, 237), 0.15, Lighting
 	local remoteFolder = Instance.new("Folder")
 	remoteFolder.Name, remoteFolder.Parent = "MythicsRemotes", ReplicatedStorage
+	LobbyServices.start(remoteFolder)
 	local function remote(className: string, name: string): any
 		local item = Instance.new(className)
 		item.Name, item.Parent = name, remoteFolder
@@ -36,6 +40,29 @@ function Server.start()
 	local lastPhase = ""
 	local budgets: { [Player]: any } = {}
 	local channelSeq: any = { movement = 0, action = 0 }
+	local loading: { [Player]: boolean } = {}
+	local function spawnLobby(player: Player)
+		if loading[player] or not player.Parent then return end
+		loading[player] = true
+		local ok = pcall(function() player:LoadCharacterAsync() end)
+		loading[player] = nil
+		if ok and player.Character then
+			if player == owner then player.Character:Destroy() else player.Character:PivotTo(Lobby.Spawn) end
+		end
+	end
+	local function added(player: Player)
+		player.DevComputerMovementMode = Enum.DevComputerMovementMode.Scriptable
+		player.DevTouchMovementMode = Enum.DevTouchMovementMode.Scriptable
+		player.CharacterAdded:Connect(function(character)
+			local humanoid = character:WaitForChild("Humanoid", 10)
+			if humanoid and humanoid:IsA("Humanoid") then
+				humanoid.Died:Connect(function() task.delay(3, function() if player ~= owner then spawnLobby(player) end end) end)
+			end
+		end)
+		task.spawn(spawnLobby, player)
+	end
+	Players.PlayerAdded:Connect(added)
+	for _, player in Players:GetPlayers() do added(player) end
 	local function permit(player: Player, category: string, limit: number): boolean
 		local budget = budgets[player]
 		if not budget then budget = {} budgets[player] = budget end
@@ -126,22 +153,25 @@ function Server.start()
 		end
 		if not permit(player, "command", 10) then return end
 		if kind == "start" then
+			if type(data) == "table" and data.mode and data.mode ~= "SoloBots2v2" then reliable:FireClient(player, { error = "Modo ainda indisponível" }) return end
 			if owner and owner ~= player then reliable:FireClient(player, { error = "Esta quadra solo está ocupada" }) return end
 			if session and session.state.phase ~= "finished" then return end
 			if type(data) ~= "table" or not Config.Abilities[data.ability] then return end
 			if data.team ~= "A" and data.team ~= "B" then return end
 			if data.difficulty ~= "easy" and data.difficulty ~= "normal" and data.difficulty ~= "hard" then return end
 			owner, channelSeq = player, { movement = 0, action = 0 }
+			if player.Character then player.Character:Destroy() end
 			session = Runtime.new(HttpService:GenerateGUID(false), tostring(player.UserId), data.team, data.ability, data.difficulty, Random.new():NextInteger(1, 2147483647))
 			lastPhase = ""
 			reliable:FireClient(player, session:snapshot())
 			task.spawn(buildActors, player, session)
 		elseif kind == "sync" then
-			if player == owner and session then reliable:FireClient(player, session:snapshot()) end
+			if player == owner and session then reliable:FireClient(player, session:snapshot()) else reliable:FireClient(player, { lobby = true }) end
 		elseif kind == "leave" and player == owner then
 			session, owner = nil, nil
 			for _, child in templates:GetChildren() do child:Destroy() end
 			reliable:FireClient(player, { lobby = true })
+			task.spawn(spawnLobby, player)
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)

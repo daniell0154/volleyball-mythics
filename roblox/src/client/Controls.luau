@@ -55,7 +55,7 @@ function Controls.new(hud: any, onAction: (string) -> ())
 	backAction.Name, backAction.Type, backAction.Parent = "Back", Enum.InputActionType.Bool, back
 	binding(backAction, "Gamepad", Enum.KeyCode.ButtonB)
 	backAction.Pressed:Connect(function()
-		if not hud.panel.Visible and hud.onBack then hud.onBack() end
+		if hud.onBack then hud.onBack() end
 	end)
 	hud.aim.Activated:Connect(function() self.aim = Vector2.zero end)
 	local moveTouch: InputObject? = nil

@@ -16,7 +16,7 @@ Esta spec define o produto Roblox. Os contratos 013, 015 e 019 descrevem a vers�
 
 ## Lobby e HUD de entrada
 
-O avatar chega ao pátio de um ginásio escolar ao fim da tarde. Da entrada, vê uma quadra verde-azulada com faixa terracota, rede e arquibancada. Uma bancada com prancheta de treinador, carrinho de bolas e camisas numeradas identifica o espaço das Assinaturas. Usar a linha de ataque e a trajetória curva do saque como motivos gráficos na sinalização e nos ícones originais. Reservar o centro da tela para o avatar e a vista da quadra.
+O avatar chega a uma arena circular azul, com estações iluminadas de Jogar, Assinaturas e Loja ao redor do centro. O portal branco leva à seleção de modos, a estação violeta usa uma bola de vôlei e a estação dourada apresenta um cartão de jogador. Rede, marcações de ataque e bolas completam a identidade esportiva. O HUD apresenta quatro ícones com contorno hexagonal na faixa inferior, conforme a referência visual fornecida pelo proprietário em 2026-11-19. Aproximar-se de uma estação permite abrir o mesmo painel pelo comando de interação. A arena tem paredes em todo o perímetro. O servidor limita a movimentação esportiva à quadra durante as partidas. A quadra das partidas conserva o cenário do navegador definido na T2.
 
 | Acesso no HUD | Experiência |
 | --- | --- |

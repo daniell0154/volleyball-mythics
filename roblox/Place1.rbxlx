@@ -380,7 +380,163 @@ function Rally.velocity(kind: string, ball: Vec3, athlete: Vec3, direction: numb
 end
 
 return Rally
-</ProtectedString></Properties></Item></Item><Item class="ModuleScript"><Properties><string name="Name">Runtime</string><ProtectedString name="Source">--!strict
+</ProtectedString></Properties></Item></Item><Item class="ModuleScript"><Properties><string name="Name">Lobby</string><ProtectedString name="Source">--!strict
+local Lobby = {}
+Lobby.Spawn = CFrame.new(150, 5, 22)
+
+function Lobby.build()
+	local existing = workspace:FindFirstChild(&quot;MythicsLobby&quot;)
+	if existing then existing:Destroy() end
+	local model = Instance.new(&quot;Model&quot;)
+	model.Name, model.ModelStreamingMode = &quot;MythicsLobby&quot;, Enum.ModelStreamingMode.Persistent
+	local origin = Vector3.new(150, 0, 0)
+	local dark, white = Color3.fromRGB(17, 23, 42), Color3.fromRGB(222, 240, 255)
+	local function part(name: string, size: Vector3, at: Vector3, color: Color3, neon: boolean?): Part
+		local p = Instance.new(&quot;Part&quot;)
+		p.Name, p.Size, p.Position, p.Color = name, size, origin + at, color
+		p.Anchored, p.Material = true, if neon then Enum.Material.Neon else Enum.Material.SmoothPlastic
+		p.TopSurface, p.BottomSurface, p.Parent = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth, model
+		return p
+	end
+	local function disk(radius: number, height: number, at: Vector3, color: Color3)
+		local p = part(&quot;Platform&quot;, Vector3.new(height, radius*2, radius*2), at, color)
+		p.Shape, p.CFrame = Enum.PartType.Cylinder, CFrame.new(origin + at)*CFrame.Angles(0, 0, math.pi/2)
+		return p
+	end
+	local function ring(radius: number, at: Vector3, color: Color3)
+		for index = 1, 48 do
+			local angle = index*math.pi/24
+			local p = part(&quot;LightRing&quot;, Vector3.new(0.2, 0.12, radius*math.pi/23), at + Vector3.new(math.cos(angle)*radius, 0, math.sin(angle)*radius), color, true)
+			p.CFrame = CFrame.new(p.Position)*CFrame.Angles(0, -angle, 0)
+			p.CanCollide = false
+		end
+	end
+	local function title(value: string, at: Vector3, color: Color3, width: number)
+		local p = part(&quot;Title&quot;, Vector3.one, at, dark)
+		p.Transparency, p.CanCollide = 1, false
+		local gui = Instance.new(&quot;BillboardGui&quot;)
+		gui.Size, gui.MaxDistance, gui.Parent = UDim2.fromOffset(width, 50), 150, p
+		local label = Instance.new(&quot;TextLabel&quot;)
+		label.Size, label.BackgroundTransparency = UDim2.fromScale(1, 1), 1
+		label.Text, label.TextColor3, label.TextSize, label.Font = value, color, 26, Enum.Font.GothamBlack
+		label.TextStrokeTransparency, label.Parent = 0.5, gui
+		return p
+	end
+	disk(72, 2, Vector3.new(0, -1.2, 0), dark)
+	disk(67, 0.3, Vector3.new(0, -0.05, 0), Color3.fromRGB(30, 47, 153))
+	ring(65, Vector3.new(0, 0.15, 0), Color3.fromRGB(46, 156, 255))
+	ring(20, Vector3.new(0, 0.18, 8), Color3.fromRGB(58, 117, 230))
+	for _, x in {-13, 13} do part(&quot;CourtLine&quot;, Vector3.new(0.12, 0.04, 40), Vector3.new(x, 0.18, 9), Color3.fromRGB(69, 103, 213)) end
+	for _, z in {-11, 4, 29} do part(&quot;AttackLine&quot;, Vector3.new(26, 0.04, 0.12), Vector3.new(0, 0.18, z), Color3.fromRGB(69, 103, 213)) end
+	for index = 0, 28 do
+		local angle = math.rad(180 + index*180/14)
+		local wall = part(&quot;ArenaWall&quot;, Vector3.new(14, 22, 2), Vector3.new(math.cos(angle)*66, 10, math.sin(angle)*66), Color3.fromRGB(47, 55, 85))
+		wall.CFrame = CFrame.lookAt(wall.Position, origin + Vector3.new(0, 10, 0))
+		for row = -2, 2 do
+			local inset = part(&quot;WallInset&quot;, Vector3.new(1, 1, 0.3), Vector3.zero, dark)
+			inset.CFrame = wall.CFrame*CFrame.new(0, row*3.5, -1.2)
+		end
+		local light = part(&quot;LightPillar&quot;, Vector3.new(0.3, 20, 0.4), Vector3.zero, Color3.fromRGB(72, 153, 255), true)
+		light.CFrame = wall.CFrame*CFrame.new(6, 0, -1.3)
+	end
+	local function station(name: string, at: Vector3, color: Color3, action: string)
+		disk(9, 0.8, at + Vector3.new(0, 0.4, 0), dark)
+		ring(8, at + Vector3.new(0, 0.85, 0), color)
+		local anchor = title(name, at + Vector3.new(0, 12, 0), color, 270)
+		local light = Instance.new(&quot;PointLight&quot;)
+		light.Color, light.Brightness, light.Range, light.Parent = color, 1.5, 22, anchor
+		local interaction = part(&quot;Interaction&quot;, Vector3.new(3, 4, 3), at + Vector3.new(0, 3, 4), dark)
+		interaction.Transparency, interaction.CanCollide = 1, false
+		interaction:SetAttribute(&quot;LobbyPanel&quot;, action)
+		local prompt = Instance.new(&quot;ProximityPrompt&quot;)
+		prompt.ActionText, prompt.ObjectText = &quot;Abrir&quot;, name
+		prompt.MaxActivationDistance, prompt.RequiresLineOfSight, prompt.Parent = 10, false, interaction
+	end
+	local portal = Vector3.new(0, 0, -28)
+	station(&quot;JOGAR&quot;, portal, white, &quot;Play&quot;)
+	for _, x in {-7.5, 7.5} do part(&quot;PortalPillar&quot;, Vector3.new(1, 15, 1), portal + Vector3.new(x, 8, 0), white, true) end
+	part(&quot;PortalTop&quot;, Vector3.new(16, 1, 1), portal + Vector3.new(0, 15, 0), white, true)
+	local gate = part(&quot;Portal&quot;, Vector3.new(14, 14, 0.2), portal + Vector3.new(0, 8, 0), Color3.fromRGB(163, 210, 255), true)
+	gate.Transparency, gate.CanCollide = 0.45, false
+	local signatures = Vector3.new(-28, 0, -16)
+	station(&quot;ASSINATURAS&quot;, signatures, Color3.fromRGB(206, 77, 255), &quot;Signatures&quot;)
+	local ball = part(&quot;SignatureVolleyball&quot;, Vector3.one*7, signatures + Vector3.new(0, 6, 0), Color3.fromRGB(240, 228, 255))
+	ball.Shape, ball.CanCollide = Enum.PartType.Ball, false
+	for axis = 1, 3 do
+		for segment = 1, 32 do
+			local angle = segment*math.pi/16
+			local cf = CFrame.new(origin + signatures + Vector3.new(0, 6, 0))*CFrame.Angles(if axis == 1 then math.pi/2 else 0, if axis == 2 then math.pi/2 else 0, 0)
+			local seam = part(&quot;VolleyballSeam&quot;, Vector3.new(0.12, 0.72, 0.12), Vector3.zero, Color3.fromRGB(108, 42, 183))
+			seam.CFrame = cf*CFrame.new(math.cos(angle)*3.52, math.sin(angle)*3.52, 0)*CFrame.Angles(0, 0, angle)
+			seam.CanCollide = false
+		end
+	end
+	local shop = Vector3.new(28, 0, -16)
+	station(&quot;LOJA&quot;, shop, Color3.fromRGB(255, 207, 51), &quot;Shop&quot;)
+	part(&quot;CardFrame&quot;, Vector3.new(5, 6.5, 0.5), shop + Vector3.new(0, 6, 0), Color3.fromRGB(255, 207, 51), true)
+	part(&quot;CardInset&quot;, Vector3.new(4.4, 5.9, 0.6), shop + Vector3.new(0, 6, 0), dark)
+	local portrait = part(&quot;CardPortrait&quot;, Vector3.one*1.5, shop + Vector3.new(0, 7, 0.4), white)
+	portrait.Shape = Enum.PartType.Ball
+	part(&quot;CardName&quot;, Vector3.new(3, 0.2, 0.2), shop + Vector3.new(0, 4.2, 0.4), white, true)
+	title(&quot;VOLLEYBALL MYTHICS&quot;, Vector3.new(0, 23, -52), white, 440)
+	for _, x in {-39, -25} do part(&quot;NetPost&quot;, Vector3.new(0.5, 9, 0.5), Vector3.new(x, 4.5, 10), white) end
+	for index = 0, 8 do part(&quot;NetMesh&quot;, Vector3.new(14, 0.04, 0.1), Vector3.new(-32, 5 + index*0.4, 10), white) end
+	for index = 0, 14 do part(&quot;NetMesh&quot;, Vector3.new(0.04, 3.5, 0.1), Vector3.new(-39 + index, 6.75, 10), white) end
+	part(&quot;NetTape&quot;, Vector3.new(14, 0.2, 0.2), Vector3.new(-32, 8.5, 10), white)
+	for index = 1, 5 do
+		local p = part(&quot;BallRackBall&quot;, Vector3.one*1.8, Vector3.new(30 + index*2, 2.5, 12), Color3.fromRGB(255, 211, 75))
+		p.Shape = Enum.PartType.Ball
+	end
+	part(&quot;BallRack&quot;, Vector3.new(13, 0.3, 3), Vector3.new(36, 1.5, 12), dark)
+	model.Parent = workspace
+	return model
+end
+return Lobby
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">LobbyServices</string><ProtectedString name="Source">--!strict
+local Marketplace = game:GetService(&quot;MarketplaceService&quot;)
+local Players = game:GetService(&quot;Players&quot;)
+local LobbyServices = {}
+-- Add owned game-pass IDs here after the launch catalog is defined.
+local offers: { { id: number, benefit: string, color: Color3 } } = {}
+
+function LobbyServices.start(folder: Folder)
+	local request = Instance.new(&quot;RemoteFunction&quot;)
+	request.Name, request.Parent = &quot;LobbyCatalog&quot;, folder
+	local pending: { [Player]: boolean } = {}
+	local last: { [Player]: number } = {}
+	local function verify(player: Player, offer: any): boolean
+		local ok, owned = pcall(Marketplace.UserOwnsGamePassAsync, Marketplace, player.UserId, offer.id)
+		if ok and owned then
+			player:SetAttribute(&quot;CardFrame&quot;, offer.id)
+			player:SetAttribute(&quot;CardFrameColor&quot;, offer.color)
+		end
+		return ok and owned
+	end
+	request.OnServerInvoke = function(player: Player)
+		if pending[player] or os.clock() - (last[player] or -10) &lt; 2 then return { busy = true } end
+		pending[player], last[player] = true, os.clock()
+		local items = {}
+		for _, offer in offers do
+			local ok, info = pcall(Marketplace.GetProductInfoAsync, Marketplace, offer.id, Enum.InfoType.GamePass)
+			table.insert(items, {
+				id = offer.id, name = if ok then info.Name else &quot;Oferta indisponível&quot;,
+				price = if ok then info.PriceInRobux else nil,
+				icon = if ok then info.IconImageAssetId else nil,
+				available = ok and info.IsForSale == true, benefit = offer.benefit,
+				owned = verify(player, offer),
+			})
+		end
+		pending[player] = nil
+		return { modes = { SoloBots2v2 = true, Online1v1 = false, Online2v2 = false }, offers = items }
+	end
+	Marketplace.PromptGamePassPurchaseFinished:Connect(function(player, id, purchased)
+		if not purchased then return end
+		for _, offer in offers do if offer.id == id then verify(player, offer) end end
+	end)
+	Players.PlayerRemoving:Connect(function(player) pending[player], last[player] = nil, nil end)
+end
+return LobbyServices
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Runtime</string><ProtectedString name="Source">--!strict
 local Ball = require(script.Parent.Domain.Ball)
 local Contacts = require(script.Parent.Domain.Contacts)
 local Match = require(script.Parent.Domain.Match)
@@ -615,19 +771,23 @@ local HttpService = game:GetService(&quot;HttpService&quot;)
 local Lighting = game:GetService(&quot;Lighting&quot;)
 local Runtime = require(script.Parent.Runtime)
 local Court = require(script.Parent.Court)
+local Lobby = require(script.Parent.Lobby)
+local LobbyServices = require(script.Parent.LobbyServices)
 local Config = require(ReplicatedStorage.MythicsShared.Config)
 local Server = {}
 
 function Server.start()
 	Players.CharacterAutoLoads = false
 	Court.build(workspace)
-	Lighting.ClockTime, Lighting.Brightness = 14, 2
+	Lobby.build()
+	Lighting.ClockTime, Lighting.Brightness = 16.5, 2
 	Lighting.Ambient = Color3.fromRGB(150, 163, 146)
 	Lighting.OutdoorAmbient = Lighting.Ambient
 	local sky = Instance.new(&quot;Atmosphere&quot;)
 	sky.Color, sky.Density, sky.Parent = Color3.fromRGB(144, 201, 237), 0.15, Lighting
 	local remoteFolder = Instance.new(&quot;Folder&quot;)
 	remoteFolder.Name, remoteFolder.Parent = &quot;MythicsRemotes&quot;, ReplicatedStorage
+	LobbyServices.start(remoteFolder)
 	local function remote(className: string, name: string): any
 		local item = Instance.new(className)
 		item.Name, item.Parent = name, remoteFolder
@@ -645,6 +805,29 @@ function Server.start()
 	local lastPhase = &quot;&quot;
 	local budgets: { [Player]: any } = {}
 	local channelSeq: any = { movement = 0, action = 0 }
+	local loading: { [Player]: boolean } = {}
+	local function spawnLobby(player: Player)
+		if loading[player] or not player.Parent then return end
+		loading[player] = true
+		local ok = pcall(function() player:LoadCharacterAsync() end)
+		loading[player] = nil
+		if ok and player.Character then
+			if player == owner then player.Character:Destroy() else player.Character:PivotTo(Lobby.Spawn) end
+		end
+	end
+	local function added(player: Player)
+		player.DevComputerMovementMode = Enum.DevComputerMovementMode.Scriptable
+		player.DevTouchMovementMode = Enum.DevTouchMovementMode.Scriptable
+		player.CharacterAdded:Connect(function(character)
+			local humanoid = character:WaitForChild(&quot;Humanoid&quot;, 10)
+			if humanoid and humanoid:IsA(&quot;Humanoid&quot;) then
+				humanoid.Died:Connect(function() task.delay(3, function() if player ~= owner then spawnLobby(player) end end) end)
+			end
+		end)
+		task.spawn(spawnLobby, player)
+	end
+	Players.PlayerAdded:Connect(added)
+	for _, player in Players:GetPlayers() do added(player) end
 	local function permit(player: Player, category: string, limit: number): boolean
 		local budget = budgets[player]
 		if not budget then budget = {} budgets[player] = budget end
@@ -735,22 +918,25 @@ function Server.start()
 		end
 		if not permit(player, &quot;command&quot;, 10) then return end
 		if kind == &quot;start&quot; then
+			if type(data) == &quot;table&quot; and data.mode and data.mode ~= &quot;SoloBots2v2&quot; then reliable:FireClient(player, { error = &quot;Modo ainda indisponível&quot; }) return end
 			if owner and owner ~= player then reliable:FireClient(player, { error = &quot;Esta quadra solo está ocupada&quot; }) return end
 			if session and session.state.phase ~= &quot;finished&quot; then return end
 			if type(data) ~= &quot;table&quot; or not Config.Abilities[data.ability] then return end
 			if data.team ~= &quot;A&quot; and data.team ~= &quot;B&quot; then return end
 			if data.difficulty ~= &quot;easy&quot; and data.difficulty ~= &quot;normal&quot; and data.difficulty ~= &quot;hard&quot; then return end
 			owner, channelSeq = player, { movement = 0, action = 0 }
+			if player.Character then player.Character:Destroy() end
 			session = Runtime.new(HttpService:GenerateGUID(false), tostring(player.UserId), data.team, data.ability, data.difficulty, Random.new():NextInteger(1, 2147483647))
 			lastPhase = &quot;&quot;
 			reliable:FireClient(player, session:snapshot())
 			task.spawn(buildActors, player, session)
 		elseif kind == &quot;sync&quot; then
-			if player == owner and session then reliable:FireClient(player, session:snapshot()) end
+			if player == owner and session then reliable:FireClient(player, session:snapshot()) else reliable:FireClient(player, { lobby = true }) end
 		elseif kind == &quot;leave&quot; and player == owner then
 			session, owner = nil, nil
 			for _, child in templates:GetChildren() do child:Destroy() end
 			reliable:FireClient(player, { lobby = true })
+			task.spawn(spawnLobby, player)
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
@@ -850,7 +1036,7 @@ function Controls.new(hud: any, onAction: (string) -&gt; ())
 	backAction.Name, backAction.Type, backAction.Parent = &quot;Back&quot;, Enum.InputActionType.Bool, back
 	binding(backAction, &quot;Gamepad&quot;, Enum.KeyCode.ButtonB)
 	backAction.Pressed:Connect(function()
-		if not hud.panel.Visible and hud.onBack then hud.onBack() end
+		if hud.onBack then hud.onBack() end
 	end)
 	hud.aim.Activated:Connect(function() self.aim = Vector2.zero end)
 	local moveTouch: InputObject? = nil
@@ -1132,6 +1318,421 @@ function Hud.new()
 end
 
 return Hud
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">LobbyControls</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local Input = game:GetService(&quot;UserInputService&quot;)
+local LobbyControls = {}
+
+function LobbyControls.new(hud: any)
+	local self: any = { enabled = true, yaw = 0, pitch = 0.3 }
+	local context = Instance.new(&quot;InputContext&quot;)
+	context.Name, context.Priority, context.Sink, context.Parent = &quot;MythicsExplore&quot;, 1500, true, Players.LocalPlayer.PlayerScripts
+	local function direction(name: string, stick: Enum.KeyCode): InputAction
+		local action = Instance.new(&quot;InputAction&quot;)
+		action.Name, action.Type, action.Parent = name, Enum.InputActionType.Direction2D, context
+		local binding = Instance.new(&quot;InputBinding&quot;)
+		binding.KeyCode, binding.Parent = stick, action
+		return action
+	end
+	local move = direction(&quot;Walk&quot;, Enum.KeyCode.Thumbstick1)
+	local keyboard = Instance.new(&quot;InputBinding&quot;)
+	keyboard.Up, keyboard.Down, keyboard.Left, keyboard.Right = Enum.KeyCode.W, Enum.KeyCode.S, Enum.KeyCode.A, Enum.KeyCode.D
+	keyboard.Parent = move
+	local look = direction(&quot;Look&quot;, Enum.KeyCode.Thumbstick2)
+	local walking, looking = Vector2.zero, Vector2.zero
+	move.StateChanged:Connect(function(value) walking = value end)
+	look.StateChanged:Connect(function(value) looking = value end)
+	local touch: InputObject? = nil
+	local origin = Vector2.zero
+	local drag = Vector2.zero
+	hud.stick.InputBegan:Connect(function(input)
+		if self.enabled and input.UserInputType == Enum.UserInputType.Touch and not touch then
+			touch, origin = input, Vector2.new(input.Position.X, input.Position.Y)
+		end
+	end)
+	Input.TouchStarted:Connect(function(input, processed)
+		if self.enabled and not processed and not touch then
+			touch, origin = input, Vector2.new(input.Position.X, input.Position.Y)
+		end
+	end)
+	Input.TouchMoved:Connect(function(input)
+		if input == touch then drag = (Vector2.new(input.Position.X, input.Position.Y) - origin) / 80 end
+	end)
+	Input.TouchEnded:Connect(function(input) if input == touch then touch, drag = nil, Vector2.zero end end)
+	Input.InputChanged:Connect(function(input)
+		if self.enabled and input.UserInputType == Enum.UserInputType.MouseMovement and Input:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+			self.yaw -= input.Delta.X * 0.006
+			self.pitch = math.clamp(self.pitch + input.Delta.Y * 0.004, 0.1, 0.9)
+		end
+	end)
+	local function clear()
+		walking, looking, touch, drag = Vector2.zero, Vector2.zero, nil, Vector2.zero
+		local character = Players.LocalPlayer.Character
+		local humanoid = if character then character:FindFirstChildOfClass(&quot;Humanoid&quot;) else nil
+		if humanoid then humanoid:Move(Vector3.zero) end
+	end
+	Input.WindowFocusReleased:Connect(clear)
+	game:GetService(&quot;GuiService&quot;).MenuOpened:Connect(clear)
+	self.Enable = function() self.enabled, context.Enabled = true, true clear() end
+	self.Disable = function() self.enabled, context.Enabled = false, false clear() end
+	self.step = function(dt: number, blocked: boolean)
+		if not self.enabled then return end
+		local character = Players.LocalPlayer.Character
+		local humanoid = if character then character:FindFirstChildOfClass(&quot;Humanoid&quot;) else nil
+		local root = if character then character:FindFirstChild(&quot;HumanoidRootPart&quot;) else nil
+		if not humanoid or not root or not root:IsA(&quot;BasePart&quot;) then return end
+		self.yaw -= looking.X * dt * 2
+		self.pitch = math.clamp(self.pitch + looking.Y * dt, 0.1, 0.9)
+		local camera = workspace.CurrentCamera
+		local rotation = CFrame.Angles(0, self.yaw, 0)
+		local value = if blocked then Vector2.zero elseif touch then Vector2.new(drag.X, -drag.Y) else walking
+		if value.Magnitude &gt; 1 then value = value.Unit end
+		humanoid:Move(rotation:VectorToWorldSpace(Vector3.new(value.X, 0, -value.Y)))
+		camera.CameraType = Enum.CameraType.Scriptable
+		local target = root.Position + Vector3.new(0, 2, 0)
+		camera.CFrame = CFrame.lookAt(target + rotation:VectorToWorldSpace(Vector3.new(0, 5 + self.pitch * 8, 18)), target + Vector3.new(0, 0, -5))
+	end
+	return self
+end
+return LobbyControls
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">LobbyHud</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local Input = game:GetService(&quot;UserInputService&quot;)
+local GuiService = game:GetService(&quot;GuiService&quot;)
+local TweenService = game:GetService(&quot;TweenService&quot;)
+local Marketplace = game:GetService(&quot;MarketplaceService&quot;)
+local Config = require(game.ReplicatedStorage.MythicsShared.Config)
+local LobbyHud = {}
+local cream, ink = Color3.fromRGB(244, 233, 205), Color3.fromRGB(20, 38, 46)
+local gold, teal = Color3.fromRGB(246, 199, 77), Color3.fromRGB(54, 118, 122)
+
+local function text(parent: Instance, name: string, value: string, y: number, height: number): TextLabel
+	local item = Instance.new(&quot;TextLabel&quot;)
+	item.Name, item.Text = name, value
+	item.Position, item.Size = UDim2.fromOffset(20, y), UDim2.new(1, -40, 0, height)
+	item.BackgroundTransparency, item.TextColor3, item.TextWrapped = 1, cream, true
+	item.TextXAlignment, item.Font, item.TextSize = Enum.TextXAlignment.Left, Enum.Font.GothamMedium, 14
+	item.Parent = parent
+	return item
+end
+local function button(parent: Instance, name: string, value: string, y: number): TextButton
+	local item = Instance.new(&quot;TextButton&quot;)
+	item.Name, item.Text = name, value
+	item.Position, item.Size = UDim2.fromOffset(20, y), UDim2.new(1, -40, 0, 46)
+	item.BackgroundColor3, item.TextColor3 = teal, cream
+	item.Font, item.TextSize, item.TextWrapped = Enum.Font.GothamBold, 15, true
+	local corner = Instance.new(&quot;UICorner&quot;)
+	corner.CornerRadius, corner.Parent = UDim.new(0, 8), item
+	local stroke = Instance.new(&quot;UIStroke&quot;)
+	stroke.Color, stroke.Thickness, stroke.Parent = gold, 0, item
+	item.SelectionGained:Connect(function() stroke.Thickness = 3 end)
+	item.SelectionLost:Connect(function() stroke.Thickness = 0 end)
+	item.Parent = parent
+	return item
+end
+
+function LobbyHud.new(hud: any)
+	local self: any = { visible = true, busy = false, reduced = false, volume = 0.5, catalog = nil }
+	local root = Instance.new(&quot;Frame&quot;)
+	root.Name, root.Size, root.BackgroundTransparency, root.Parent = &quot;Lobby&quot;, UDim2.fromScale(1, 1), 1, hud.root
+	local identity = text(root, &quot;Player&quot;, Players.LocalPlayer.DisplayName, 18, 28)
+	identity.TextColor3, identity.Size = gold, UDim2.fromOffset(250, 28)
+	local function updateFrame()
+		local value = Players.LocalPlayer:GetAttribute(&quot;CardFrameColor&quot;)
+		identity.BackgroundTransparency = if value then 0.15 else 1
+		if typeof(value) == &quot;Color3&quot; then identity.BackgroundColor3 = value end
+	end
+	Players.LocalPlayer:GetAttributeChangedSignal(&quot;CardFrameColor&quot;):Connect(updateFrame)
+	updateFrame()
+	local nav = Instance.new(&quot;Frame&quot;)
+	nav.Name, nav.Size, nav.Position, nav.BackgroundTransparency, nav.Parent = &quot;Navigation&quot;, UDim2.fromOffset(226, 232), UDim2.new(0, 0, 1, -244), 1, root
+	local names = { {&quot;Play&quot;, &quot;JOGAR&quot;}, {&quot;Signatures&quot;, &quot;ASSINATURAS&quot;}, {&quot;Shop&quot;, &quot;LOJA&quot;}, {&quot;Settings&quot;, &quot;CONFIGURAÇÕES&quot;} }
+	local accents = { Color3.fromRGB(103, 255, 70), Color3.fromRGB(212, 80, 255), gold, Color3.fromRGB(81, 213, 255) }
+	local buttons, panels = {}, {}
+	local selected: string? = nil
+	local returnTo: GuiObject? = nil
+	local sound = Instance.new(&quot;Sound&quot;)
+	sound.Name, sound.SoundId, sound.Volume, sound.Parent = &quot;MenuClick&quot;, &quot;rbxasset://sounds/electronicpingshort.wav&quot;, self.volume, root
+	local function click() sound.Volume = self.volume sound:Play() end
+	local function focus(item: GuiObject?)
+		if Input.PreferredInput == Enum.PreferredInput.Gamepad then
+			task.defer(function()
+				game:GetService(&quot;RunService&quot;).RenderStepped:Wait()
+				if self.visible then GuiService.SelectedObject = item end
+			end)
+		end
+	end
+	local function link(items: { GuiObject })
+		for index, item in items do
+			item.NextSelectionDown = items[index % #items + 1]
+			item.NextSelectionUp = items[(index - 2) % #items + 1]
+		end
+	end
+	local close = button(root, &quot;ClosePanel&quot;, &quot;Voltar&quot;, 0)
+	close.Size, close.Position, close.Visible = UDim2.fromOffset(104, 40), UDim2.new(1, -124, 0, 16), false
+	local tween: Tween? = nil
+	local function open(name: string?)
+		if self.busy then return end
+		if tween then tween:Cancel() end
+		selected = name
+		nav.Visible = true
+		hud.stick.Visible = name == nil and Input.PreferredInput == Enum.PreferredInput.Touch
+		hud.panel.Visible = false
+		for key, panel in panels do panel.Visible = key == name end
+		close.Visible = name ~= nil
+		if name then
+			returnTo = buttons[name] or returnTo
+			local panel = panels[name]
+			local items = {}
+			for _, child in panel:GetChildren() do
+				if child:IsA(&quot;TextButton&quot;) then table.insert(items, child) end
+			end
+			table.sort(items, function(a, b) return a.Position.Y.Offset &lt; b.Position.Y.Offset end)
+			table.insert(items, close)
+			link(items)
+			panel.BackgroundTransparency = if self.reduced then 0.04 else 0.5
+			if not self.reduced then
+				tween = TweenService:Create(panel, TweenInfo.new(0.18), {BackgroundTransparency = 0.04})
+				tween:Play()
+			end
+			focus(panel:FindFirstChildWhichIsA(&quot;TextButton&quot;) or close)
+		else
+			focus(returnTo or buttons.Play)
+		end
+	end
+	self.back = function()
+		if hud.panel.Visible then hud.panel.Visible = false open(&quot;Play&quot;) else open(nil) end
+	end
+	close.Activated:Connect(function() click() self.back() end)
+	for index, definition in names do
+		local item = button(nav, definition[1], definition[2], (index - 1) * 54)
+		item.Text, item.BackgroundTransparency = &quot;&quot;, 1
+		item:FindFirstChildOfClass(&quot;UIStroke&quot;):Destroy()
+		local accent = accents[index]
+		for layer = 1, 2 do
+			for rotation = 0, 2 do
+				local hex = Instance.new(&quot;Frame&quot;)
+				local width = if layer == 1 then 66 else 59
+				hex.Name, hex.Size, hex.AnchorPoint, hex.Position = &quot;Hex&quot;, UDim2.fromOffset(width, width * 0.577), Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0, 38)
+				hex.Rotation, hex.BackgroundColor3, hex.BorderSizePixel = rotation * 60, if layer == 1 then accent else ink, 0
+				hex.ZIndex, hex.Parent = layer + 1, item
+			end
+		end
+		local icon = Instance.new(&quot;TextLabel&quot;)
+		icon.Name, icon.BackgroundTransparency, icon.Size, icon.Position = &quot;Icon&quot;, 1, UDim2.fromOffset(64, 56), UDim2.new(0.5, -32, 0, 10)
+		icon.Text, icon.Font, icon.TextSize, icon.TextColor3 = ({&quot;▶&quot;, &quot;&quot;, &quot;&quot;, &quot;⚙&quot;})[index], Enum.Font.GothamBlack, 34, accent
+		icon.ZIndex, icon.Parent = 5, item
+		if index == 2 then
+			local circle = Instance.new(&quot;Frame&quot;)
+			circle.Size, circle.Position, circle.BackgroundColor3 = UDim2.fromOffset(31, 31), UDim2.fromOffset(16, 12), cream
+			circle.ZIndex, circle.Parent = 5, icon
+			local corner = Instance.new(&quot;UICorner&quot;)
+			corner.CornerRadius, corner.Parent = UDim.new(1, 0), circle
+			for seamIndex = 1, 3 do
+				local seam = Instance.new(&quot;Frame&quot;)
+				seam.Size, seam.Position, seam.Rotation = UDim2.fromOffset(27, 2), UDim2.fromOffset(2, seamIndex * 7), 20
+				seam.BackgroundColor3, seam.BorderSizePixel, seam.ZIndex, seam.Parent = accent, 0, 6, circle
+			end
+		elseif index == 3 then
+			local bag = Instance.new(&quot;Frame&quot;)
+			bag.Size, bag.Position, bag.BackgroundColor3 = UDim2.fromOffset(30, 25), UDim2.fromOffset(17, 22), gold
+			bag.ZIndex, bag.Parent = 5, icon
+			local handle = Instance.new(&quot;Frame&quot;)
+			handle.Size, handle.Position, handle.BackgroundTransparency = UDim2.fromOffset(16, 13), UDim2.fromOffset(7, -9), 1
+			handle.ZIndex, handle.Parent = 5, bag
+			local stroke = Instance.new(&quot;UIStroke&quot;)
+			stroke.Thickness, stroke.Color, stroke.Parent = 3, gold, handle
+		end
+		local caption = text(item, &quot;Caption&quot;, definition[2], 78, 24)
+		caption.Position, caption.Size, caption.TextSize, caption.TextXAlignment = UDim2.fromOffset(-8, 78), UDim2.new(1, 16, 0, 24), 10, Enum.TextXAlignment.Center
+		caption.Font, caption.TextStrokeTransparency = Enum.Font.GothamBlack, 0.4
+		item.SelectionGained:Connect(function() caption.TextColor3 = accent end)
+		item.SelectionLost:Connect(function() caption.TextColor3 = cream end)
+		buttons[definition[1]] = item
+		local panel = Instance.new(&quot;ScrollingFrame&quot;)
+		panel.Name, panel.Size = definition[1] .. &quot;Panel&quot;, UDim2.fromOffset(400, 340)
+		panel.AnchorPoint, panel.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, -34)
+		panel.BackgroundColor3, panel.BorderSizePixel, panel.ScrollBarThickness = ink, 0, 4
+		panel.CanvasSize, panel.Visible, panel.Parent = UDim2.fromOffset(0, 340), false, root
+		panels[definition[1]] = panel
+		local corner = Instance.new(&quot;UICorner&quot;)
+		corner.CornerRadius, corner.Parent = UDim.new(0, 14), panel
+		local title = text(panel, &quot;Title&quot;, definition[2], 16, 34)
+		title.TextSize, title.Font = 24, Enum.Font.GothamBold
+		item.Activated:Connect(function() click() open(definition[1]) end)
+	end
+	local navOrder = {buttons.Play, buttons.Signatures, buttons.Shop, buttons.Settings}
+	for index, item in navOrder do
+		item.NextSelectionLeft, item.NextSelectionRight = navOrder[(index - 2) % #navOrder + 1], navOrder[index % #navOrder + 1]
+	end
+	local solo = button(panels.Play, &quot;Solo&quot;, &quot;Solo 2v2 · contra bots&quot;, 66)
+	text(panels.Play, &quot;SoloDescription&quot;, &quot;Você e um bot contra dois bots. Começa imediatamente.&quot;, 116, 40)
+	local duel = button(panels.Play, &quot;Duel&quot;, &quot;1v1 online · Em breve&quot;, 164)
+	text(panels.Play, &quot;DuelDescription&quot;, &quot;Duelo entre humanos. Aquecimento até o adversário chegar.&quot;, 214, 42)
+	local doubles = button(panels.Play, &quot;Doubles&quot;, &quot;2v2 online · Em breve&quot;, 264)
+	text(panels.Play, &quot;DoublesDescription&quot;, &quot;Entre direto. Bots cedem suas vagas entre pontos.&quot;, 314, 42)
+	panels.Play.CanvasSize = UDim2.fromOffset(0, 374)
+	link({solo, duel, doubles, close})
+	solo.Activated:Connect(function()
+		if self.busy then return end
+		click()
+		if not self.catalog or not self.catalog.modes.SoloBots2v2 then
+			self.message(&quot;Consultando os modos. Tente novamente em instantes.&quot;)
+			return
+		end
+		for _, panel in panels do panel.Visible = false end
+		hud.setMenu(true)
+		nav.Visible, hud.panel.Visible, close.Visible = false, true, true
+		link({hud.skillChoice, hud.difficultyChoice, hud.sideChoice, hud.start, close})
+		focus(hud.start)
+	end)
+	local function online(mode: string)
+		if self.catalog and self.catalog.modes[mode] and self.onMode then self.onMode(mode) end
+	end
+	duel.Activated:Connect(function() online(&quot;Online1v1&quot;) end)
+	doubles.Activated:Connect(function() online(&quot;Online2v2&quot;) end)
+	local signature = panels.Signatures
+	local equipped = text(signature, &quot;Equipped&quot;, &quot;Em uso · &quot; .. Config.Abilities[hud.selection.ability].name, 64, 46)
+	text(signature, &quot;Collection&quot;, &quot;Uma jogada característica. Uma habilidade ativa.&quot;, 112, 42)
+	local chances = text(signature, &quot;Chances&quot;, &quot;Coleção e probabilidades disponíveis na próxima etapa.&quot;, 164, 60)
+	local spin = button(signature, &quot;Spin&quot;, &quot;Girar assinatura · Em breve&quot;, 242)
+	spin.AutoButtonColor = false
+	spin.BackgroundColor3 = Color3.fromRGB(61, 73, 77)
+	text(signature, &quot;Balance&quot;, &quot;Giros gratuitos&quot;, 298, 24)
+	link({spin, close})
+	local volume = button(panels.Settings, &quot;Volume&quot;, &quot;Efeitos · 50%&quot;, 70)
+	local reduced = button(panels.Settings, &quot;ReducedMotion&quot;, &quot;Animação reduzida · Desligada&quot;, 132)
+	text(panels.Settings, &quot;Scope&quot;, &quot;Ajustes aplicados ao lobby nesta sessão.&quot;, 200, 50)
+	volume.Activated:Connect(function()
+		self.volume = (math.round(self.volume * 4) + 1) % 5 / 4
+		volume.Text = &quot;Efeitos · &quot; .. math.round(self.volume * 100) .. &quot;%&quot;
+		click()
+	end)
+	reduced.Activated:Connect(function()
+		self.reduced = not self.reduced
+		reduced.Text = &quot;Animação reduzida · &quot; .. (if self.reduced then &quot;Ligada&quot; else &quot;Desligada&quot;)
+		if tween and self.reduced then tween:Cancel() panels.Settings.BackgroundTransparency = 0.04 end
+		click()
+	end)
+	link({volume, reduced, close})
+	local shopStatus = text(panels.Shop, &quot;Empty&quot;, &quot;Consultando ofertas…&quot;, 70, 90)
+	local shopButtons: { GuiObject } = {}
+	local purchaseId: number? = nil
+	local function loadCatalog()
+		local ok, catalog = pcall(function() return game.ReplicatedStorage.MythicsRemotes.LobbyCatalog:InvokeServer() end)
+		if not ok or not catalog or catalog.busy then
+			shopStatus.Text = &quot;Não foi possível consultar. Abra a loja para tentar novamente.&quot;
+			return
+		end
+		self.catalog = catalog
+		shopStatus.Text = if #catalog.offers == 0 then &quot;Novas ofertas em breve.\nOs giros de Assinaturas são gratuitos.&quot; else &quot;Cosméticos para o seu cartão de jogador.&quot;
+		for _, item in shopButtons do item:Destroy() end
+		shopButtons = {}
+		for index, offer in catalog.offers do
+			local item = button(panels.Shop, &quot;Offer&quot; .. index,
+				offer.name .. &quot;\n&quot; .. offer.benefit .. (if offer.owned then &quot; · Adquirido&quot; elseif offer.available then &quot; · R$ &quot; .. tostring(offer.price) else &quot; · Indisponível&quot;), 170 + (index - 1) * 90)
+			item.Size = UDim2.new(1, -40, 0, 76)
+			if offer.icon then
+				local preview = Instance.new(&quot;ImageLabel&quot;)
+				preview.Name, preview.Size, preview.Position = &quot;Preview&quot;, UDim2.fromOffset(48, 48), UDim2.fromOffset(6, 14)
+				preview.BackgroundTransparency, preview.Image, preview.Parent = 1, &quot;rbxassetid://&quot; .. offer.icon, item
+				local padding = Instance.new(&quot;UIPadding&quot;)
+				padding.PaddingLeft, padding.Parent = UDim.new(0, 60), item
+			end
+			item.Activated:Connect(function()
+				if purchaseId or offer.owned or not offer.available or not offer.price then return end
+				purchaseId = offer.id
+				local prompted = pcall(Marketplace.PromptGamePassPurchase, Marketplace, Players.LocalPlayer, offer.id)
+				if not prompted then purchaseId = nil shopStatus.Text = &quot;Compra indisponível. Tente novamente.&quot; end
+			end)
+			table.insert(shopButtons, item)
+		end
+		panels.Shop.CanvasSize = UDim2.fromOffset(0, math.max(340, 180 + #shopButtons * 90))
+		local navigation = table.clone(shopButtons)
+		table.insert(navigation, close)
+		link(navigation)
+	end
+	Marketplace.PromptGamePassPurchaseFinished:Connect(function(player, id)
+		if player == Players.LocalPlayer and id == purchaseId then
+			purchaseId = nil
+			task.delay(2.1, loadCatalog)
+		end
+	end)
+	buttons.Shop.Activated:Connect(function() task.spawn(loadCatalog) end)
+	task.spawn(loadCatalog)
+	local notice = text(root, &quot;Notice&quot;, &quot;&quot;, 0, 48)
+	notice.AnchorPoint, notice.Position, notice.Size = Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -116), UDim2.new(0.65, 0, 0, 44)
+	notice.TextColor3 = gold
+	self.message = function(value: string) notice.Text = value end
+	self.setBusy = function(value: boolean)
+		self.busy = value
+		hud.start.Text = if value then &quot;Entrando…&quot; else &quot;Jogar contra bots&quot;
+		hud.start.Active = not value
+	end
+	self.setVisible = function(value: boolean)
+		self.visible, root.Visible = value, value
+		self.setBusy(false)
+		hud.score.Visible, hud.status.Visible, hud.feedback.Visible = not value, not value, not value
+		if value then
+			nav.Visible = true
+			equipped.Text = &quot;Em uso · &quot; .. Config.Abilities[hud.selection.ability].name
+			notice.Text = &quot;&quot;
+			returnTo = buttons.Play
+			open(nil)
+		end
+	end
+	-- Presentation fixtures can be injected by Studio acceptance scripts.
+	self.previewSignature = function(data: any)
+		equipped.Text, chances.Text, spin.Text = data.equipped, data.chances, data.status
+		signature.Balance.Text = data.balance
+	end
+	self.focus = function() focus(buttons.Play) end
+	game:GetService(&quot;ProximityPromptService&quot;).PromptTriggered:Connect(function(prompt, player)
+		if player ~= Players.LocalPlayer or not self.visible then return end
+		local name = prompt.Parent:GetAttribute(&quot;LobbyPanel&quot;)
+		if panels[name] then open(name) end
+	end)
+	self.panelOpen = function() return selected ~= nil or hud.panel.Visible end
+	Input:GetPropertyChangedSignal(&quot;PreferredInput&quot;):Connect(function()
+		if self.visible then
+			hud.stick.Visible = selected == nil and not hud.panel.Visible and Input.PreferredInput == Enum.PreferredInput.Touch
+			focus(if hud.panel.Visible then hud.start elseif selected then close else buttons.Play)
+		end
+	end)
+	local function layout()
+		local compact = hud.root.AbsoluteSize.Y &lt; 500
+		local width = hud.root.AbsoluteSize.X
+		identity.Position = UDim2.fromOffset(20, 18)
+		nav.AnchorPoint, nav.Position, nav.Size = Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -8), UDim2.fromOffset(400, 104)
+		for index, definition in names do
+			local item = buttons[definition[1]]
+			item.Size, item.Position = UDim2.fromOffset(88, 104), UDim2.fromOffset((index - 1) * 104, 0)
+		end
+		for _, panel in panels do
+			panel.Size = UDim2.fromOffset(math.min(440, width - 48), math.min(360, hud.root.AbsoluteSize.Y - 146))
+		end
+		local modeButtons = {solo, duel, doubles}
+		local descriptions = {&quot;SoloDescription&quot;, &quot;DuelDescription&quot;, &quot;DoublesDescription&quot;}
+		for index, item in modeButtons do
+			local description = panels.Play[descriptions[index]]
+			if compact then
+				item.Position, item.Size = UDim2.new((index - 1)/3, 12, 0, 58), UDim2.new(1/3, -16, 0, 54)
+				item.TextSize = 12
+				description.Position, description.Size, description.TextSize = UDim2.new((index - 1)/3, 12, 0, 118), UDim2.new(1/3, -16, 0, 80), 11
+			else
+				item.Position, item.Size, item.TextSize = UDim2.fromOffset(20, 66 + (index - 1)*100), UDim2.new(1, -40, 0, 46), 15
+				description.Position, description.Size, description.TextSize = UDim2.fromOffset(20, 116 + (index - 1)*100), UDim2.new(1, -40, 0, 42), 14
+			end
+		end
+		panels.Play.CanvasSize = UDim2.fromOffset(0, if compact then 204 else 374)
+	end
+	hud.root:GetPropertyChangedSignal(&quot;AbsoluteSize&quot;):Connect(layout)
+	layout()
+	self.setVisible(true)
+	self.focus()
+	return self
+end
+return LobbyHud
 </ProtectedString></Properties></Item><Item class="LocalScript"><Properties><string name="Name">Main</string><ProtectedString name="Source">--!strict
 local Players = game:GetService(&quot;Players&quot;)
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
@@ -1146,6 +1747,20 @@ local command = remotes:WaitForChild(&quot;Command&quot;) :: RemoteEvent
 local movementRemote = remotes:WaitForChild(&quot;Movement&quot;) :: UnreliableRemoteEvent
 local templates = ReplicatedStorage:WaitForChild(&quot;MythicsActors&quot;)
 local hud = Hud.new()
+local lobby = require(script.Parent.LobbyHud).new(hud)
+hud.panel.Visible = false
+local nativeControls = require(script.Parent.LobbyControls).new(hud)
+nativeControls:Enable()
+local playerGui = Players.LocalPlayer:WaitForChild(&quot;PlayerGui&quot;)
+local function hideNativeTouch(child: Instance)
+	if child.Name == &quot;TouchGui&quot; and child:IsA(&quot;ScreenGui&quot;) then child.Enabled = false end
+end
+playerGui.ChildAdded:Connect(hideNativeTouch)
+for _, child in playerGui:GetChildren() do hideNativeTouch(child) end
+RunService:BindToRenderStep(&quot;MythicsTouchVisibility&quot;, Enum.RenderPriority.Last.Value, function()
+	local touchGui = playerGui:FindFirstChild(&quot;TouchGui&quot;)
+	if touchGui then hideNativeTouch(touchGui) end
+end)
 local state: any = nil
 local buffer: { any } = {}
 local models: { [string]: any } = {}
@@ -1153,8 +1768,7 @@ local actionSeq, moveSeq, eventId, lastSend = 0, 0, 0, 0
 local camera = workspace.CurrentCamera
 local cameraEye: Vector3? = nil
 local cameraDistance = 0
-camera.CameraType, camera.FieldOfView = Enum.CameraType.Scriptable, 65
-camera.CFrame = CFrame.lookAt(Vector3.new(48,55,68), Vector3.new(0,5,-15))
+camera.CameraType, camera.FieldOfView = Enum.CameraType.Custom, 65
 local visualFolder = Instance.new(&quot;Folder&quot;)
 visualFolder.Name, visualFolder.Parent = &quot;MythicsPresentation&quot;, workspace
 local court = workspace:WaitForChild(&quot;MythicsCourt&quot;)
@@ -1163,6 +1777,7 @@ local marker = Instance.new(&quot;Part&quot;)
 marker.Name, marker.Shape, marker.Size = &quot;BallShadow&quot;, Enum.PartType.Cylinder, Vector3.new(0.025,1.1,1.1)
 marker.Anchored, marker.CanCollide, marker.CanQuery, marker.CanTouch = true, false, false, false
 marker.Color, marker.Transparency, marker.Parent = Color3.fromRGB(255,230,0), 0.25, visualFolder
+marker.Transparency = 1
 local controls: any
 local function vector(position: any): Vector3 return Vector3.new(position.x,position.y,position.z) end
 local function inputPayload(channel: string, actions: { string }?)
@@ -1186,9 +1801,28 @@ controls = Controls.new(hud, function(name)
 	command:FireServer(&quot;input&quot;, inputPayload(&quot;action&quot;, {name}))
 	hud.feedback.Text = &quot;Solicitado · aguardando confirmação&quot;
 end)
-hud.start.Activated:Connect(function() command:FireServer(&quot;start&quot;, hud.selection) end)
+hud.start.Activated:Connect(function()
+	if lobby.busy then return end
+	lobby.setBusy(true)
+	local selection = table.clone(hud.selection)
+	selection.mode = &quot;SoloBots2v2&quot;
+	command:FireServer(&quot;start&quot;, selection)
+	task.delay(10, function()
+		if lobby.busy then
+			lobby.setBusy(false)
+			lobby.message(&quot;A entrada demorou. Tente novamente.&quot;)
+			command:FireServer(&quot;sync&quot;)
+		end
+	end)
+end)
 hud.leave.Activated:Connect(function() command:FireServer(&quot;leave&quot;) end)
-hud.onBack = function() command:FireServer(&quot;leave&quot;) end
+hud.onBack = function()
+	if lobby.visible then lobby.back() else command:FireServer(&quot;leave&quot;) end
+end
+Players.LocalPlayer.CharacterAdded:Connect(function(character)
+	local humanoid = character:WaitForChild(&quot;Humanoid&quot;)
+	if not state then camera.CameraSubject, camera.CameraType = humanoid, Enum.CameraType.Custom end
+end)
 Input.InputBegan:Connect(function(input, processed)
 	if processed or input.UserInputType ~= Enum.UserInputType.MouseButton1 or not state or not controls.enabled then return end
 	for _, object in Players.LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(input.Position.X,input.Position.Y) do
@@ -1210,12 +1844,21 @@ local function clearModels()
 	models = {}
 end
 local function receive(nextState: any, reliable: boolean)
-	if nextState.error then hud.feedback.Text = nextState.error return end
+	if nextState.error then
+		lobby.setBusy(false)
+		if lobby.visible then lobby.message(nextState.error) else hud.feedback.Text = nextState.error end
+		return
+	end
 	if nextState.lobby then
 		state, buffer = nil, {}
 		controls.setEnabled(false)
 		clearModels()
 		hud.setMenu(true)
+		lobby.setVisible(true)
+		nativeControls:Enable()
+		camera.CameraType = Enum.CameraType.Custom
+		if Players.LocalPlayer.Character then camera.CameraSubject = Players.LocalPlayer.Character:FindFirstChildOfClass(&quot;Humanoid&quot;) end
+		marker.Transparency = 1
 		hud.score.Text, hud.status.Text, hud.feedback.Text = &quot;&quot;, &quot;&quot;, &quot;&quot;
 		return
 	end
@@ -1227,6 +1870,10 @@ local function receive(nextState: any, reliable: boolean)
 		cameraEye, cameraDistance = nil, 0
 		clearModels()
 		hud.setMenu(false)
+		lobby.setVisible(false)
+		nativeControls:Disable()
+		camera.CameraType = Enum.CameraType.Scriptable
+		marker.Transparency = 0.25
 		GuiService.SelectedObject = nil
 		controls.setEnabled(true)
 	end
@@ -1282,7 +1929,7 @@ local function pose(entry: any, speed: number, now: number)
 end
 
 RunService.RenderStepped:Connect(function(dt)
-	if not state then return end
+	if not state then nativeControls.step(dt, lobby.panelOpen()) return end
 	local now = os.clock()
 	if controls.enabled and now-lastSend &gt;= 1/30 then
 		lastSend = now
@@ -1306,6 +1953,7 @@ RunService.RenderStepped:Connect(function(dt)
 		controls.setEnabled(false)
 		local side = if displayed.score.A == 6 then &quot;A&quot; else &quot;B&quot;
 		hud.setMenu(true, &quot;Vitória do lado &quot; .. side)
+		hud.leave.Visible = true
 	end
 	local ballPosition = vector(a.ball):Lerp(vector(b.ball),alpha)
 	ball.Position = Config.Origin + ballPosition * Config.Scale

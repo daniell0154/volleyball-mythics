@@ -12,6 +12,20 @@ local command = remotes:WaitForChild("Command") :: RemoteEvent
 local movementRemote = remotes:WaitForChild("Movement") :: UnreliableRemoteEvent
 local templates = ReplicatedStorage:WaitForChild("MythicsActors")
 local hud = Hud.new()
+local lobby = require(script.Parent.LobbyHud).new(hud)
+hud.panel.Visible = false
+local nativeControls = require(script.Parent.LobbyControls).new(hud)
+nativeControls:Enable()
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+local function hideNativeTouch(child: Instance)
+	if child.Name == "TouchGui" and child:IsA("ScreenGui") then child.Enabled = false end
+end
+playerGui.ChildAdded:Connect(hideNativeTouch)
+for _, child in playerGui:GetChildren() do hideNativeTouch(child) end
+RunService:BindToRenderStep("MythicsTouchVisibility", Enum.RenderPriority.Last.Value, function()
+	local touchGui = playerGui:FindFirstChild("TouchGui")
+	if touchGui then hideNativeTouch(touchGui) end
+end)
 local state: any = nil
 local buffer: { any } = {}
 local models: { [string]: any } = {}
@@ -19,8 +33,7 @@ local actionSeq, moveSeq, eventId, lastSend = 0, 0, 0, 0
 local camera = workspace.CurrentCamera
 local cameraEye: Vector3? = nil
 local cameraDistance = 0
-camera.CameraType, camera.FieldOfView = Enum.CameraType.Scriptable, 65
-camera.CFrame = CFrame.lookAt(Vector3.new(48,55,68), Vector3.new(0,5,-15))
+camera.CameraType, camera.FieldOfView = Enum.CameraType.Custom, 65
 local visualFolder = Instance.new("Folder")
 visualFolder.Name, visualFolder.Parent = "MythicsPresentation", workspace
 local court = workspace:WaitForChild("MythicsCourt")
@@ -29,6 +42,7 @@ local marker = Instance.new("Part")
 marker.Name, marker.Shape, marker.Size = "BallShadow", Enum.PartType.Cylinder, Vector3.new(0.025,1.1,1.1)
 marker.Anchored, marker.CanCollide, marker.CanQuery, marker.CanTouch = true, false, false, false
 marker.Color, marker.Transparency, marker.Parent = Color3.fromRGB(255,230,0), 0.25, visualFolder
+marker.Transparency = 1
 local controls: any
 local function vector(position: any): Vector3 return Vector3.new(position.x,position.y,position.z) end
 local function inputPayload(channel: string, actions: { string }?)
@@ -52,9 +66,28 @@ controls = Controls.new(hud, function(name)
 	command:FireServer("input", inputPayload("action", {name}))
 	hud.feedback.Text = "Solicitado · aguardando confirmação"
 end)
-hud.start.Activated:Connect(function() command:FireServer("start", hud.selection) end)
+hud.start.Activated:Connect(function()
+	if lobby.busy then return end
+	lobby.setBusy(true)
+	local selection = table.clone(hud.selection)
+	selection.mode = "SoloBots2v2"
+	command:FireServer("start", selection)
+	task.delay(10, function()
+		if lobby.busy then
+			lobby.setBusy(false)
+			lobby.message("A entrada demorou. Tente novamente.")
+			command:FireServer("sync")
+		end
+	end)
+end)
 hud.leave.Activated:Connect(function() command:FireServer("leave") end)
-hud.onBack = function() command:FireServer("leave") end
+hud.onBack = function()
+	if lobby.visible then lobby.back() else command:FireServer("leave") end
+end
+Players.LocalPlayer.CharacterAdded:Connect(function(character)
+	local humanoid = character:WaitForChild("Humanoid")
+	if not state then camera.CameraSubject, camera.CameraType = humanoid, Enum.CameraType.Custom end
+end)
 Input.InputBegan:Connect(function(input, processed)
 	if processed or input.UserInputType ~= Enum.UserInputType.MouseButton1 or not state or not controls.enabled then return end
 	for _, object in Players.LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(input.Position.X,input.Position.Y) do
@@ -76,12 +109,21 @@ local function clearModels()
 	models = {}
 end
 local function receive(nextState: any, reliable: boolean)
-	if nextState.error then hud.feedback.Text = nextState.error return end
+	if nextState.error then
+		lobby.setBusy(false)
+		if lobby.visible then lobby.message(nextState.error) else hud.feedback.Text = nextState.error end
+		return
+	end
 	if nextState.lobby then
 		state, buffer = nil, {}
 		controls.setEnabled(false)
 		clearModels()
 		hud.setMenu(true)
+		lobby.setVisible(true)
+		nativeControls:Enable()
+		camera.CameraType = Enum.CameraType.Custom
+		if Players.LocalPlayer.Character then camera.CameraSubject = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") end
+		marker.Transparency = 1
 		hud.score.Text, hud.status.Text, hud.feedback.Text = "", "", ""
 		return
 	end
@@ -93,6 +135,10 @@ local function receive(nextState: any, reliable: boolean)
 		cameraEye, cameraDistance = nil, 0
 		clearModels()
 		hud.setMenu(false)
+		lobby.setVisible(false)
+		nativeControls:Disable()
+		camera.CameraType = Enum.CameraType.Scriptable
+		marker.Transparency = 0.25
 		GuiService.SelectedObject = nil
 		controls.setEnabled(true)
 	end
@@ -148,7 +194,7 @@ local function pose(entry: any, speed: number, now: number)
 end
 
 RunService.RenderStepped:Connect(function(dt)
-	if not state then return end
+	if not state then nativeControls.step(dt, lobby.panelOpen()) return end
 	local now = os.clock()
 	if controls.enabled and now-lastSend >= 1/30 then
 		lastSend = now
@@ -172,6 +218,7 @@ RunService.RenderStepped:Connect(function(dt)
 		controls.setEnabled(false)
 		local side = if displayed.score.A == 6 then "A" else "B"
 		hud.setMenu(true, "Vitória do lado " .. side)
+		hud.leave.Visible = true
 	end
 	local ballPosition = vector(a.ball):Lerp(vector(b.ball),alpha)
 	ball.Position = Config.Origin + ballPosition * Config.Scale
