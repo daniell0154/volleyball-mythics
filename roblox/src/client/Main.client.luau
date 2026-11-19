@@ -49,12 +49,14 @@ local function inputPayload(channel: string, actions: { string }?)
 	if not state then return nil end
 	local move, aim = controls.sample()
 	local humanTeam = "A"
-	for _, athlete in state.athletes do if athlete.id == state.humanId then humanTeam = athlete.team end end
+	local generation = 0
+	for _, athlete in state.athletes do if athlete.id == state.humanId then humanTeam, generation = athlete.team, athlete.generation end end
 	local direction = if humanTeam == "A" then 1 else -1
 	local sequence: number
 	if channel == "action" then actionSeq += 1 sequence = actionSeq else moveSeq += 1 sequence = moveSeq end
 	return {
 		matchId = state.matchId, seq = sequence,
+		generation = generation,
 		moveX = -direction * move.X, moveZ = direction * move.Y,
 		-- Rally targets use world X but own-side depth for Z.
 		aim = { x = -direction * aim.X, z = aim.Y }, actions = actions,
@@ -67,6 +69,7 @@ controls = Controls.new(hud, function(name)
 	hud.feedback.Text = "Solicitado · aguardando confirmação"
 end)
 hud.start.Activated:Connect(function()
+	if state and state.phase == "finished" then command:FireServer("rematch") hud.start.Text = "Aguardando revanche…" return end
 	if lobby.busy then return end
 	lobby.setBusy(true)
 	local selection = table.clone(hud.selection)
@@ -80,6 +83,14 @@ hud.start.Activated:Connect(function()
 		end
 	end)
 end)
+lobby.onMode = function(mode: string)
+	if lobby.busy then return end
+	lobby.setBusy(true)
+	command:FireServer("start", {mode=mode})
+	task.delay(10, function()
+		if lobby.busy then lobby.setBusy(false) lobby.message("A entrada demorou. Tente novamente.") command:FireServer("sync") end
+	end)
+end
 hud.leave.Activated:Connect(function() command:FireServer("leave") end)
 hud.onBack = function()
 	if lobby.visible then lobby.back() else command:FireServer("leave") end
@@ -143,6 +154,8 @@ local function receive(nextState: any, reliable: boolean)
 		controls.setEnabled(true)
 	end
 	state = nextState
+	local enabled = not state.pending and not state.suspended and state.phase ~= "finished" and state.phase ~= "cancelled"
+	if controls.enabled ~= enabled then controls.setEnabled(enabled) end
 	table.insert(buffer, { time = os.clock(), snapshot = nextState })
 	if #buffer > 12 then table.remove(buffer, 1) end
 end
@@ -153,9 +166,19 @@ snapshotRemote.OnClientEvent:Connect(function(value) receive(value, false) end)
 command:FireServer("sync")
 
 local function modelFor(athlete: any): any
+	if models[athlete.id] and models[athlete.id].generation ~= athlete.generation then
+		models[athlete.id].model:Destroy()
+		models[athlete.id] = nil
+	end
+	if not athlete.active then
+		if models[athlete.id] then models[athlete.id].model:Destroy() models[athlete.id] = nil end
+		return nil
+	end
 	if models[athlete.id] then return models[athlete.id] end
-	local template = templates:FindFirstChild(athlete.id)
+	local folder = templates:FindFirstChild(state.matchId)
+	local template = if folder then folder:FindFirstChild(athlete.id) else nil
 	if not template or template:GetAttribute("MatchId") ~= state.matchId then return nil end
+	if template:GetAttribute("Generation") ~= athlete.generation then return nil end
 	local expected = template:GetAttribute("ExpectedDescendants")
 	if not expected or #template:GetDescendants() < expected then return nil end
 	local model = template:Clone() :: Model
@@ -171,10 +194,10 @@ local function modelFor(athlete: any): any
 	badge.Adornee, badge.Parent = root, model
 	local text = Instance.new("TextLabel")
 	text.Size, text.BackgroundColor3, text.BackgroundTransparency = UDim2.fromScale(1,1), Color3.fromRGB(16,35,52), 0.15
-	text.Text, text.TextSize = if athlete.bot then "BOT · " .. athlete.team .. (athlete.slot+1) else "VOCÊ", 15
+	text.Text, text.TextSize = if athlete.bot then "BOT · " .. athlete.team .. (athlete.slot+1) elseif athlete.id == state.humanId then "VOCÊ" else athlete.team .. (athlete.slot+1), 15
 	text.Font, text.TextColor3, text.Parent = Enum.Font.GothamBold, Color3.new(1,1,1), badge
 	model.Parent = visualFolder
-	local entry = { model = model, joints = joints, feet = humanoid.HipHeight + root.Size.Y/2, actionUntil = 0, last = nil, kind = "" }
+	local entry = { model = model, joints = joints, feet = humanoid.HipHeight + root.Size.Y/2, actionUntil = 0, last = nil, kind = "", generation = athlete.generation }
 	models[athlete.id] = entry
 	return entry
 end
@@ -216,7 +239,7 @@ RunService.RenderStepped:Connect(function(dt)
 	hud.update(displayed)
 	if displayed.phase == "finished" and not hud.panel.Visible then
 		controls.setEnabled(false)
-		local side = if displayed.score.A == 6 then "A" else "B"
+		local side = displayed.winner or (if displayed.score.A == 6 then "A" else "B")
 		hud.setMenu(true, "Vitória do lado " .. side)
 		hud.leave.Visible = true
 	end

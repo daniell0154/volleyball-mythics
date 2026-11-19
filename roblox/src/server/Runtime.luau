@@ -12,20 +12,22 @@ local function distance(a: any, b: any): number
 	return math.sqrt((a.x-b.x)^2 + (a.y-b.y)^2 + (a.z-b.z)^2)
 end
 
-function Runtime.new(id: string, humanId: string, team: string, ability: string, difficulty: string, seed: number)
+function Runtime.new(id: string, humanId: string, team: string, ability: string, difficulty: string, seed: number, profile: string?)
+	local mode = if profile == "Online1v1" then "1v1" else "2v2"
 	local self: any = setmetatable({
-		state = Match.create(id, "2v2"), tick = 0, phaseTicks = 0, athletes = {},
-		inputs = {}, sequences = {}, touching = {}, contacts = Contacts.create("2v2"),
+		state = Match.create(id, mode), tick = 0, phaseTicks = 0, athletes = {},
+		inputs = {}, sequences = {}, touching = {}, contacts = Contacts.create(mode),
 		ball = { position = { x = 0, y = 1.25, z = -6 }, velocity = { x = 0, y = 0, z = 0 }, grounded = false },
-		bots = Bots.new(seed, difficulty), feedback = "", events = {}, eventId = 0,
+		bots = if mode == "1v1" then nil else Bots.new(seed, difficulty), feedback = "", events = {}, eventId = 0,
 		humanId = humanId, abilityId = ability, cooldownUntil = 0, difficulty = difficulty,
 	}, Runtime)
 	for _, side in { "A", "B" } do
-		for slot = 0, 1 do
+		for slot = 0, (if mode == "1v1" then 0 else 1) do
 			local human = side == team and slot == 0
 			table.insert(self.athletes, {
 				id = if human then humanId else "bot:" .. side .. slot,
-				team = side, slot = slot, bot = not human,
+				team = side, slot = slot, bot = mode ~= "1v1" and not human,
+				active = mode ~= "1v1" or human, abilityId = if human then ability else "fundamentals", cooldownUntil = 0, generation = 1,
 				position = { x = if slot == 0 then -2 else 2, y = 0, z = if side == "A" then -6 else 6 },
 				velocityY = 0, recovery = 0, effectUntil = 0, attributes = table.clone(Config.Attributes),
 			})
@@ -62,6 +64,12 @@ function Runtime.visual(self: any, athlete: any, kind: string)
 end
 
 function Runtime.point(self: any, side: any, reason: string)
+	if self.warmup then
+		self.state.phase, self.phaseTicks = "serving", 0
+		for _, athlete in self.athletes do if athlete.active then self.state.servingSide = athlete.team break end end
+		self:resetRally()
+		return
+	end
 	local nextState = Match.transition(self.state, {
 		type = "RALLY_POINT", scoringSide = side, pointId = self.state.matchId .. ":" .. self.state.rallyId,
 	})
@@ -71,17 +79,22 @@ function Runtime.point(self: any, side: any, reason: string)
 end
 
 function Runtime.resetRally(self: any)
-	self.contacts, self.touching, self.inputs = Contacts.create("2v2"), {}, {}
+	self.contacts, self.touching, self.inputs = Contacts.create(self.state.mode), {}, {}
 	self.feedback = ""
 	for _, athlete in self.athletes do
 		athlete.position = { x = if athlete.slot == 0 then -2 else 2, y = 0, z = if athlete.team == "A" then -6 else 6 }
 		athlete.velocityY, athlete.recovery = 0, 0
+		if athlete.team == self.state.servingSide and athlete.slot == self.state.servingSlot then
+			self.ball = { position = {x=athlete.position.x,y=1.25,z=athlete.position.z}, velocity={x=0,y=0,z=0}, grounded=false }
+		end
 	end
 end
 
 function Runtime.ability(self: any, athlete: any)
-	if self.tick < self.cooldownUntil then self.feedback = "Habilidade em recarga" return end
-	if self.abilityId == "teammate_rant" then
+	local ability = athlete.abilityId or self.abilityId
+	local untilTick = athlete.cooldownUntil or self.cooldownUntil
+	if self.tick < untilTick then self.feedback = "Habilidade em recarga" return end
+	if ability == "teammate_rant" then
 		local teammate = nil
 		for _, candidate in self.athletes do
 			if candidate.team == athlete.team and candidate.id ~= athlete.id then teammate = candidate end
@@ -90,10 +103,12 @@ function Runtime.ability(self: any, athlete: any)
 		if teammate.effectUntil > self.tick then self.feedback = "Parceiro já tem um efeito ativo" return end
 		teammate.effectUntil = self.tick + 300
 		self.cooldownUntil = self.tick + 1200
+		athlete.cooldownUntil = self.cooldownUntil
 		self:visual(athlete, "rant")
-	elseif self.abilityId == "free_point_out" then
+	elseif ability == "free_point_out" then
 		if distance(self.ball.position, athlete.position) > 1.9 then self.feedback = "Chegue perto da bola" return end
 		self.cooldownUntil = self.tick + 1500
+		athlete.cooldownUntil = self.cooldownUntil
 		self:visual(athlete, "freePoint")
 		self:point(if athlete.team == "A" then "B" else "A", "Foi Sem Querer")
 	end
@@ -115,7 +130,7 @@ function Runtime.action(self: any, athlete: any, input: any)
 		end
 		self.state = Match.transition(self.state, { type = "SERVE_HIT" })
 		self.phaseTicks = 0
-		self.contacts = Contacts.create("2v2")
+		self.contacts = Contacts.create(self.state.mode)
 		self.contacts.lastTouchSide, self.contacts.lastPlayerId = athlete.team, athlete.id
 		local position = { x = athlete.position.x, y = athlete.position.y + 1.25, z = athlete.position.z }
 		self.ball = {
@@ -151,10 +166,10 @@ function Runtime.action(self: any, athlete: any, input: any)
 end
 
 function Runtime.step(self: any)
-	if self.state.phase == "finished" then return end
+	if self.state.phase == "finished" or self.state.phase == "cancelled" or self.suspended then return end
 	self.tick += 1
 	self.phaseTicks += 1
-	self.bots:step(self)
+	if self.bots then self.bots:step(self) end
 	if self.state.phase == "countdown" then
 		if self.phaseTicks < 180 then return end
 		self.state = Match.transition(self.state, { type = "COUNTDOWN_FINISHED" })
@@ -171,6 +186,7 @@ function Runtime.step(self: any)
 		return
 	end
 	for _, athlete in self.athletes do
+		if not athlete.active then continue end
 		local input = self.inputs[athlete.id]
 		if input and self.tick - input.receivedTick <= 15 then
 			local direction = if athlete.team == "A" then 1 else -1
@@ -208,19 +224,25 @@ function Runtime.step(self: any)
 	end
 end
 
-function Runtime.snapshot(self: any)
+function Runtime.snapshot(self: any, viewer: string?)
 	local athletes = {}
+	local localAthlete = nil
 	for _, athlete in self.athletes do
+		if athlete.id == (viewer or self.humanId) then localAthlete = athlete end
 		table.insert(athletes, {
 			id = athlete.id, team = athlete.team, slot = athlete.slot, bot = athlete.bot,
 			position = table.clone(athlete.position), effectUntil = athlete.effectUntil,
+			generation = athlete.generation, active = athlete.active, userId = athlete.userId,
 		})
 	end
 	return {
 		matchId = self.state.matchId, tick = self.tick, rallyId = self.state.rallyId, phase = self.state.phase, score = table.clone(self.state.score),
 		phaseTicks = self.phaseTicks, servingSide = self.state.servingSide, servingSlot = self.state.servingSlot,
 		ball = table.clone(self.ball.position), athletes = athletes, events = table.clone(self.events),
-		abilityId = self.abilityId, cooldownUntil = self.cooldownUntil, humanId = self.humanId, feedback = self.feedback,
+		abilityId = if localAthlete then localAthlete.abilityId else self.abilityId,
+		cooldownUntil = if localAthlete then localAthlete.cooldownUntil else self.cooldownUntil,
+		humanId = viewer or self.humanId, feedback = self.feedback,
+		warmup = self.warmup == true, suspended = self.suspended == true,
 	}
 end
 

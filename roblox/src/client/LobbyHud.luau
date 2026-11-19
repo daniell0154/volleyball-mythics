@@ -225,6 +225,8 @@ function LobbyHud.new(hud: any)
 			return
 		end
 		self.catalog = catalog
+		duel.Text = if catalog.modes.Online1v1 then "1v1 online" else "1v1 online · Em breve"
+		doubles.Text = if catalog.modes.Online2v2 then "2v2 online" else "2v2 online · Em breve"
 		shopStatus.Text = if #catalog.offers == 0 then "Novas ofertas em breve.\nOs giros de Assinaturas são gratuitos." else "Cosméticos para o seu cartão de jogador."
 		for _, item in shopButtons do item:Destroy() end
 		shopButtons = {}

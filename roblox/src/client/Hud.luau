@@ -207,6 +207,9 @@ function Hud.new()
 			finished = "Fim da partida",
 		}
 		self.status.Text = names[state.phase] or ""
+		if state.warmup then self.status.Text = "Aguardando adversário · aquecimento" self.score.Text = ""
+		elseif state.suspended then self.status.Text = "Aguardando reconexão · partida pausada"
+		elseif state.pending then self.status.Text = "Você entra no próximo saque" end
 		local reasons = { consecutive_player = "Dois toques seguidos do mesmo jogador", fourth_touch = "Quarto toque" }
 		self.feedback.Text = reasons[state.feedback] or state.feedback
 		self.actions.hit.ActionName.Text = if state.phase == "serving" then "Sacar" else "Atacar"

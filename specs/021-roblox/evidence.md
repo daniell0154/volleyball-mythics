@@ -62,3 +62,11 @@ O painel Assinaturas usa o serviço Collection para consultar, girar, recuperar 
 O serviço usa DataStoreService em namespaces distintos de Studio e produção. Um adaptador temporário exige o atributo explícito MythicsTemporaryProfiles no Workspace durante Studio. Falhas de acesso ao armazenamento são exibidas ao usuário e não substituem seu perfil por dados locais.
 
 O aceite de persistência real e a captura do ciclo completo aguardam a confirmação dos acessos solicitada ao proprietário. A T3 permanece pendente desse aceite.
+
+## T4 · Duelo humano — 2026-11-19
+
+O módulo Session mantém slots A0 e B0, vínculo por UserId e geração do controlador. Runtime usa domínio 1v1 e não constrói Bots nesse modo. O aquecimento permite sacar e jogar, sem incrementar o placar. A chegada do segundo humano restaura posições, bola e recargas, iniciando a contagem em 0–0.
+
+O ensaio DuelAcceptance no Studio passou oito cenários com zero bots. Cobriu aquecimento, segundo humano, pausa sem avanço do relógio, retorno com contagem de três segundos, contabilização do tempo de queda, expiração com desistência em 0–0, saída explícita e votação de revanche com novo matchId. O limite de retorno é 20 segundos por queda e 40 acumulados por jogador.
+
+O servidor usa snapshots próprios para cada participante, recusa geração antiga e mantém sessões locais independentes. Os atores preservam a descrição Roblox de cada humano. A interface informa aquecimento e reconexão, respeita vencedor por desistência e oferece votação de revanche. O ensaio com dois clientes de rede e aparelhos físicos integra os aceites posteriores.
