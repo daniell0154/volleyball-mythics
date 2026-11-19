@@ -1,31 +1,16 @@
-# Ordem de execução SDD
+# Guia de execução das specs
 
-Consulte o [plano de arquivamento de specs](../docs/ARQUIVAMENTO-SPECS.md) e o [exemplo preenchido de tarefa futura](examples/tarefa.md).
+Leia a [constituição](../.specify/memory/constitution.md), o [refinamento](../docs/REFINAMENTO.md), os [contratos vigentes](contracts.md) e os arquivos `spec.md`, `plan.md` e `tasks.md` da entrega. Consulte o [arquivo de specs](../docs/archive/specs/README.md) para histórico e evidências e o [exemplo de tarefa](examples/tarefa.md) para começar uma spec.
 
-Planejamento preparado antes da implementação da 016. A sequência proposta após a partida em tela inteira é [017 — câmera próxima e leitura da bola](017-close-rally-camera/spec.md), [018 — editor visual de atletas](018-visual-roster-editor/spec.md) e [019 — novas habilidades e sorteio](019-random-roster-abilities/spec.md). A 017 usa a área segura da 016. A 018 depende tecnicamente da 012, e a 019 usa a ficha da 018. Cada pasta contém o plano técnico, as tarefas e o espaço para registrar evidências na execução.
+## Pendências de entrega
 
-Novo ciclo solicitado em 2026-11-17: **012 admin do elenco → 013 somente 2v2/remover demo → 014 gameplay, saque e visibilidade da bola → 015 bots/dificuldade → 016 partida em tela inteira**. Ler [plano do ciclo](../docs/MELHORIAS-012-016.md) e [contratos futuros](future-contracts-012-016.md). São planos, não funcionalidades implementadas. Antes de executar 012, confirmar 011 integrada em main; cada seguinte exige a anterior integrada. Just Volleyball é referência de gameplay da 014. O pedido de criar estes planos não inicia suas implementações.
+- **007 · Beta.** A T3 ainda exige Firefox, Safari e fallback gráfico online. A T4 exige ensaio real de staging. [Tarefas](007-release/tasks.md) · [Evidências](007-release/evidence.md) · [Roteiro](../docs/deployment/007-release.md).
+- **019 · Liberação de habilidades.** O aceite da configuração e dos clipes precede a habilitação dos candidatos e do sorteio em produção. [Contrato](contracts/019-random-roster-abilities.md) · [Evidências](../docs/archive/specs/019-random-roster-abilities/evidence.md).
+- **Operação e lançamento.** Confirmar o deploy do serviço único no Render e a configuração Auth/RPC da administração no ambiente alvo. O checklist inicial mantém hardware de referência, orçamento, hospedagem de produção, elenco e poderes finais como critérios para lançamento amplo. [Serviço único](../docs/archive/specs/hosting-single/evidence.md) · [Administração](../docs/admin/012-operations.md) · [Checklist](../docs/archive/specs/checklist.md).
 
-Ler constitution → REFINAMENTO → contracts → spec/plan/tasks da feature.
-Sequência: 001 dados → 002 domínio → 003 3D → 004 salas/rede → 005 1v1 → 006 2v2/habilidades → 007 beta.
-Novo ciclo de melhorias planejado: 008 modelos articulados → 009 animações → 010 dinâmica do rally → 011 apresentação. Direção, referência Happy Hoops e metas propostas em [docs/MELHORIAS.md](../docs/MELHORIAS.md). Estas specs são planejamento, não implementação concluída.
-Após integração da 007, a primeira implementação elegível deste ciclo é 008-character-models. As evidências pendentes de publicação da 007 continuam registradas; não impedem desenvolvimento visual local independente e continuam obrigatórias antes de publicar.
-Não iniciar feature dependente de gate reprovado. Consultar os checklists para identificar a próxima tarefa pendente.
+## Execução e publicação
 
-## Commits, branches e PRs
-
-- Uma tarefa = um commit próprio. Exemplo: `feat(001-T1): bootstrap workspace e contratos`. Incluir código, verificação, evidências e atualização do checklist da mesma tarefa juntos.
-- Uma spec = uma branch e uma PR novas. `feat/001-data` contém os commits de `001-T1` a `001-T4` e gera uma única PR de `001-data` para `main`.
-- Não misturar specs nem fazer squash das tarefas. Correções posteriores recebem commits identificando a tarefa original; não reescrever histórico publicado.
-- Conferir status, branches e PRs antes de agir; retomar a branch/PR existente da spec sem duplicação e preservar mudanças alheias.
-- Remote esperado: `origin`, `https://github.com/daniell0154/volleyball-mythics.git`. Conferir antes de publicar.
-- Se não houver commit/base, executar `PREP-001`: registrar somente o planejamento em `docs(PREP-001): registra planejamento SDD` e publicar `main` como base inicial. Todas as implementações seguem por PR.
-- Push e abertura de PR foram solicitados pelo usuário. Não fazer merge automaticamente. Aguardar integração da spec antes de iniciar a dependente.
-- Tarefa bloqueada permanece pendente. Se houver trabalho parcial publicável, abrir PR draft com as pendências explícitas.
-
-Prompt para Luna ou outro implementador:
-> Leia specs/README.md e os documentos exigidos por ele. Inicie ou retome a primeira spec pendente cujas dependências estejam concluídas e integradas em main. Confira o estado do repositório e execute a preparação inicial se necessária. Implemente todas as tarefas dessa spec em ordem, uma por vez, com um commit separado por tarefa identificado pelo ID. Respeite caminhos, contratos, critérios e regras de Git deste guia. Não invente conteúdo de personagens. Se encontrar conflito, registre a decisão e atualize os documentos antes do código dependente. Execute as verificações indicadas, registre resultados reais e limitações em evidence.md e só marque a tarefa concluída quando o aceite passar. Ao concluir a spec, revise a consistência entre spec, plan, tasks, contratos e código; publique a branch no origin e abra uma PR exclusiva para main, descrevendo as tarefas, verificações e limitações. Não faça merge. Informe os commits, o link da PR e a próxima spec elegível após o merge. Se faltar acesso, conteúdo ou outro pré-requisito, avance nas partes independentes permitidas e relate o bloqueio concreto sem alegar conclusão.
-
-Para executar, basta pedir: **Leia specs/README.md e execute o prompt de execução contido nele.** O padrão é implementar uma spec inteira. Após o merge, repetir a instrução seleciona a próxima spec. Para limitar o trabalho, informe uma spec ou tarefa específica.
-
-Cada evidence.md deve registrar tarefa, requisito, comando/cenário, resultado real, ambiente, limitações e decisão do gate. Após cada feature analisar consistência entre spec, plan, tasks e contratos antes de prosseguir.
+1. Inicie ou retome a primeira spec elegível com dependências integradas na `main`, ou a entrega explicitamente indicada pelo proprietário. Confira status, branches e PRs e preserve alterações alheias. O remoto é `origin` em `https://github.com/daniell0154/volleyball-mythics.git`.
+2. Use uma branch e uma PR por entrega, com um commit por tarefa identificado pelo ID. Exemplo de mensagem de commit: `feat(001-T1): bootstrap workspace e contratos`. Inclua implementação, checklist e evidência da tarefa no mesmo commit. Preserve o histórico publicado e os commits por tarefa.
+3. Execute as verificações de aceite na ordem das tarefas. Registre em `evidence.md` o requisito, comando ou cenário, resultado real, ambiente, limites e decisão do gate. Mantenha pendentes as tarefas bloqueadas. Em caso de conflito de contrato, registre a decisão antes do código dependente. Use o elenco fornecido pelo proprietário.
+4. Revise a consistência entre código, contratos e documentação. Faça push e abra a PR para `main`, com as verificações e os limites. Use draft para entregas parciais. Aguarde autorização para merge e integração antes de iniciar uma entrega dependente.

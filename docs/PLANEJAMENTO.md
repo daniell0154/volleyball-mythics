@@ -1,6 +1,6 @@
 # Volleyball Mythics — planejamento de escopo
 
-> Documento inicial preservado como contexto. O escopo refinado em [REFINAMENTO.md](REFINAMENTO.md) substitui decisões conflitantes deste documento (backend, pausa, regras e decisões pendentes). A execução deve seguir [specs/README.md](../specs/README.md), seus contratos e as sete features. Este documento não deve ser usado isoladamente para implementação.
+> Documento inicial preservado como contexto. O escopo refinado em [REFINAMENTO.md](REFINAMENTO.md) substitui decisões conflitantes deste documento (backend, pausa, regras e decisões pendentes). A execução deve seguir [specs/README.md](../specs/README.md), seus contratos e a spec ativa correspondente. Este documento não deve ser usado isoladamente para implementação.
 
 **Status:** planejamento inicial; implementação ainda não iniciada.  
 **Data:** 2026-11-16  

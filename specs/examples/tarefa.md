@@ -22,7 +22,7 @@ Em `apps/web/src/lobby/Lobby.tsx`, obter o nome da habilidade a partir da revis�
 | Samuel durante a recarga, com 12 s restantes | `Especial · Bronca no Parceiro · 12s` |
 | Nome da habilidade ausente, com a habilidade pronta | `Especial · U` |
 
-Verificar que o botão pode ser alcançado por Tab quando disponível e fica desabilitado durante a recarga. Usar a [referência do botão e da área de jogo](../016-fullscreen-court/contract.md) e o [contrato de habilidades](../019-random-roster-abilities/contract.md).
+Verificar que o botão pode ser alcançado por Tab quando disponível e fica desabilitado durante a recarga. Usar a [referência do botão e da área de jogo](../contracts/016-fullscreen-court.md) e o [contrato de habilidades](../contracts/019-random-roster-abilities.md).
 
 ## evidence.md
 
