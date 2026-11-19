@@ -3,7 +3,7 @@
 Executar em ordem. As caixas representam trabalho futuro.
 
 - [x] **T1 · Quadra e domínio.** Reproduzir saque, contato, rotação e sexto ponto com fixtures de 1v1 e 2v2. Conferir toques consecutivos em cada modo. [Evidência](evidence.md).
-- [ ] **T2 · Solo e HUD.** Completar partida com um humano e três bots. Conferir os dois cantos de saque, mira, salto e habilidade. Capturar HUD com nome longo, recarga e comandos de cada plataforma.
+- [x] **T2 · Solo, HUD e mapa fiel ao navegador.** Completar partida com um humano e três bots. Reproduzir a quadra verde-azulada, faixa terracota, gramado, rede vazada e prédio escolar do navegador, com proporções e cores de apps/web/src/scene/createScene.ts. Conferir os dois lados do saque, mira, salto e habilidade. Capturar HUD com nome longo, recarga e comandos de cada plataforma. Reduzir os controles e sincronizar o placar com a bola exibida conforme revisão do proprietário. [Evidência](evidence.md).
 - [ ] **T3 · Coleção e roleta.** Entregar o fluxo completo do primeiro acesso à quadra. Exercitar clique duplo, dois servidores acessando o perfil, resposta perdida, coleção completa, reentrada e prêmio por partida repetido. Conferir que o avatar se mantém e que o servidor fixa somente habilidade possuída.
 - [ ] **T4 · Duelo humano.** Primeiro jogador aquece imediatamente. Com um humano, verificar placar inativo e zero controladores de bot. Segundo jogador entra e inicia em 0–0. Cobrir queda, retorno, expiração, desistência e revanche, sempre com zero bots.
 - [ ] **T5 · Duplas online.** Iniciar com um humano. Entrar com o segundo, terceiro e quarto durante rallies. Conferir times, passagem de posse no saque seguinte, continuidade da recarga, saída, retorno e partida que termina durante a espera.

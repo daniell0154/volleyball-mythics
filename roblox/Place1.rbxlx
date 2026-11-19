@@ -1,10 +1,109 @@
 <roblox version="4"><Item class="ServerScriptService"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder"><Properties><string name="Name">VolleyballMythics</string></Properties><Item class="Script"><Properties><string name="Name">Bootstrap</string><ProtectedString name="Source">--!strict
-local Court = require(script.Parent.Court)
-Court.build(workspace)
-local spawn = workspace:FindFirstChild(&quot;SpawnLocation&quot;)
-if spawn and spawn:IsA(&quot;SpawnLocation&quot;) then
-	spawn.Position = Vector3.new(0, 3, -40)
+require(script.Parent.Server).start()
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Bots</string><ProtectedString name="Source">--!strict
+local Bots = {}
+Bots.__index = Bots
+local policies = {
+	easy = { reaction = 24, error = 1.8 },
+	normal = { reaction = 12, error = 0.35 },
+	hard = { reaction = 6, error = 0.06 },
+}
+
+function Bots.new(seed: number, difficulty: string)
+	return setmetatable({ seed = seed, policy = policies[difficulty] or policies.normal, history = {} }, Bots)
 end
+
+local function noise(seed: number): number
+	local x = bit32.bxor(seed, bit32.lshift(seed, 13))
+	x = bit32.bxor(x, bit32.rshift(x, 17))
+	x = bit32.bxor(x, bit32.lshift(x, 5))
+	return x / 4294967295 * 2 - 1
+end
+
+function Bots.step(self: any, match: any)
+	if match.tick % 3 == 0 then
+		local athletes = {}
+		for _, athlete in match.athletes do
+			table.insert(athletes, { id = athlete.id, team = athlete.team, x = athlete.position.x, z = athlete.position.z })
+		end
+		table.insert(self.history, {
+			tick = match.tick, phase = match.state.phase, ball = table.clone(match.ball.position),
+			last = match.contacts.lastPlayerId, side = match.contacts.lastTouchSide,
+			touches = match.contacts.touches, athletes = athletes,
+			serveSide = if match.contacts.touches == 0 and not match.contacts.lastContactWasBlock then match.contacts.lastTouchSide else nil,
+		})
+		if #self.history &gt; 64 then table.remove(self.history, 1) end
+	end
+	if match.tick % self.policy.reaction ~= 0 then return end
+	local observed = self.history[1]
+	if not observed then return end
+	for _, item in self.history do
+		if item.tick &lt;= match.tick - self.policy.reaction then observed = item end
+	end
+	local previous = self.history[1]
+	for _, item in self.history do
+		if item.tick &lt;= observed.tick - 3 then previous = item end
+	end
+	local dt = math.max(1, observed.tick - previous.tick) / 60
+	local ball = observed.ball
+	local vx, vy, vz = (ball.x - previous.ball.x) / dt, (ball.y - previous.ball.y) / dt, (ball.z - previous.ball.z) / dt
+	local discriminant = vy * vy + 2 * 9.81 * (ball.y - 1.7)
+	local flight = if discriminant &gt; 0 then math.clamp((vy + math.sqrt(discriminant)) / 9.81, 0, 2.5) else 0
+	local error = noise(self.seed + (match.state.score.A + match.state.score.B + 1) * 109) * self.policy.error
+	local target = { x = ball.x + vx * flight + error, z = ball.z + vz * flight + error }
+	for _, team in { &quot;A&quot;, &quot;B&quot; } do
+		local responsible, closest = nil, math.huge
+		for _, athlete in match.athletes do
+			if athlete.team == team and athlete.id ~= observed.last then
+				local input = match.inputs[athlete.id]
+				local active = athlete.bot or (input and (math.abs(input.moveX) + math.abs(input.moveZ) &gt; 0.1))
+				if active then
+					local distance = (athlete.position.x - target.x)^2 + (athlete.position.z - target.z)^2
+					if distance &lt; closest then closest, responsible = distance, athlete.id end
+				end
+			end
+		end
+		for _, athlete in match.athletes do
+			if not athlete.bot or athlete.team ~= team then continue end
+			local direction = if team == &quot;A&quot; then 1 else -1
+			local x, z = if athlete.slot == 0 then -2 else 2, -direction * 6
+			local actions = {}
+			local aim = { x = 0, z = 0 }
+			if match.state.phase == &quot;serving&quot; and team == match.state.servingSide and athlete.slot == match.state.servingSlot then
+				x = athlete.position.x
+				if athlete.position.z * direction &lt;= -5 then table.insert(actions, &quot;serve&quot;) end
+			elseif match.state.phase == &quot;rally&quot; and observed.phase == &quot;rally&quot;
+				and observed.serveSide ~= team and (if target.z &lt; 0 then &quot;A&quot; else &quot;B&quot;) == team and responsible == athlete.id then
+				x, z = target.x, target.z
+				local action = if observed.side == team then (if observed.touches &gt;= 2 then &quot;attack&quot; else &quot;set&quot;) else &quot;receive&quot;
+				table.insert(actions, action)
+				if action == &quot;attack&quot; and self.policy.error &lt; 1 and ball.y &gt; 1.5 then table.insert(actions, &quot;jump&quot;) end
+			end
+			if self.policy.error &lt; 1 and (actions[1] == &quot;serve&quot; or actions[1] == &quot;attack&quot;) then
+				local bestScore = -math.huge
+				for _, candidate in { {x=-1,z=0}, {x=1,z=0}, {x=0,z=-1}, {x=0,z=1} } do
+					local score = math.huge
+					for _, opponent in observed.athletes do
+						if opponent.team ~= team then
+							score = math.min(score, (opponent.x - candidate.x * 3.5)^2 + (opponent.z - direction * (5 + candidate.z * 2))^2)
+						end
+					end
+					if score &gt; bestScore then bestScore, aim = score, candidate end
+				end
+			end
+			local dx, dz = x - athlete.position.x, z - athlete.position.z
+			local length = math.sqrt(dx*dx + dz*dz)
+			match:submit(athlete.id, {
+				seq = (match.sequences[athlete.id] or 0) + 1,
+				moveX = if length &gt; 0.15 then dx / math.max(1, length) else 0,
+				moveZ = if length &gt; 0.15 then dz / math.max(1, length) else 0,
+				actions = actions, aim = aim,
+			})
+		end
+	end
+end
+
+return Bots
 </ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Court</string><ProtectedString name="Source">--!strict
 local Court = {}
 Court.StudsPerMeter = 3.5
@@ -14,10 +113,12 @@ function Court.build(parent: Instance): Model
 	local existing = parent:FindFirstChild(&quot;MythicsCourt&quot;)
 	if existing then
 		assert(existing:IsA(&quot;Model&quot;), &quot;MythicsCourt must be a Model&quot;)
-		return existing
+		if existing:GetAttribute(&quot;VisualRevision&quot;) == 2 then return existing end
+		existing:Destroy()
 	end
 	local model = Instance.new(&quot;Model&quot;)
 	model.Name = &quot;MythicsCourt&quot;
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 	local scale = Court.StudsPerMeter
 	local function part(name: string, size: Vector3, position: Vector3, color: Color3, collidable: boolean): Part
 		local item = Instance.new(&quot;Part&quot;)
@@ -32,24 +133,39 @@ function Court.build(parent: Instance): Model
 		return item
 	end
 	local white = Color3.fromRGB(240, 243, 248)
-	part(&quot;Surround&quot;, Vector3.new(17, 0.15, 28), Vector3.new(0, -0.23, 0), Color3.fromRGB(30, 72, 77), true)
-	part(&quot;Floor&quot;, Vector3.new(9, 0.3, 18), Vector3.new(0, -0.15, 0), Color3.fromRGB(39, 112, 149), true)
+	part(&quot;Grass&quot;, Vector3.new(55, 0.2, 60), Vector3.new(0, -0.25, 0), Color3.fromRGB(99, 128, 90), true)
+	part(&quot;Surround&quot;, Vector3.new(13, 0.1, 22), Vector3.new(0, -0.1, 0), Color3.fromRGB(219, 140, 88), true)
+	part(&quot;Floor&quot;, Vector3.new(9, 0.04, 18), Vector3.new(0, -0.03, 0), Color3.fromRGB(75, 145, 149), true)
 	for _, x in { -4.5, 4.5 } do
 		part(&quot;Sideline&quot;, Vector3.new(0.05, 0.01, 18), Vector3.new(x, 0.005, 0), white, false)
 	end
 	for _, z in { -9, -3, 0, 3, 9 } do
 		part(&quot;CrossLine&quot;, Vector3.new(9, 0.01, 0.05), Vector3.new(0, 0.005, z), white, false)
 	end
-	for _, x in { -4.8, 4.8 } do
+	for _, x in { -5, 5 } do
 		part(&quot;Post&quot;, Vector3.new(0.12, 2.6, 0.12), Vector3.new(x, 1.3, 0), white, false)
 	end
-	local net = part(&quot;Net&quot;, Vector3.new(9, 0.9, 0.025), Vector3.new(0, 1.98, 0), Color3.fromRGB(20, 28, 40), false)
-	net.Transparency = 0.65
-	part(&quot;NetTape&quot;, Vector3.new(9, 0.05, 0.04), Vector3.new(0, 2.405, 0), white, false)
+	local meshColor = Color3.fromRGB(248, 245, 228)
+	for row = 0, 8 do
+		part(&quot;NetRow&quot;, Vector3.new(10, 0.015, 0.015), Vector3.new(0, 1.43 + row * 0.125, 0), meshColor, false)
+	end
+	for column = 0, 40 do
+		part(&quot;NetColumn&quot;, Vector3.new(0.015, 1, 0.015), Vector3.new(-5 + column * 0.25, 1.93, 0), meshColor, false)
+	end
+	part(&quot;NetTape&quot;, Vector3.new(10.2, 0.06, 0.05), Vector3.new(0, 2.43, 0), white, false)
+	part(&quot;School&quot;, Vector3.new(26, 8, 5), Vector3.new(0, 4, -19), Color3.fromRGB(230, 207, 172), true)
+	part(&quot;Roof&quot;, Vector3.new(27, 0.4, 6), Vector3.new(0, 8.2, -19), Color3.fromRGB(106, 102, 115), true)
+	for _, y in { 2, 5.5 } do
+		for x = -10, 10, 4 do
+			part(&quot;Window&quot;, Vector3.new(2, 1.8, 0.05), Vector3.new(x, y, -16.45), Color3.fromRGB(77, 113, 136), false)
+		end
+	end
+	part(&quot;Door&quot;, Vector3.new(2, 3, 0.1), Vector3.new(0, 1.5, -16.4), Color3.fromRGB(88, 75, 68), false)
 	local ball = part(&quot;Ball&quot;, Vector3.new(0.22, 0.22, 0.22), Vector3.new(0, 1.6, -6.8), Color3.fromRGB(255, 209, 66), false)
 	ball.Shape = Enum.PartType.Ball
 	model:SetAttribute(&quot;StudsPerMeter&quot;, scale)
 	model:SetAttribute(&quot;RulesVersion&quot;, 4)
+	model:SetAttribute(&quot;VisualRevision&quot;, 2)
 	model.Parent = parent
 	return model
 end
@@ -264,4 +380,992 @@ function Rally.velocity(kind: string, ball: Vec3, athlete: Vec3, direction: numb
 end
 
 return Rally
+</ProtectedString></Properties></Item></Item><Item class="ModuleScript"><Properties><string name="Name">Runtime</string><ProtectedString name="Source">--!strict
+local Ball = require(script.Parent.Domain.Ball)
+local Contacts = require(script.Parent.Domain.Contacts)
+local Match = require(script.Parent.Domain.Match)
+local Rally = require(script.Parent.Domain.Rally)
+local Bots = require(script.Parent.Bots)
+local Config = require(game.ReplicatedStorage.MythicsShared.Config)
+local Runtime = {}
+Runtime.__index = Runtime
+
+local function distance(a: any, b: any): number
+	return math.sqrt((a.x-b.x)^2 + (a.y-b.y)^2 + (a.z-b.z)^2)
+end
+
+function Runtime.new(id: string, humanId: string, team: string, ability: string, difficulty: string, seed: number)
+	local self: any = setmetatable({
+		state = Match.create(id, &quot;2v2&quot;), tick = 0, phaseTicks = 0, athletes = {},
+		inputs = {}, sequences = {}, touching = {}, contacts = Contacts.create(&quot;2v2&quot;),
+		ball = { position = { x = 0, y = 1.25, z = -6 }, velocity = { x = 0, y = 0, z = 0 }, grounded = false },
+		bots = Bots.new(seed, difficulty), feedback = &quot;&quot;, events = {}, eventId = 0,
+		humanId = humanId, abilityId = ability, cooldownUntil = 0, difficulty = difficulty,
+	}, Runtime)
+	for _, side in { &quot;A&quot;, &quot;B&quot; } do
+		for slot = 0, 1 do
+			local human = side == team and slot == 0
+			table.insert(self.athletes, {
+				id = if human then humanId else &quot;bot:&quot; .. side .. slot,
+				team = side, slot = slot, bot = not human,
+				position = { x = if slot == 0 then -2 else 2, y = 0, z = if side == &quot;A&quot; then -6 else 6 },
+				velocityY = 0, recovery = 0, effectUntil = 0, attributes = table.clone(Config.Attributes),
+			})
+		end
+	end
+	self.state = Match.transition(self.state, { type = &quot;START&quot; })
+	return self
+end
+
+function Runtime.submit(self: any, id: string, input: any)
+	if input.seq &lt;= (self.sequences[id] or 0) then return end
+	self.sequences[id] = input.seq
+	local previous = self.inputs[id]
+	local actions = if previous then previous.actions else {}
+	local receivedAction = if previous then previous.actionTick else -100
+	if #input.actions &gt; 0 then
+		-- Merge presses arriving before the same tick, without extending older presses.
+		if not previous or self.tick - previous.actionTick &gt; 6 then actions = {} end
+		if #actions == 0 then receivedAction = self.tick end
+		for _, action in input.actions do
+			if not table.find(actions, action) then table.insert(actions, action) end
+		end
+	end
+	self.inputs[id] = {
+		moveX = input.moveX, moveZ = input.moveZ, aim = input.aim,
+		actions = actions, actionTick = receivedAction, receivedTick = self.tick,
+	}
+end
+
+function Runtime.visual(self: any, athlete: any, kind: string)
+	self.eventId += 1
+	table.insert(self.events, { id = self.eventId, athleteId = athlete.id, kind = kind, tick = self.tick })
+	if #self.events &gt; 32 then table.remove(self.events, 1) end
+end
+
+function Runtime.point(self: any, side: any, reason: string)
+	local nextState = Match.transition(self.state, {
+		type = &quot;RALLY_POINT&quot;, scoringSide = side, pointId = self.state.matchId .. &quot;:&quot; .. self.state.rallyId,
+	})
+	if nextState == self.state then return end
+	self.state, self.phaseTicks, self.feedback = nextState, 0, reason
+	self.inputs = {}
+end
+
+function Runtime.resetRally(self: any)
+	self.contacts, self.touching, self.inputs = Contacts.create(&quot;2v2&quot;), {}, {}
+	self.feedback = &quot;&quot;
+	for _, athlete in self.athletes do
+		athlete.position = { x = if athlete.slot == 0 then -2 else 2, y = 0, z = if athlete.team == &quot;A&quot; then -6 else 6 }
+		athlete.velocityY, athlete.recovery = 0, 0
+	end
+end
+
+function Runtime.ability(self: any, athlete: any)
+	if self.tick &lt; self.cooldownUntil then self.feedback = &quot;Habilidade em recarga&quot; return end
+	if self.abilityId == &quot;teammate_rant&quot; then
+		local teammate = nil
+		for _, candidate in self.athletes do
+			if candidate.team == athlete.team and candidate.id ~= athlete.id then teammate = candidate end
+		end
+		if not teammate then self.feedback = &quot;Sem parceiro disponível&quot; return end
+		if teammate.effectUntil &gt; self.tick then self.feedback = &quot;Parceiro já tem um efeito ativo&quot; return end
+		teammate.effectUntil = self.tick + 300
+		self.cooldownUntil = self.tick + 1200
+		self:visual(athlete, &quot;rant&quot;)
+	elseif self.abilityId == &quot;free_point_out&quot; then
+		if distance(self.ball.position, athlete.position) &gt; 1.9 then self.feedback = &quot;Chegue perto da bola&quot; return end
+		self.cooldownUntil = self.tick + 1500
+		self:visual(athlete, &quot;freePoint&quot;)
+		self:point(if athlete.team == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;, &quot;Foi Sem Querer&quot;)
+	end
+end
+
+function Runtime.action(self: any, athlete: any, input: any)
+	local direction = if athlete.team == &quot;A&quot; then 1 else -1
+	local actions = input.actions
+	if self.state.phase == &quot;rally&quot; and not athlete.bot and table.find(actions, &quot;ability&quot;) then self:ability(athlete) end
+	if self.state.phase == &quot;serving&quot; then
+		if not table.find(actions, &quot;serve&quot;) then return end
+		if athlete.team ~= self.state.servingSide or athlete.slot ~= self.state.servingSlot then
+			if not athlete.bot then self.feedback = &quot;Aguarde sua vez de sacar&quot; end
+			return
+		end
+		if athlete.position.z * direction &gt; -5 then
+			if not athlete.bot then self.feedback = &quot;Recue para sacar&quot; end
+			return
+		end
+		self.state = Match.transition(self.state, { type = &quot;SERVE_HIT&quot; })
+		self.phaseTicks = 0
+		self.contacts = Contacts.create(&quot;2v2&quot;)
+		self.contacts.lastTouchSide, self.contacts.lastPlayerId = athlete.team, athlete.id
+		local position = { x = athlete.position.x, y = athlete.position.y + 1.25, z = athlete.position.z }
+		self.ball = {
+			position = position, velocity = Rally.velocity(&quot;serve&quot;, position, athlete.position, direction, athlete.attributes, nil, input.aim),
+			grounded = false,
+		}
+		self.touching[athlete.id], athlete.recovery = true, self.tick + 6
+		self:visual(athlete, &quot;serve&quot;)
+		return
+	end
+	if self.state.phase ~= &quot;rally&quot; or self.touching[athlete.id] or self.tick &lt; athlete.recovery then return end
+	local action = if table.find(actions, &quot;attack&quot;) then &quot;attack&quot;
+		elseif table.find(actions, &quot;set&quot;) then &quot;set&quot; elseif table.find(actions, &quot;receive&quot;) then &quot;receive&quot; else nil
+	if not action then return end
+	local attribute = if action == &quot;set&quot; then athlete.attributes.set elseif action == &quot;attack&quot; then athlete.attributes.attack else athlete.attributes.receive
+	local multiplier = if athlete.effectUntil &gt; self.tick then 0.85 else 1
+	local center = { x = athlete.position.x, y = athlete.position.y + 1.1, z = athlete.position.z }
+	if distance(self.ball.position, center) &gt; Rally.range(attribute) * multiplier then
+		if not athlete.bot then self.feedback = &quot;Chegue mais perto da bola&quot; end
+		return
+	end
+	local block = action == &quot;receive&quot; and athlete.position.y &gt; 0.2 and math.abs(athlete.position.z) &lt; 1 and self.ball.position.y &gt;= 2.43
+	local result = Contacts.apply(self.contacts, athlete.id, athlete.team, if block then &quot;block&quot; else &quot;hit&quot;)
+	if not result.legal then self:point(result.pointFor, result.reason or &quot;Falta&quot;) return end
+	self.contacts = result.state
+	self.touching[athlete.id], athlete.recovery = true, self.tick + 6
+	local teammate = nil
+	for _, other in self.athletes do
+		if other.team == athlete.team and other.id ~= athlete.id then teammate = other.position end
+	end
+	self.ball.velocity = Rally.velocity(if block then &quot;block&quot; else action, self.ball.position, athlete.position, direction, athlete.attributes, teammate, input.aim)
+	self:visual(athlete, if block then &quot;block&quot; else action)
+end
+
+function Runtime.step(self: any)
+	if self.state.phase == &quot;finished&quot; then return end
+	self.tick += 1
+	self.phaseTicks += 1
+	self.bots:step(self)
+	if self.state.phase == &quot;countdown&quot; then
+		if self.phaseTicks &lt; 180 then return end
+		self.state = Match.transition(self.state, { type = &quot;COUNTDOWN_FINISHED&quot; })
+		self.phaseTicks = 0
+		self:resetRally()
+	elseif self.state.phase == &quot;point&quot; then
+		if self.phaseTicks &lt; 120 then return end
+		self.state = Match.transition(self.state, { type = &quot;POINT_DELAY_FINISHED&quot; })
+		self.phaseTicks = 0
+		self:resetRally()
+	end
+	if self.state.phase == &quot;serving&quot; and self.phaseTicks &gt;= 480 then
+		self:point(if self.state.servingSide == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;, &quot;Tempo de saque esgotado&quot;)
+		return
+	end
+	for _, athlete in self.athletes do
+		local input = self.inputs[athlete.id]
+		if input and self.tick - input.receivedTick &lt;= 15 then
+			local direction = if athlete.team == &quot;A&quot; then 1 else -1
+			local speed = (2 + (athlete.attributes.speed - 1) / 99 * 6) * (if athlete.effectUntil &gt; self.tick then 0.85 else 1)
+			athlete.position = Ball.move(athlete.position, { x = input.moveX, z = input.moveZ }, speed, 1/60, {
+				minX = -4.175, maxX = 4.175,
+				minZ = if direction == 1 then -8.675 else 0.325, maxZ = if direction == 1 then -0.325 else 8.675,
+			})
+			local actions = if self.tick - input.actionTick &lt;= 6 then input.actions else {}
+			if table.find(actions, &quot;jump&quot;) and athlete.position.y == 0 then athlete.velocityY = 4 + (athlete.attributes.jump - 1) / 99 * 5 end
+			self:action(athlete, { actions = actions, aim = input.aim })
+			input.actions = {}
+			if self.state.phase == &quot;point&quot; or self.state.phase == &quot;finished&quot; then return end
+		end
+		if athlete.position.y &gt; 0 or athlete.velocityY &gt; 0 then
+			athlete.velocityY -= 9.81 / 60
+			athlete.position.y = math.max(0, athlete.position.y + athlete.velocityY / 60)
+			if athlete.position.y == 0 then athlete.velocityY = 0 end
+		end
+	end
+	if self.state.phase == &quot;serving&quot; then
+		for _, athlete in self.athletes do
+			if athlete.team == self.state.servingSide and athlete.slot == self.state.servingSlot then
+				self.ball.position = { x = athlete.position.x, y = athlete.position.y + 1.25, z = athlete.position.z }
+			end
+		end
+	elseif self.state.phase == &quot;rally&quot; then
+		local nextBall, _, grounded = Ball.step(self.ball)
+		self.ball = nextBall
+		for _, athlete in self.athletes do
+			local center = { x = athlete.position.x, y = athlete.position.y + 1.1, z = athlete.position.z }
+			if distance(self.ball.position, center) &gt; 2.5 then self.touching[athlete.id] = nil end
+		end
+		if grounded then self:point(Contacts.ground(self.ball.position, self.contacts.lastTouchSide), &quot;Bola no chão&quot;) end
+	end
+end
+
+function Runtime.snapshot(self: any)
+	local athletes = {}
+	for _, athlete in self.athletes do
+		table.insert(athletes, {
+			id = athlete.id, team = athlete.team, slot = athlete.slot, bot = athlete.bot,
+			position = table.clone(athlete.position), effectUntil = athlete.effectUntil,
+		})
+	end
+	return {
+		matchId = self.state.matchId, tick = self.tick, rallyId = self.state.rallyId, phase = self.state.phase, score = table.clone(self.state.score),
+		phaseTicks = self.phaseTicks, servingSide = self.state.servingSide, servingSlot = self.state.servingSlot,
+		ball = table.clone(self.ball.position), athletes = athletes, events = table.clone(self.events),
+		abilityId = self.abilityId, cooldownUntil = self.cooldownUntil, humanId = self.humanId, feedback = self.feedback,
+	}
+end
+
+return Runtime
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Server</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local HttpService = game:GetService(&quot;HttpService&quot;)
+local Lighting = game:GetService(&quot;Lighting&quot;)
+local Runtime = require(script.Parent.Runtime)
+local Court = require(script.Parent.Court)
+local Config = require(ReplicatedStorage.MythicsShared.Config)
+local Server = {}
+
+function Server.start()
+	Players.CharacterAutoLoads = false
+	Court.build(workspace)
+	Lighting.ClockTime, Lighting.Brightness = 14, 2
+	Lighting.Ambient = Color3.fromRGB(150, 163, 146)
+	Lighting.OutdoorAmbient = Lighting.Ambient
+	local sky = Instance.new(&quot;Atmosphere&quot;)
+	sky.Color, sky.Density, sky.Parent = Color3.fromRGB(144, 201, 237), 0.15, Lighting
+	local remoteFolder = Instance.new(&quot;Folder&quot;)
+	remoteFolder.Name, remoteFolder.Parent = &quot;MythicsRemotes&quot;, ReplicatedStorage
+	local function remote(className: string, name: string): any
+		local item = Instance.new(className)
+		item.Name, item.Parent = name, remoteFolder
+		return item
+	end
+	local command = remote(&quot;RemoteEvent&quot;, &quot;Command&quot;)
+	local movement = remote(&quot;UnreliableRemoteEvent&quot;, &quot;Movement&quot;)
+	-- Full snapshots include event history. Keep them reliable until a bounded compact codec exists.
+	local snapshot = remote(&quot;RemoteEvent&quot;, &quot;Snapshot&quot;)
+	local reliable = remote(&quot;RemoteEvent&quot;, &quot;State&quot;)
+	local templates = Instance.new(&quot;Folder&quot;)
+	templates.Name, templates.Parent = &quot;MythicsActors&quot;, ReplicatedStorage
+	local session: any = nil
+	local owner: Player? = nil
+	local lastPhase = &quot;&quot;
+	local budgets: { [Player]: any } = {}
+	local channelSeq: any = { movement = 0, action = 0 }
+	local function permit(player: Player, category: string, limit: number): boolean
+		local budget = budgets[player]
+		if not budget then budget = {} budgets[player] = budget end
+		local now = os.clock()
+		local bucket = budget[category]
+		if not bucket or now - bucket.since &gt;= 1 then
+			bucket = { since = now, count = 0 }
+			budget[category] = bucket
+		end
+		bucket.count += 1
+		return bucket.count &lt;= limit
+	end
+	local function buildActors(player: Player, match: any)
+		for _, child in templates:GetChildren() do child:Destroy() end
+		local description: HumanoidDescription? = nil
+		local ok, result = pcall(function() return Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId) end)
+		if ok then description = result end
+		for _, athlete in match.athletes do
+			if session ~= match then break end
+			local appearance = if not athlete.bot and description then description else Instance.new(&quot;HumanoidDescription&quot;)
+			if athlete.bot then
+				local uniform = if athlete.team == &quot;A&quot; then Color3.fromRGB(21, 76, 138) else Color3.fromRGB(185, 67, 56)
+				appearance.HeadColor = Color3.fromRGB(210, 166, 124)
+				appearance.TorsoColor, appearance.LeftArmColor, appearance.RightArmColor = uniform, uniform, uniform
+				appearance.LeftLegColor, appearance.RightLegColor = Color3.fromRGB(35, 46, 59), Color3.fromRGB(35, 46, 59)
+			end
+			local success, model = pcall(function()
+				return Players:CreateHumanoidModelFromDescriptionAsync(appearance :: HumanoidDescription, Enum.HumanoidRigType.R15)
+			end)
+			if not success then
+				reliable:FireClient(player, { error = &quot;Não foi possível carregar o avatar. Volte ao início e tente novamente.&quot; })
+				continue
+			end
+			if session ~= match then model:Destroy() break end
+			model.Name = athlete.id
+			local humanoid = model:FindFirstChildOfClass(&quot;Humanoid&quot;)
+			if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+			for _, child in model:GetDescendants() do
+				if child:IsA(&quot;BasePart&quot;) then
+					child.CanCollide, child.CanTouch, child.CanQuery = false, false, false
+					if athlete.bot and child.Name ~= &quot;Head&quot; then
+						child.Color = if athlete.team == &quot;A&quot; then Color3.fromRGB(21, 76, 138) else Color3.fromRGB(185, 67, 56)
+					end
+				end
+			end
+			local root = model:FindFirstChild(&quot;HumanoidRootPart&quot;)
+			if root and root:IsA(&quot;BasePart&quot;) then root.Anchored = true end
+			model:SetAttribute(&quot;MatchId&quot;, match.state.matchId)
+			model:SetAttribute(&quot;ExpectedDescendants&quot;, #model:GetDescendants())
+			model.Parent = templates
+			if athlete.bot or not description then appearance:Destroy() end
+		end
+		if description then description:Destroy() end
+	end
+	local function finite(value: any): boolean
+		return type(value) == &quot;number&quot; and value == value and math.abs(value) &lt; math.huge
+	end
+	local validActions = { jump = true, receive = true, set = true, serve = true, attack = true, ability = true }
+	local function acceptInput(player: Player, data: any, channel: string)
+		if player ~= owner or not session or type(data) ~= &quot;table&quot; or data.matchId ~= session.state.matchId then return end
+		if not finite(data.seq) or data.seq % 1 ~= 0 or data.seq &lt;= channelSeq[channel] then return end
+		if not finite(data.moveX) or not finite(data.moveZ) or data.moveX^2 + data.moveZ^2 &gt; 1.00001 then return end
+		if type(data.aim) ~= &quot;table&quot; or not finite(data.aim.x) or not finite(data.aim.z) or data.aim.x^2 + data.aim.z^2 &gt; 1.00001 then return end
+		local actions = {}
+		if channel == &quot;action&quot; then
+			if type(data.actions) ~= &quot;table&quot; or #data.actions &gt; 6 then return end
+			for key, action in data.actions do
+				if type(key) ~= &quot;number&quot; or type(action) ~= &quot;string&quot; or not validActions[action] then return end
+				if not table.find(actions, action) then table.insert(actions, action) end
+			end
+		end
+		channelSeq[channel] = data.seq
+		local aimLength = math.sqrt(data.aim.x^2 + data.aim.z^2)
+		local aimScale = math.max(1, aimLength)
+		session:submit(tostring(player.UserId), {
+			seq = (session.sequences[tostring(player.UserId)] or 0) + 1,
+			moveX = data.moveX, moveZ = data.moveZ,
+			aim = { x = data.aim.x/aimScale, z = data.aim.z/aimScale }, actions = actions,
+		})
+	end
+	movement.OnServerEvent:Connect(function(player: Player, data: any)
+		if permit(player, &quot;input&quot;, 60) then acceptInput(player, data, &quot;movement&quot;) end
+	end)
+	command.OnServerEvent:Connect(function(player: Player, kind: any, data: any)
+		if kind == &quot;input&quot; then
+			if permit(player, &quot;input&quot;, 60) then acceptInput(player, data, &quot;action&quot;) end
+			return
+		end
+		if not permit(player, &quot;command&quot;, 10) then return end
+		if kind == &quot;start&quot; then
+			if owner and owner ~= player then reliable:FireClient(player, { error = &quot;Esta quadra solo está ocupada&quot; }) return end
+			if session and session.state.phase ~= &quot;finished&quot; then return end
+			if type(data) ~= &quot;table&quot; or not Config.Abilities[data.ability] then return end
+			if data.team ~= &quot;A&quot; and data.team ~= &quot;B&quot; then return end
+			if data.difficulty ~= &quot;easy&quot; and data.difficulty ~= &quot;normal&quot; and data.difficulty ~= &quot;hard&quot; then return end
+			owner, channelSeq = player, { movement = 0, action = 0 }
+			session = Runtime.new(HttpService:GenerateGUID(false), tostring(player.UserId), data.team, data.ability, data.difficulty, Random.new():NextInteger(1, 2147483647))
+			lastPhase = &quot;&quot;
+			reliable:FireClient(player, session:snapshot())
+			task.spawn(buildActors, player, session)
+		elseif kind == &quot;sync&quot; then
+			if player == owner and session then reliable:FireClient(player, session:snapshot()) end
+		elseif kind == &quot;leave&quot; and player == owner then
+			session, owner = nil, nil
+			for _, child in templates:GetChildren() do child:Destroy() end
+			reliable:FireClient(player, { lobby = true })
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		budgets[player] = nil
+		if player == owner then
+			session, owner = nil, nil
+			for _, child in templates:GetChildren() do child:Destroy() end
+		end
+	end)
+	local accumulator = 0
+	RunService.Heartbeat:Connect(function(dt)
+		if not session or not owner then accumulator = 0 return end
+		if session.state.phase == &quot;finished&quot; then accumulator = 0 return end
+		accumulator += dt
+		local count = 0
+		while accumulator &gt;= Config.Step and count &lt; 8 do
+			accumulator -= Config.Step
+			count += 1
+			session:step()
+			if session.tick % 3 == 0 then snapshot:FireClient(owner, session:snapshot()) end
+			if lastPhase ~= session.state.phase then
+				lastPhase = session.state.phase
+				reliable:FireClient(owner, session:snapshot())
+			end
+			if session.state.phase == &quot;finished&quot; then accumulator = 0 break end
+		end
+	end)
+end
+
+return Server
+</ProtectedString></Properties></Item></Item></Item><Item class="ReplicatedStorage"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder"><Properties><string name="Name">MythicsShared</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Config</string><ProtectedString name="Source">--!strict
+-- Immutable rules for a match, derived from the browser's profile 4.
+return table.freeze({
+	Step = 1 / 60,
+	Scale = 3.5,
+	Origin = Vector3.new(0, 2, 0),
+	Attributes = table.freeze({ serve = 70, receive = 70, set = 70, attack = 70, block = 70, speed = 70, jump = 70 }),
+	Abilities = table.freeze({
+		teammate_rant = table.freeze({ name = &quot;Bronca no Parceiro&quot;, cooldown = 20, duration = 5 }),
+		free_point_out = table.freeze({ name = &quot;Foi Sem Querer&quot;, cooldown = 25, duration = 0 }),
+	}),
+})
+</ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder"><Properties><string name="Name">MythicsClient</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Controls</string><ProtectedString name="Source">--!strict
+local Input = game:GetService(&quot;UserInputService&quot;)
+local GuiService = game:GetService(&quot;GuiService&quot;)
+local Controls = {}
+
+local function normalized(value: Vector2): Vector2
+	return if value.Magnitude &gt; 1 then value.Unit else value
+end
+
+function Controls.new(hud: any, onAction: (string) -&gt; ())
+	local self: any = { move = Vector2.zero, aim = Vector2.zero, enabled = false }
+	local context = Instance.new(&quot;InputContext&quot;)
+	context.Name, context.Priority, context.Sink, context.Enabled = &quot;MythicsPlay&quot;, 2000, true, false
+	context.Parent = game.Players.LocalPlayer:WaitForChild(&quot;PlayerScripts&quot;)
+	self.context = context
+	local function action(name: string, kind: Enum.InputActionType): InputAction
+		local item = Instance.new(&quot;InputAction&quot;)
+		item.Name, item.Type, item.Parent = name, kind, context
+		return item
+	end
+	local function binding(parent: InputAction, name: string, key: Enum.KeyCode?): InputBinding
+		local item = Instance.new(&quot;InputBinding&quot;)
+		item.Name = name
+		if key then item.KeyCode = key end
+		item.Parent = parent
+		return item
+	end
+	for _, name in { &quot;receive&quot;, &quot;set&quot;, &quot;jump&quot;, &quot;hit&quot;, &quot;ability&quot; } do
+		local item = action(name, Enum.InputActionType.Bool)
+		binding(item, &quot;Keyboard&quot;, hud.keysByAction[name][1])
+		local gamepad = binding(item, &quot;Gamepad&quot;, hud.keysByAction[name][2])
+		gamepad.PressedThreshold, gamepad.ReleasedThreshold = 0.55, 0.35
+		local touch = binding(item, &quot;Touch&quot;, nil)
+		touch.UIButton = if name == &quot;ability&quot; then hud.ability else hud.actions[name]
+		item.Pressed:Connect(function() if self.enabled then onAction(name) end end)
+	end
+	local move = action(&quot;Move&quot;, Enum.InputActionType.Direction2D)
+	local keyboard = binding(move, &quot;Keyboard&quot;, nil)
+	keyboard.Up, keyboard.Down, keyboard.Left, keyboard.Right = Enum.KeyCode.W, Enum.KeyCode.S, Enum.KeyCode.A, Enum.KeyCode.D
+	binding(move, &quot;Gamepad&quot;, Enum.KeyCode.Thumbstick1)
+	move.StateChanged:Connect(function(value) self.move = normalized(value) end)
+	local aim = action(&quot;Aim&quot;, Enum.InputActionType.Direction2D)
+	local arrows = binding(aim, &quot;Keyboard&quot;, nil)
+	arrows.Up, arrows.Down, arrows.Left, arrows.Right = Enum.KeyCode.Up, Enum.KeyCode.Down, Enum.KeyCode.Left, Enum.KeyCode.Right
+	binding(aim, &quot;Gamepad&quot;, Enum.KeyCode.Thumbstick2)
+	aim.StateChanged:Connect(function(value)
+		self.aim = if value.Magnitude &gt; 0.15 then normalized(value) else Vector2.zero
+	end)
+	local clear = action(&quot;CenterAim&quot;, Enum.InputActionType.Bool)
+	binding(clear, &quot;Keyboard&quot;, Enum.KeyCode.C)
+	clear.Pressed:Connect(function() self.aim = Vector2.zero end)
+	local back = Instance.new(&quot;InputContext&quot;)
+	back.Name, back.Priority, back.Enabled, back.Parent = &quot;MythicsNavigation&quot;, 3000, true, context.Parent
+	local backAction = Instance.new(&quot;InputAction&quot;)
+	backAction.Name, backAction.Type, backAction.Parent = &quot;Back&quot;, Enum.InputActionType.Bool, back
+	binding(backAction, &quot;Gamepad&quot;, Enum.KeyCode.ButtonB)
+	backAction.Pressed:Connect(function()
+		if not hud.panel.Visible and hud.onBack then hud.onBack() end
+	end)
+	hud.aim.Activated:Connect(function() self.aim = Vector2.zero end)
+	local moveTouch: InputObject? = nil
+	local aimTouch: InputObject? = nil
+	local aimOrigin = Vector2.zero
+	hud.stick.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch and self.enabled and not moveTouch then moveTouch = input end
+	end)
+	local function point(input: InputObject): Vector2 return Vector2.new(input.Position.X, input.Position.Y) end
+	Input.TouchStarted:Connect(function(input, processed)
+		if not self.enabled or processed or aimTouch then return end
+		local objects = game.Players.LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(input.Position.X, input.Position.Y)
+		for _, object in objects do
+			if object:IsA(&quot;GuiButton&quot;) then return end
+		end
+		if input.Position.X &gt; workspace.CurrentCamera.ViewportSize.X * 0.45 then aimTouch, aimOrigin = input, point(input) end
+	end)
+	Input.TouchMoved:Connect(function(input)
+		if input == moveTouch then
+			local center = hud.stick.AbsolutePosition + hud.stick.AbsoluteSize/2
+			-- AbsolutePosition and InputObject use screen pixels.
+			local value = normalized((point(input)-center)/45)
+			self.move = Vector2.new(value.X, -value.Y)
+			hud.thumb.Position = UDim2.new(0.5, value.X*30-20, 0.5, value.Y*30-20)
+		elseif input == aimTouch then
+			local value = normalized((point(input)-aimOrigin)/100)
+			self.aim = Vector2.new(value.X, -value.Y)
+		end
+	end)
+	Input.TouchEnded:Connect(function(input)
+		if input == moveTouch then moveTouch, self.move = nil, Vector2.zero hud.thumb.Position = UDim2.new(0.5,-20,0.5,-20) end
+		if input == aimTouch then aimTouch = nil end
+	end)
+	local function clearInput()
+		self.move, self.aim, moveTouch, aimTouch = Vector2.zero, Vector2.zero, nil, nil
+		context.Enabled = false
+	end
+	Input.WindowFocusReleased:Connect(clearInput)
+	Input.WindowFocused:Connect(function() context.Enabled = self.enabled end)
+	Input.GamepadDisconnected:Connect(function() clearInput() context.Enabled = self.enabled end)
+	GuiService.MenuOpened:Connect(clearInput)
+	GuiService.MenuClosed:Connect(function() context.Enabled = self.enabled end)
+	Input.TextBoxFocused:Connect(clearInput)
+	Input.TextBoxFocusReleased:Connect(function() context.Enabled = self.enabled end)
+	self.setEnabled = function(enabled: boolean)
+		clearInput()
+		self.enabled, context.Enabled = enabled, enabled
+	end
+	self.sample = function()
+		local movement = if self.move.Magnitude &gt; 0.15 then normalized(self.move) else Vector2.zero
+		return movement, normalized(self.aim)
+	end
+	self.setAim = function(value: Vector2) self.aim = normalized(value) end
+	return self
+end
+
+return Controls
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Hud</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local Input = game:GetService(&quot;UserInputService&quot;)
+local GuiService = game:GetService(&quot;GuiService&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local Config = require(game.ReplicatedStorage.MythicsShared.Config)
+local Hud = {}
+
+local function label(parent: Instance, name: string, text: string, size: UDim2, position: UDim2): TextLabel
+	local item = Instance.new(&quot;TextLabel&quot;)
+	item.Name, item.Text, item.Size, item.Position = name, text, size, position
+	item.BackgroundTransparency = 1
+	item.TextColor3 = Color3.fromRGB(244, 248, 246)
+	item.Font = Enum.Font.GothamMedium
+	item.TextSize = 16
+	item.TextWrapped = true
+	item.Parent = parent
+	return item
+end
+local function button(parent: Instance, name: string, text: string, size: UDim2, position: UDim2): TextButton
+	local item = Instance.new(&quot;TextButton&quot;)
+	item.Name, item.Text, item.Size, item.Position = name, text, size, position
+	item.BackgroundColor3 = Color3.fromRGB(16, 38, 45)
+	item.TextColor3 = Color3.fromRGB(244, 248, 246)
+	item.Font, item.TextSize, item.TextWrapped = Enum.Font.GothamMedium, 16, true
+	local corner = Instance.new(&quot;UICorner&quot;)
+	corner.CornerRadius, corner.Parent = UDim.new(0, 10), item
+	local stroke = Instance.new(&quot;UIStroke&quot;)
+	stroke.Color, stroke.Thickness, stroke.Parent = Color3.fromRGB(104, 145, 151), 1, item
+	item.Parent = parent
+	return item
+end
+
+function Hud.new()
+	local self: any = {}
+	local playerGui = Players.LocalPlayer:WaitForChild(&quot;PlayerGui&quot;)
+	playerGui.ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor
+	local screen = Instance.new(&quot;ScreenGui&quot;)
+	screen.Name, screen.ResetOnSpawn = &quot;MythicsHUD&quot;, false
+	screen.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+	screen.ClipToDeviceSafeArea = true
+	screen.Parent = playerGui
+	local root = Instance.new(&quot;Frame&quot;)
+	root.Name, root.Size, root.BackgroundTransparency, root.Parent = &quot;SafeArea&quot;, UDim2.fromScale(1, 1), 1, screen
+	self.screen, self.root = screen, root
+	self.score = label(root, &quot;Score&quot;, &quot;&quot;, UDim2.fromOffset(280, 38), UDim2.new(0.5, -140, 0, 8))
+	self.score.TextSize = 24
+	self.status = label(root, &quot;Status&quot;, &quot;&quot;, UDim2.new(0.8, 0, 0, 36), UDim2.new(0.1, 0, 0, 46))
+	self.feedback = label(root, &quot;Feedback&quot;, &quot;&quot;, UDim2.new(0.7, 0, 0, 28), UDim2.new(0.15, 0, 0, 84))
+	self.feedback.TextColor3 = Color3.fromRGB(255, 222, 133)
+	self.aim = button(root, &quot;Aim&quot;, &quot;Mira central&quot;, UDim2.fromOffset(126, 30), UDim2.new(0.5, -63, 1, -150))
+	self.aim.TextSize = 13
+	local grid = Instance.new(&quot;Frame&quot;)
+	grid.Name, grid.AnchorPoint, grid.Position = &quot;Actions&quot;, Vector2.new(1, 1), UDim2.new(1, -20, 1, -20)
+	grid.BackgroundTransparency, grid.Parent = 1, root
+	self.grid, self.actions, self.keys = grid, {}, {}
+	local definitions = { {&quot;receive&quot;, &quot;Receber&quot;}, {&quot;set&quot;, &quot;Levantar&quot;}, {&quot;jump&quot;, &quot;Pular&quot;}, {&quot;hit&quot;, &quot;Sacar&quot;} }
+	for index, definition in definitions do
+		local item = button(grid, definition[1], &quot;&quot;, UDim2.fromOffset(112, 58), UDim2.fromOffset(((index-1)%2)*120, math.floor((index-1)/2)*66))
+		local key = label(item, &quot;Binding&quot;, &quot;&quot;, UDim2.new(1, -8, 0, 24), UDim2.fromOffset(4, 2))
+		local icon = Instance.new(&quot;ImageLabel&quot;)
+		icon.Name, icon.Size, icon.AnchorPoint, icon.Position = &quot;Glyph&quot;, UDim2.fromOffset(22, 22), Vector2.new(0.5, 0), UDim2.fromScale(0.5, 0)
+		icon.BackgroundTransparency, icon.Parent = 1, key
+		local title = label(item, &quot;ActionName&quot;, definition[2], UDim2.new(1, -8, 0, 24), UDim2.fromOffset(4, 28))
+		title.TextSize = 14
+		self.actions[definition[1]], self.keys[definition[1]] = item, { text = key, icon = icon }
+	end
+	local ability = button(root, &quot;Ability&quot;, &quot;&quot;, UDim2.fromOffset(112, 112), UDim2.new(0.5, 0, 1, -20))
+	ability.AnchorPoint = Vector2.new(0.5, 1)
+	local aspect = Instance.new(&quot;UIAspectRatioConstraint&quot;)
+	aspect.AspectRatio, aspect.Parent = 1, ability
+	self.ability, self.abilityValue = ability, label(ability, &quot;Value&quot;, &quot;◆&quot;, UDim2.new(1, 0, 1, -40), UDim2.new())
+	self.abilityValue.TextSize = 30
+	local edge = Instance.new(&quot;Frame&quot;)
+	edge.Name, edge.Size, edge.Position = &quot;BottomEdge&quot;, UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 1, -40)
+	edge.BackgroundColor3, edge.Parent = Color3.fromRGB(29, 66, 74), ability
+	self.abilityName = label(edge, &quot;AbilityName&quot;, &quot;Bronca no Parceiro&quot;, UDim2.new(0.72, -4, 1, -4), UDim2.fromOffset(4, 2))
+	self.abilityName.TextSize = 12
+	self.abilityKey = label(edge, &quot;Binding&quot;, &quot;U&quot;, UDim2.new(0.28, -2, 1, 0), UDim2.new(0.72, 0, 0, 0))
+	self.abilityKey.TextWrapped = false
+	local abilityIcon = Instance.new(&quot;ImageLabel&quot;)
+	abilityIcon.Name, abilityIcon.Size, abilityIcon.AnchorPoint, abilityIcon.Position = &quot;Glyph&quot;, UDim2.fromOffset(24, 24), Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5)
+	abilityIcon.BackgroundTransparency, abilityIcon.Parent = 1, self.abilityKey
+	self.keys.ability = { text = self.abilityKey, icon = abilityIcon }
+	self.stick = button(root, &quot;MoveStick&quot;, &quot;&quot;, UDim2.fromOffset(106, 106), UDim2.new(0, 30, 1, -126))
+	self.stick.BackgroundTransparency = 0.25
+	self.stick.Selectable = false
+	self.thumb = label(self.stick, &quot;Thumb&quot;, &quot;●&quot;, UDim2.fromOffset(40, 40), UDim2.new(0.5, -20, 0.5, -20))
+	self.thumb.TextSize = 32
+	self.leave = button(root, &quot;Leave&quot;, &quot;Voltar&quot;, UDim2.fromOffset(90, 34), UDim2.new(0, 18, 0, 10))
+	self.panel = Instance.new(&quot;Frame&quot;)
+	self.panel.Name, self.panel.AnchorPoint, self.panel.Position = &quot;SoloMenu&quot;, Vector2.new(0.5, 0.5), UDim2.fromScale(0.5, 0.5)
+	self.panel.Size, self.panel.BackgroundColor3, self.panel.Parent = UDim2.fromOffset(356, 302), Color3.fromRGB(16, 38, 45), root
+	local corner = Instance.new(&quot;UICorner&quot;)
+	corner.CornerRadius, corner.Parent = UDim.new(0, 14), self.panel
+	self.menuTitle = label(self.panel, &quot;Title&quot;, &quot;Solo 2v2&quot;, UDim2.new(1, 0, 0, 44), UDim2.fromOffset(0, 6))
+	self.menuTitle.TextSize = 24
+	self.skillChoice = button(self.panel, &quot;SkillChoice&quot;, &quot;&quot;, UDim2.new(1, -32, 0, 48), UDim2.fromOffset(16, 56))
+	self.difficultyChoice = button(self.panel, &quot;DifficultyChoice&quot;, &quot;&quot;, UDim2.new(1, -32, 0, 40), UDim2.fromOffset(16, 112))
+	self.sideChoice = button(self.panel, &quot;SideChoice&quot;, &quot;&quot;, UDim2.new(1, -32, 0, 40), UDim2.fromOffset(16, 160))
+	self.start = button(self.panel, &quot;Start&quot;, &quot;Jogar contra bots&quot;, UDim2.new(1, -32, 0, 46), UDim2.fromOffset(16, 214))
+	self.start.BackgroundColor3 = Color3.fromRGB(53, 115, 98)
+	local teamInfo = label(self.panel, &quot;TeamInfo&quot;, &quot;Você + parceiro bot × dois bots&quot;, UDim2.new(1, 0, 0, 24), UDim2.fromOffset(0, 270))
+	teamInfo.TextSize = 12
+	local menuButtons = { self.skillChoice, self.difficultyChoice, self.sideChoice, self.start }
+	for index, item in menuButtons do
+		item.NextSelectionUp = menuButtons[(index-2)%#menuButtons+1]
+		item.NextSelectionDown = menuButtons[index%#menuButtons+1]
+	end
+	local function focusMenu()
+		task.defer(function()
+			-- PlayerGui layout can still be offscreen on the first render.
+			for _ = 1, 10 do
+				RunService.RenderStepped:Wait()
+				if root.AbsoluteSize.X &gt; 0 and root.AbsoluteSize.Y &gt; 0 and self.start.AbsolutePosition.X &gt;= 0 then
+					task.wait(0.1)
+					break
+				end
+			end
+			if self.panel.Visible and Input.PreferredInput == Enum.PreferredInput.Gamepad then
+				GuiService.SelectedObject = self.start
+			end
+		end)
+	end
+	self.selection = { ability = &quot;teammate_rant&quot;, difficulty = &quot;normal&quot;, team = &quot;A&quot; }
+	local function choices()
+		self.skillChoice.Text = &quot;Habilidade · &quot; .. Config.Abilities[self.selection.ability].name
+		local names = { easy = &quot;Fácil&quot;, normal = &quot;Normal&quot;, hard = &quot;Difícil&quot; }
+		self.difficultyChoice.Text = &quot;Dificuldade · &quot; .. names[self.selection.difficulty]
+		self.sideChoice.Text = &quot;Seu lado · &quot; .. self.selection.team
+	end
+	self.skillChoice.Activated:Connect(function()
+		self.selection.ability = if self.selection.ability == &quot;teammate_rant&quot; then &quot;free_point_out&quot; else &quot;teammate_rant&quot;
+		choices()
+	end)
+	self.difficultyChoice.Activated:Connect(function()
+		self.selection.difficulty = ({ easy = &quot;normal&quot;, normal = &quot;hard&quot;, hard = &quot;easy&quot; })[self.selection.difficulty]
+		choices()
+	end)
+	self.sideChoice.Activated:Connect(function() self.selection.team = if self.selection.team == &quot;A&quot; then &quot;B&quot; else &quot;A&quot; choices() end)
+	choices()
+	self.keysByAction = { receive = {Enum.KeyCode.J, Enum.KeyCode.ButtonL2}, set = {Enum.KeyCode.K, Enum.KeyCode.ButtonR1},
+		jump = {Enum.KeyCode.Space, Enum.KeyCode.ButtonA}, hit = {Enum.KeyCode.L, Enum.KeyCode.ButtonR2}, ability = {Enum.KeyCode.U, Enum.KeyCode.ButtonL1} }
+	self.refresh = function()
+		local touch = Input.PreferredInput == Enum.PreferredInput.Touch
+		local gamepad = Input.PreferredInput == Enum.PreferredInput.Gamepad
+		local compact = root.AbsoluteSize.Y &lt; 500
+		self.panel.Size = UDim2.fromOffset(356, if compact then 252 else 302)
+		self.menuTitle.Size = UDim2.new(1, 0, 0, if compact then 32 else 44)
+		for index, item in menuButtons do
+			local y = if compact then 40+(index-1)*48 else ({56,112,160,214})[index]
+			item.Position = UDim2.fromOffset(16,y)
+			item.Size = UDim2.new(1,-32,0,if compact then 44 else ({48,40,40,46})[index])
+		end
+		teamInfo.Position = UDim2.fromOffset(0,if compact then 228 else 270)
+		local cellW, cellH = if compact then 72 else 88, 48
+		grid.Size = UDim2.fromOffset(cellW*2+8, cellH*2+8)
+		for index, definition in definitions do
+			local item = self.actions[definition[1]]
+			item.Size = UDim2.fromOffset(cellW, cellH)
+			item.Position = UDim2.fromOffset(((index-1)%2)*(cellW+8), math.floor((index-1)/2)*(cellH+8))
+		end
+		local square = if compact then 72 else 84
+		ability.Size = UDim2.fromOffset(square, square)
+		self.abilityName.TextSize = if compact then 10 else 11
+		self.abilityKey.TextSize = if touch then 8 else 14
+		self.abilityName.Size = UDim2.new(if touch then 0.65 else 0.72, -4, 1, -4)
+		self.abilityKey.Size = UDim2.new(if touch then 0.35 else 0.28, -2, 1, 0)
+		self.abilityKey.Position = UDim2.new(if touch then 0.65 else 0.72, 0, 0, 0)
+		self.abilityValue.TextSize = 24
+		self.abilityValue.Size = UDim2.new(1, 0, 1, -34)
+		edge.Size, edge.Position = UDim2.new(1, 0, 0, 34), UDim2.new(0, 0, 1, -34)
+		self.aim.Position = UDim2.new(0.5, -63, 1, -(square + 54))
+		local margin = if gamepad then math.max(20, root.AbsoluteSize.X * 0.045) else 20
+		grid.Position = UDim2.new(1, -margin, 1, -20)
+		self.stick.Visible = touch and not self.panel.Visible
+		for name, binding in self.keys do
+			local code = self.keysByAction[name][if gamepad then 2 else 1]
+			binding.icon.Visible = gamepad
+			binding.text.Text = if touch then (if name == &quot;ability&quot; then &quot;Toque&quot; else &quot;Toque&quot;) else Input:GetStringForKeyCode(code)
+			if gamepad then
+				local image = Input:GetImageForKeyCode(code)
+				binding.icon.Image = image
+				binding.icon.Visible = image ~= &quot;&quot;
+				if image ~= &quot;&quot; then binding.text.Text = &quot;&quot; end
+			end
+		end
+	end
+	root:GetPropertyChangedSignal(&quot;AbsoluteSize&quot;):Connect(self.refresh)
+	Input:GetPropertyChangedSignal(&quot;PreferredInput&quot;):Connect(function()
+		self.refresh()
+		focusMenu()
+	end)
+	self.setMenu = function(visible: boolean, title: string?)
+		self.panel.Visible = visible
+		self.menuTitle.Text = title or &quot;Solo 2v2&quot;
+		self.start.Text = if title then &quot;Jogar novamente&quot; else &quot;Jogar contra bots&quot;
+		self.grid.Visible, self.ability.Visible, self.aim.Visible = not visible, not visible, not visible
+		self.leave.Visible = not visible
+		self.refresh()
+		if visible then focusMenu() end
+	end
+	self.update = function(state: any)
+		self.score.Text = state.score.A .. &quot;  ×  &quot; .. state.score.B
+		local names = {
+			countdown = &quot;Começa em &quot; .. math.max(1, math.ceil((180-state.phaseTicks)/60)),
+			serving = &quot;Saque · &quot; .. state.servingSide .. (state.servingSlot+1), rally = &quot;Rally&quot;,
+			point = &quot;Ponto · próximo saque em &quot; .. math.max(1, math.ceil((120-state.phaseTicks)/60)),
+			finished = &quot;Fim da partida&quot;,
+		}
+		self.status.Text = names[state.phase] or &quot;&quot;
+		local reasons = { consecutive_player = &quot;Dois toques seguidos do mesmo jogador&quot;, fourth_touch = &quot;Quarto toque&quot; }
+		self.feedback.Text = reasons[state.feedback] or state.feedback
+		self.actions.hit.ActionName.Text = if state.phase == &quot;serving&quot; then &quot;Sacar&quot; else &quot;Atacar&quot;
+		self.abilityName.Text = Config.Abilities[state.abilityId].name
+		local seconds = math.max(0, math.ceil((state.cooldownUntil-state.tick)/60))
+		self.abilityValue.Text = if seconds &gt; 0 then seconds .. &quot;s&quot; elseif state.phase == &quot;rally&quot; then &quot;◆&quot; else &quot;—&quot;
+		self.ability.BackgroundColor3 = if seconds &gt; 0 then Color3.fromRGB(49, 58, 63) else Color3.fromRGB(16, 38, 45)
+	end
+	self.setMenu(true)
+	return self
+end
+
+return Hud
+</ProtectedString></Properties></Item><Item class="LocalScript"><Properties><string name="Name">Main</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
+local RunService = game:GetService(&quot;RunService&quot;)
+local Input = game:GetService(&quot;UserInputService&quot;)
+local GuiService = game:GetService(&quot;GuiService&quot;)
+local Config = require(ReplicatedStorage:WaitForChild(&quot;MythicsShared&quot;):WaitForChild(&quot;Config&quot;))
+local Hud = require(script.Parent.Hud)
+local Controls = require(script.Parent.Controls)
+local remotes = ReplicatedStorage:WaitForChild(&quot;MythicsRemotes&quot;)
+local command = remotes:WaitForChild(&quot;Command&quot;) :: RemoteEvent
+local movementRemote = remotes:WaitForChild(&quot;Movement&quot;) :: UnreliableRemoteEvent
+local templates = ReplicatedStorage:WaitForChild(&quot;MythicsActors&quot;)
+local hud = Hud.new()
+local state: any = nil
+local buffer: { any } = {}
+local models: { [string]: any } = {}
+local actionSeq, moveSeq, eventId, lastSend = 0, 0, 0, 0
+local camera = workspace.CurrentCamera
+local cameraEye: Vector3? = nil
+local cameraDistance = 0
+camera.CameraType, camera.FieldOfView = Enum.CameraType.Scriptable, 65
+camera.CFrame = CFrame.lookAt(Vector3.new(48,55,68), Vector3.new(0,5,-15))
+local visualFolder = Instance.new(&quot;Folder&quot;)
+visualFolder.Name, visualFolder.Parent = &quot;MythicsPresentation&quot;, workspace
+local court = workspace:WaitForChild(&quot;MythicsCourt&quot;)
+local ball = court:WaitForChild(&quot;Ball&quot;) :: Part
+local marker = Instance.new(&quot;Part&quot;)
+marker.Name, marker.Shape, marker.Size = &quot;BallShadow&quot;, Enum.PartType.Cylinder, Vector3.new(0.025,1.1,1.1)
+marker.Anchored, marker.CanCollide, marker.CanQuery, marker.CanTouch = true, false, false, false
+marker.Color, marker.Transparency, marker.Parent = Color3.fromRGB(255,230,0), 0.25, visualFolder
+local controls: any
+local function vector(position: any): Vector3 return Vector3.new(position.x,position.y,position.z) end
+local function inputPayload(channel: string, actions: { string }?)
+	if not state then return nil end
+	local move, aim = controls.sample()
+	local humanTeam = &quot;A&quot;
+	for _, athlete in state.athletes do if athlete.id == state.humanId then humanTeam = athlete.team end end
+	local direction = if humanTeam == &quot;A&quot; then 1 else -1
+	local sequence: number
+	if channel == &quot;action&quot; then actionSeq += 1 sequence = actionSeq else moveSeq += 1 sequence = moveSeq end
+	return {
+		matchId = state.matchId, seq = sequence,
+		moveX = -direction * move.X, moveZ = direction * move.Y,
+		-- Rally targets use world X but own-side depth for Z.
+		aim = { x = -direction * aim.X, z = aim.Y }, actions = actions,
+	}
+end
+controls = Controls.new(hud, function(name)
+	if not state then return end
+	if name == &quot;hit&quot; then name = if state.phase == &quot;serving&quot; then &quot;serve&quot; else &quot;attack&quot; end
+	command:FireServer(&quot;input&quot;, inputPayload(&quot;action&quot;, {name}))
+	hud.feedback.Text = &quot;Solicitado · aguardando confirmação&quot;
+end)
+hud.start.Activated:Connect(function() command:FireServer(&quot;start&quot;, hud.selection) end)
+hud.leave.Activated:Connect(function() command:FireServer(&quot;leave&quot;) end)
+hud.onBack = function() command:FireServer(&quot;leave&quot;) end
+Input.InputBegan:Connect(function(input, processed)
+	if processed or input.UserInputType ~= Enum.UserInputType.MouseButton1 or not state or not controls.enabled then return end
+	for _, object in Players.LocalPlayer.PlayerGui:GetGuiObjectsAtPosition(input.Position.X,input.Position.Y) do
+		if object:IsA(&quot;GuiButton&quot;) then return end
+	end
+	local ray = camera:ScreenPointToRay(input.Position.X,input.Position.Y)
+	if math.abs(ray.Direction.Y) &lt; 0.001 then return end
+	local distance = (Config.Origin.Y-ray.Origin.Y)/ray.Direction.Y
+	if distance &lt;= 0 then return end
+	local target = (ray.Origin+ray.Direction*distance-Config.Origin)/Config.Scale
+	local direction = 1
+	for _, athlete in state.athletes do
+		if athlete.id == state.humanId then direction = if athlete.team == &quot;A&quot; then 1 else -1 end
+	end
+	controls.setAim(Vector2.new(-direction*target.X/3.5,(target.Z*direction-5)/2))
+end)
+local function clearModels()
+	for _, entry in models do entry.model:Destroy() end
+	models = {}
+end
+local function receive(nextState: any, reliable: boolean)
+	if nextState.error then hud.feedback.Text = nextState.error return end
+	if nextState.lobby then
+		state, buffer = nil, {}
+		controls.setEnabled(false)
+		clearModels()
+		hud.setMenu(true)
+		hud.score.Text, hud.status.Text, hud.feedback.Text = &quot;&quot;, &quot;&quot;, &quot;&quot;
+		return
+	end
+	if not nextState.matchId then return end
+	if not reliable and (not state or state.matchId ~= nextState.matchId) then return end
+	if state and nextState.matchId == state.matchId and nextState.tick &lt; state.tick then return end
+	if not state or nextState.matchId ~= state.matchId then
+		buffer, actionSeq, moveSeq, eventId = {}, 0, 0, 0
+		cameraEye, cameraDistance = nil, 0
+		clearModels()
+		hud.setMenu(false)
+		GuiService.SelectedObject = nil
+		controls.setEnabled(true)
+	end
+	state = nextState
+	table.insert(buffer, { time = os.clock(), snapshot = nextState })
+	if #buffer &gt; 12 then table.remove(buffer, 1) end
+end
+local stateRemote = remotes:WaitForChild(&quot;State&quot;) :: RemoteEvent
+local snapshotRemote = remotes:WaitForChild(&quot;Snapshot&quot;) :: RemoteEvent
+stateRemote.OnClientEvent:Connect(function(value) receive(value, true) end)
+snapshotRemote.OnClientEvent:Connect(function(value) receive(value, false) end)
+command:FireServer(&quot;sync&quot;)
+
+local function modelFor(athlete: any): any
+	if models[athlete.id] then return models[athlete.id] end
+	local template = templates:FindFirstChild(athlete.id)
+	if not template or template:GetAttribute(&quot;MatchId&quot;) ~= state.matchId then return nil end
+	local expected = template:GetAttribute(&quot;ExpectedDescendants&quot;)
+	if not expected or #template:GetDescendants() &lt; expected then return nil end
+	local model = template:Clone() :: Model
+	local root = model:FindFirstChild(&quot;HumanoidRootPart&quot;) :: Part
+	local humanoid = model:FindFirstChildOfClass(&quot;Humanoid&quot;)
+	if not root or not humanoid then model:Destroy() return nil end
+	local joints = {}
+	for _, child in model:GetDescendants() do
+		if child:IsA(&quot;Motor6D&quot;) then joints[child.Name] = { motor = child, base = child.C0 } end
+	end
+	local badge = Instance.new(&quot;BillboardGui&quot;)
+	badge.Size, badge.StudsOffset, badge.AlwaysOnTop = UDim2.fromOffset(100,24), Vector3.new(0,3.6,0), true
+	badge.Adornee, badge.Parent = root, model
+	local text = Instance.new(&quot;TextLabel&quot;)
+	text.Size, text.BackgroundColor3, text.BackgroundTransparency = UDim2.fromScale(1,1), Color3.fromRGB(16,35,52), 0.15
+	text.Text, text.TextSize = if athlete.bot then &quot;BOT · &quot; .. athlete.team .. (athlete.slot+1) else &quot;VOCÊ&quot;, 15
+	text.Font, text.TextColor3, text.Parent = Enum.Font.GothamBold, Color3.new(1,1,1), badge
+	model.Parent = visualFolder
+	local entry = { model = model, joints = joints, feet = humanoid.HipHeight + root.Size.Y/2, actionUntil = 0, last = nil, kind = &quot;&quot; }
+	models[athlete.id] = entry
+	return entry
+end
+local function pose(entry: any, speed: number, now: number)
+	local swing = math.sin(now * 12) * math.min(0.65, speed * 0.12)
+	local values = { LeftHip = swing, RightHip = -swing, LeftShoulder = -swing*0.6, RightShoulder = swing*0.6 }
+	if entry.actionUntil &gt; now then
+		if entry.kind == &quot;set&quot; or entry.kind == &quot;block&quot; then
+			values.LeftShoulder, values.RightShoulder = -2.4, -2.4
+		elseif entry.kind == &quot;receive&quot; then values.LeftShoulder, values.RightShoulder = -1.1, -1.1
+		else values.RightShoulder = -2.7 end
+	end
+	for name, value in values do
+		local joint = entry.joints[name]
+		if joint then joint.motor.C0 = joint.base * CFrame.Angles(value,0,0) end
+	end
+end
+
+RunService.RenderStepped:Connect(function(dt)
+	if not state then return end
+	local now = os.clock()
+	if controls.enabled and now-lastSend &gt;= 1/30 then
+		lastSend = now
+		movementRemote:FireServer(inputPayload(&quot;movement&quot;))
+	end
+	local latest = buffer[#buffer]
+	local targetTick = latest.snapshot.tick - 6 + math.min(now-latest.time, 0.1)*60
+	local a, b = buffer[1].snapshot, latest.snapshot
+	for index = 1, #buffer-1 do
+		if buffer[index].snapshot.tick &lt;= targetTick and buffer[index+1].snapshot.tick &gt;= targetTick then
+			a, b = buffer[index].snapshot, buffer[index+1].snapshot
+			break
+		end
+	end
+	local alpha = if b.tick == a.tick then 1 else math.clamp((targetTick-a.tick)/(b.tick-a.tick),0,1)
+	-- A new serve resets positions. Grounding and scoring share the rendered timeline.
+	if a.rallyId ~= b.rallyId then alpha = 1 end
+	local displayed = if alpha &gt;= 1 then b else a
+	hud.update(displayed)
+	if displayed.phase == &quot;finished&quot; and not hud.panel.Visible then
+		controls.setEnabled(false)
+		local side = if displayed.score.A == 6 then &quot;A&quot; else &quot;B&quot;
+		hud.setMenu(true, &quot;Vitória do lado &quot; .. side)
+	end
+	local ballPosition = vector(a.ball):Lerp(vector(b.ball),alpha)
+	ball.Position = Config.Origin + ballPosition * Config.Scale
+	marker.CFrame = CFrame.new(Config.Origin + Vector3.new(ballPosition.X,0.025,ballPosition.Z)*Config.Scale) * CFrame.Angles(0,0,math.pi/2)
+	local humanPosition, humanTeam = Vector3.zero, &quot;A&quot;
+	for index, athlete in b.athletes do
+		local previous = a.athletes[index]
+		local position = if previous and previous.id == athlete.id then vector(previous.position):Lerp(vector(athlete.position),alpha) else vector(athlete.position)
+		if athlete.id == state.humanId then humanPosition, humanTeam = position, athlete.team end
+		local entry = modelFor(athlete)
+		if entry then
+			local speed = if entry.last then (position-entry.last).Magnitude/math.max(dt,0.001) else 0
+			entry.last = position
+			local direction = if athlete.team == &quot;A&quot; then 1 else -1
+			local footPosition = Config.Origin + position*Config.Scale + Vector3.new(0,entry.feet,0)
+			entry.model:PivotTo(CFrame.lookAt(footPosition, footPosition+Vector3.new(0,0,direction)))
+			pose(entry,speed,now)
+		end
+	end
+	for _, event in state.events do
+		if event.id &gt; eventId and event.tick &lt;= targetTick then
+			local entry = models[event.athleteId]
+			if entry and state.tick-event.tick &lt; 30 then entry.actionUntil, entry.kind = now+0.35, event.kind end
+			eventId = math.max(eventId,event.id)
+		end
+	end
+	local direction = if humanTeam == &quot;A&quot; then 1 else -1
+	local viewport = camera.ViewportSize
+	local aspect = viewport.X/math.max(1,viewport.Y)
+	-- Close browser camera, with additional setback on narrow screens and high balls.
+	local setback = 5.8 + math.max(0,1.7-aspect)*3 + math.max(0,ballPosition.Y-5)*0.65
+	local desiredEye = Config.Origin + Vector3.new(humanPosition.X,3.2,humanPosition.Z-direction*setback)*Config.Scale
+	cameraEye = if cameraEye then cameraEye:Lerp(desiredEye,1-math.exp(-8*math.min(dt,0.1))) else desiredEye
+	local ahead = (ballPosition.Z-humanPosition.Z)*direction
+	local target = Config.Origin + Vector3.new(
+		humanPosition.X*0.65 + ballPosition.X*0.35,
+		1.25+0.4*math.clamp(ballPosition.Y-1.25,-1,8),
+		humanPosition.Z+direction*math.clamp(2.8+0.5*ahead,2.2,11)
+	)*Config.Scale
+	local frame = CFrame.lookAt(cameraEye :: Vector3, target)
+	local vertical = math.tan(math.rad(camera.FieldOfView/2))
+	local horizontal = vertical * aspect
+	local top = vertical * math.max(0.2, 1-120/math.max(1,viewport.Y))
+	local bottom = vertical * math.max(0.2, 1-(hud.ability.AbsoluteSize.Y+40)*2/math.max(1,viewport.Y))
+	local required = 0
+	for _, position in {
+		humanPosition+Vector3.new(0,0.28,0), humanPosition+Vector3.new(0,1.75,0),
+		ballPosition, Vector3.new(math.clamp(ballPosition.X,-4.5,4.5),0,math.clamp(ballPosition.Z,-9,9)),
+	} do
+		local point = frame:PointToObjectSpace(Config.Origin+position*Config.Scale)
+		local radius = 0.3*Config.Scale
+		local verticalFit = (math.abs(point.Y)+radius)/(if point.Y &gt;= 0 then top else bottom)
+		required = math.max(required,point.Z+radius+math.max((math.abs(point.X)+radius)/horizontal,verticalFit))
+	end
+	cameraDistance = if required &gt; cameraDistance then required else math.max(required,cameraDistance*math.exp(-2.5*dt))
+	camera.CFrame = frame + frame.LookVector*(-cameraDistance)
+	local distance = (camera.CFrame.Position-ball.Position).Magnitude
+	local minimumRadius = distance*math.tan(math.rad(camera.FieldOfView/2))*12/math.max(1,viewport.Y)
+	ball.Size = Vector3.one*math.max(0.22*Config.Scale,minimumRadius*2)
+	local _, aim = controls.sample()
+	hud.aim.Text = if aim.Magnitude &lt; 0.05 then &quot;Mira central&quot; else string.format(&quot;Mira %.1f · %.1f&quot;,aim.X,aim.Y)
+end)
 </ProtectedString></Properties></Item></Item></Item></Item></roblox>
