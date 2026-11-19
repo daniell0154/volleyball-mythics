@@ -22,10 +22,10 @@ Visual esportivo estilizado, personagens reconhecíveis à distância, bola e a�
 
 | Ordem | Spec | Resultado esperado |
 | --- | --- | --- |
-| 1 | [008 — Modelos articulados](../specs/008-character-models/spec.md) | Silhuetas, rosto, roupas e rig reutilizável |
-| 2 | [009 — Animações](../specs/009-character-animation/spec.md) | Locomoção e ações sincronizadas com o servidor |
-| 3 | [010 — Dinâmica do rally](../specs/010-rally-dynamics/spec.md) | Resposta previsível, contato legível e tuning medido |
-| 4 | [011 — Apresentação e orientação](../specs/011-game-presentation/spec.md) | Entrada com elenco em destaque e HUD contextual |
+| 1 | [008 — Modelos articulados](archive/specs/008-character-models/spec.md) | Silhuetas, rosto, roupas e rig reutilizável |
+| 2 | [009 — Animações](archive/specs/009-character-animation/spec.md) | Locomoção e ações sincronizadas com o servidor |
+| 3 | [010 — Dinâmica do rally](archive/specs/010-rally-dynamics/spec.md) | Resposta previsível, contato legível e tuning medido |
+| 4 | [011 — Apresentação e orientação](archive/specs/011-game-presentation/spec.md) | Entrada com elenco em destaque e HUD contextual |
 
 008 precede 009 para fixar articulações; 009 precede 010 para avaliar sensação de contato com poses legíveis; 011 consolida os componentes. Planejamento pode evoluir em paralelo, mas implementação segue esta ordem, uma branch/PR por spec.
 

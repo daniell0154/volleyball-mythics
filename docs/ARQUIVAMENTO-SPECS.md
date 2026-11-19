@@ -1,6 +1,6 @@
 # Plano de arquivamento das specs
 
-Proposta para reduzir o volume de `specs/` e manter acessíveis os contratos em uso, as pendências de entrega e as evidências históricas. A execução cabe em uma PR de documentação própria, a partir da `main`.
+O arquivamento reúne as entregas integradas no [índice histórico](archive/specs/README.md). Os contratos em uso e as pendências de entrega podem ser encontrados pelo [guia ativo](../specs/README.md).
 
 ## Destino dos documentos
 
@@ -8,15 +8,15 @@ Proposta para reduzir o volume de `specs/` e manter acessíveis os contratos em 
 | --- | --- |
 | [Entrada do fluxo SDD](../specs/README.md) | Manter `specs/README.md` como índice curto de pendências, contratos, arquivo e exemplo de tarefa. Transferir a cronologia para o índice do arquivo. |
 | [Contratos compartilhados](../specs/contracts.md) e os sete `contract.md` específicos | Manter `specs/contracts.md` como entrada. Mover os contratos ativos de 012, 013, 014, 015, 016, 018 e 019 para `specs/contracts/<pasta-atual-da-spec>.md`, com uma referência por assunto. Conservar o [contrato de animações](art/009-animation-contract.md) no caminho atual. |
-| Specs numeradas encerradas | Mover as pastas para `docs/archive/specs/`, preservando IDs, `spec.md`, `plan.md`, `tasks.md` e `evidence.md`. Propor 001–006 e 008–019 como primeiro lote, após conferir a integração e a situação de cada uma. |
-| [Checklist antigo](../specs/checklist.md) e [contratos futuros do ciclo 012–016](../specs/future-contracts-012-016.md) | Arquivar em `docs/archive/specs/` como documentos históricos. Destacar no índice ativo os itens ainda aplicáveis, com links para suas evidências ou roteiros. |
+| Specs numeradas 001–019 | Arquivar as pastas em `docs/archive/specs/`, preservando IDs, `spec.md`, `plan.md`, `tasks.md` e `evidence.md`. A integração de código e os gates de entrega têm registros próprios. |
+| [Checklist antigo](archive/specs/checklist.md) e [contratos futuros do ciclo 012–016](archive/specs/future-contracts-012-016.md) | Arquivar em `docs/archive/specs/` como documentos históricos. Destacar no índice ativo os itens ainda aplicáveis, com links para suas evidências ou roteiros. |
 | Capturas, clipes, benchmarks e roteiros | Manter os caminhos atuais em `docs/acceptance/`, `docs/benchmarks/`, `docs/art/` e `docs/deployment/`. Corrigir os links relativos das specs quando elas mudarem de pasta. |
-| [Elenco inicial](../specs/roster-initial/spec.md) e [hosting único](../specs/hosting-single/evidence.md) | Arquivar o conteúdo concluído depois de conferir o estado de cada entrega. Para hosting, conferir a pendência de deploy registrada e levar qualquer ação em aberto ao índice ativo. |
+| [Elenco inicial](archive/specs/roster-initial/spec.md) e [hosting único](archive/specs/hosting-single/evidence.md) | Arquivar o conteúdo concluído depois de conferir o estado de cada entrega. Para hosting, conferir a pendência de deploy registrada e levar qualquer ação em aberto ao índice ativo. |
 
 ## Pendências que precisam continuar visíveis
 
-- **007, UX e entrega.** Manter a [spec 007](../specs/007-release/tasks.md) acessível em `specs/` enquanto T3 e T4 estiverem abertas. O checklist registra Firefox/Safari, fallback online e staging. Vincular também o [roteiro de staging](deployment/007-release.md).
-- **019, liberação em produção.** A implementação foi integrada no merge `98042fd` e validada localmente. Registrar no índice ativo o aceite da configuração e dos clipes, com links para o [contrato de habilidades](../specs/019-random-roster-abilities/contract.md) e as [evidências da 019](../specs/019-random-roster-abilities/evidence.md). A habilitação dos candidatos e do sorteio depende desse aceite.
+- **007, UX e entrega.** O [guia ativo](../specs/README.md) aponta para as [tarefas arquivadas](archive/specs/007-release/tasks.md), incluindo T3 (Firefox, Safari e fallback online) e T4 (staging). [Roteiro de staging](deployment/007-release.md).
+- **019, liberação em produção.** A implementação foi integrada no merge `98042fd` e validada localmente. Registrar no índice ativo o aceite da configuração e dos clipes, com links para o [contrato de habilidades](../specs/contracts/019-random-roster-abilities.md) e as [evidências da 019](archive/specs/019-random-roster-abilities/evidence.md). A habilitação dos candidatos e do sorteio depende desse aceite.
 
 ## Sequência de execução
 

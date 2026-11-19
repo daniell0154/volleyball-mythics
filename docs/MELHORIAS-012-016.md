@@ -6,11 +6,11 @@ Status: planejamento solicitado pelo proprietário; não implementado. Base de t
 
 | Ordem | Spec | Resultado |
 | --- | --- | --- |
-| 012 | [Admin](../specs/012-admin-roster/spec.md) | Criar e publicar personagens pelo site, com acesso administrativo |
-| 013 | [Modos](../specs/013-2v2-modes/spec.md) | Consolidar 2v2 online e remover novas partidas 1v1 e demonstração pública |
-| 014 | [Gameplay e bola](../specs/014-rally-balance/spec.md) | Combater domínio do saque, melhorar controle e acompanhar a bola |
-| 015 | [Bots](../specs/015-coop-bots/spec.md) | Solo/coop contra bots com três dificuldades |
-| 016 | [Tela de partida](../specs/016-fullscreen-court/spec.md) | Quadra ocupa viewport e controles ficam dentro, embaixo |
+| 012 | [Admin](archive/specs/012-admin-roster/spec.md) | Criar e publicar personagens pelo site, com acesso administrativo |
+| 013 | [Modos](archive/specs/013-2v2-modes/spec.md) | Consolidar 2v2 online e remover novas partidas 1v1 e demonstração pública |
+| 014 | [Gameplay e bola](archive/specs/014-rally-balance/spec.md) | Combater domínio do saque, melhorar controle e acompanhar a bola |
+| 015 | [Bots](archive/specs/015-coop-bots/spec.md) | Solo/coop contra bots com três dificuldades |
+| 016 | [Tela de partida](archive/specs/016-fullscreen-court/spec.md) | Quadra ocupa viewport e controles ficam dentro, embaixo |
 
 A ordem calibra regras antes da IA e valida a apresentação final nos dois modos. Planejamento pode ser revisado em conjunto; execução é sequencial, uma spec por branch/PR, após integrar a anterior. Gates de lançamento da 007 continuam independentes.
 
@@ -35,4 +35,4 @@ Estes padrões resolvem detalhes não especificados pelo proprietário e podem s
 
 ## Gate comum
 
-Contratos futuros em specs/future-contracts-012-016.md; atualizar contratos ativos junto ao código. Testes de segurança/dados, regressões de regras/rede, percurso e evidências visuais conforme cada tarefa. Medições da 014/015 usam agentes exclusivamente de teste quando indicado; não alegar resultados humanos. A dispensa de coleta humana da 010 não dispensa novos gates automaticamente.
+Contratos futuros em docs/archive/specs/future-contracts-012-016.md; atualizar contratos ativos junto ao código. Testes de segurança/dados, regressões de regras/rede, percurso e evidências visuais conforme cada tarefa. Medições da 014/015 usam agentes exclusivamente de teste quando indicado; não alegar resultados humanos. A dispensa de coleta humana da 010 não dispensa novos gates automaticamente.
