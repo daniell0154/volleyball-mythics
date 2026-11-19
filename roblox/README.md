@@ -1,0 +1,31 @@
+# Roblox · execução do port
+
+Fontes em Luau estrito ficam em src/server. O domínio calcula em metros usando tabelas numéricas para preservar precisão. Court converte para studs e aplica origem (0, 2, 0), acima da baseplate.
+
+Abrir Place1.rbxlx no Studio e iniciar Play abre o lobby. Assinaturas consulta a coleção, permite girar e equipar. Jogar oferece Solo, 1v1 online e 2v2 online. No Solo, escolher lado e dificuldade antes de iniciar. O mapa reproduz as cores, o gramado, a rede e o prédio escolar do navegador. O arquivo pode ser regenerado com `node roblox/scripts/bundle.mjs` na raiz do repositório. Para sincronizar com Rojo instalado, executar `rojo serve roblox/default.project.json` e conectar pelo plugin Rojo. O pacote gerado inclui somente código de produção.
+
+## Comparação com o domínio web
+
+Na raiz, executar `npm.cmd run build --workspace @volleyball-mythics/domain` e `node roblox/scripts/fixtures.mjs`. O gerador usa o domínio compilado para produzir as fixtures. Cada fragmento respeita o limite de Source do Studio. Para incluí-las na sincronização de desenvolvimento, usar `rojo serve roblox/tests.project.json`.
+
+Executar na Command Bar do servidor em Edit mode:
+
+```lua
+local tests = game.ServerStorage.MythicsParity
+print(require(tests.Parity)(
+    game.ServerScriptService.VolleyballMythics,
+    require(tests.FixtureData)
+))
+```
+
+A comparação cobre cada tick de 24 trajetórias, contatos legais e faltas, rotações, duplicatas de ponto e final 6–5 em ambos os modos. Tolerância numérica absoluta de 1e-9. Ao modificar fontes após um require, reiniciar a sessão ou recarregar os módulos para evitar o cache do Studio.
+
+Executar também `require(game.ServerStorage.MythicsParity.SoloAcceptance)(game.ServerScriptService.VolleyballMythics)` para os cenários de partida solo e habilidades.
+
+Controles de PC são WASD, setas ou clique na quadra para mirar, C para centralizar, espaço para pular, J para receber/bloquear, K para levantar, L para sacar/atacar e U para habilidade. No toque, usar o analógico esquerdo, arrastar na área direita para fixar a mira e os botões da HUD. No Xbox, usar analógicos, A, LT, RB, RT e LB. No PlayStation, usar analógicos, ✕, L2, R1, R2 e L1. O botão B/○ volta ao menu durante a partida.
+
+O Studio executa sessões locais independentes para testar os três modos. Em ambiente publicado, o lobby encaminha cada sessão a uma instância reservada do mesmo place. O 1v1 usa exclusivamente humanos, com aquecimento até a segunda chegada. O 2v2 começa com bots e admite humanos no próximo saque. Os snapshots completos são confiáveis a 20 Hz; movimento e mira usam UnreliableRemoteEvent a 30 Hz. Placar e bola usam a mesma linha de tempo de apresentação. O porte mantém o intervalo de 2 s entre pontos e mostra a contagem para o saque seguinte.
+
+O lobby da T2.1 abre em uma arena com estações de Jogar, Assinaturas e Loja. Use WASD ou analógico esquerdo para caminhar e botão direito do mouse ou analógico direito para girar a câmera. No toque, arraste o controle esquerdo. Aproxime-se de uma estação para interagir ou use os quatro ícones inferiores. Jogar permite entrar no Solo e Voltar restaura o lobby. O perfil é salvo em DataStoreService, com namespaces separados de Studio e produção. Os dois poderes legados são candidatos de teste no Studio. O catálogo público começa com Fundamentos enquanto os poderes finais aguardam definição. O catálogo de passes da loja fica em src/server/LobbyServices.luau e inicia vazio.
+
+Para o Studio com persistência, habilitar acesso às APIs. O atributo Workspace.MythicsTemporaryProfiles=true ativa explicitamente um perfil temporário para desenvolvimento. A ausência de acesso ao DataStore é exibida como erro. Execute CollectionAcceptance, DuelAcceptance, DoublesAcceptance, DirectoryAcceptance e ResultsAcceptance no mesmo formato de SoloAcceptance para os ensaios adicionais. Os testes recebem adaptadores injetados, e os ensaios reais de dados usam namespaces exclusivos.

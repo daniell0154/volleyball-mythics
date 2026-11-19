@@ -1,0 +1,15 @@
+{
+  "name": "VolleyballMythics",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "MythicsShared": { "$path": "src/shared" }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": { "MythicsClient": { "$path": "src/client" } }
+    },
+    "ServerScriptService": {
+      "VolleyballMythics": { "$path": "src/server" }
+    }
+  }
+}
