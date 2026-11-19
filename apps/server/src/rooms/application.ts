@@ -1,5 +1,5 @@
 import type { CatalogEntry, ClientMessage, InputPayload, RoomState } from "@volleyball-mythics/protocol";
-import type { Session } from "../network/server.js";
+import type { Session, SharedMessageEncoding } from "../network/server.js";
 import { RoomRegistry, RoomError } from "./registry.js";
 
 export class RoomApplication {
@@ -39,7 +39,9 @@ export class RoomApplication {
     member.connected = true; this.hooks.reconnect?.(room, session.userId); this.changed(room);
   }
   broadcast(room: RoomState, type: string, payload: unknown): void {
-    for (const member of room.members) if(member.userId)this.sessions.get(member.userId)?.send(type, payload);
+    // Each broadcast owns its encoding. The transport fills it on the first eligible socket.
+    const encoding: SharedMessageEncoding | undefined = type === "snapshot" ? {} : undefined;
+    for (const member of room.members) if (member.userId) this.sessions.get(member.userId)?.send(type, payload, encoding);
   }
   sendTo(userId: string, type: string, payload: unknown): void { this.sessions.get(userId)?.send(type, payload); }
   private changed(room: RoomState): void { this.broadcast(room, "roomState", room); }
