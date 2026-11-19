@@ -1,0 +1,9 @@
+# 021 · Plano técnico
+
+A [arquitetura do porte](../../docs/PORT-ROBLOX.md) define módulos, simulação, transporte e HUD. A [spec](spec.md) governa os modos e a progressão. Implementar os mesmos contratos primeiro em Studio e depois com adaptadores de serviços Roblox no ambiente de teste publicado.
+
+1. Definir os perfis SoloBots2v2, Online1v1 e Online2v2. Cada perfil informa número de slots, política de admissão, condições de iniciar pontuação e política de saída. Em Online1v1, usar uma fase de aquecimento com comandos de treino e um estado de duelo separado. O construtor do controlador de bots só é acessível pelos dois perfis de duplas.
+2. Separar o slot do ocupante. Guardar equipe, posição e ordem de saque por slot. Cada troca incrementa a geração do controlador. Validar vínculo e geração em cada comando e identificar cada período de participação no histórico.
+3. Priorizar instância compatível com vaga antes de abrir outra. Serializar a atribuição por modo e grupo de matchmaking com reserva temporária e retentativa para dois jogadores simultâneos convergirem ao mesmo duelo. Distinguir vaga em aquecimento, vaga reservada para retorno e vaga disponível em dupla. Confirmar chegada no servidor de destino. Se o teleporte falhar, liberar só a própria reserva e retentar a busca. Remover anúncios vencidos e verificar o JobId no destino.
+4. Implementar catálogo, perfil por UserId, recibo de giro e equipamento no servidor. Descrever o avatar com a aparência Roblox do jogador e aplicar hitbox e atributos comuns no domínio. Enviar ao cliente apenas os dados de coleção necessários à tela e o poder público fixado na partida.
+5. Integrar entrada, HUD e câmera descritas no porte. Validar localmente o ciclo de cada modo, depois testar teleporte real e roteamento de consoles em ambiente publicado de teste. Registrar evidência por aparelho.

@@ -1,0 +1,12 @@
+{
+  "name": "VolleyballMythicsParity",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "VolleyballMythics": { "$path": "src/server" }
+    },
+    "ServerStorage": {
+      "MythicsParity": { "$path": "tests" }
+    }
+  }
+}

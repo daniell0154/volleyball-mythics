@@ -1,0 +1,9 @@
+{
+  "name": "VolleyballMythics",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "VolleyballMythics": { "$path": "src/server" }
+    }
+  }
+}

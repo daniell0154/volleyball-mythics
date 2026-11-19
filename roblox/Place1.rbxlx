@@ -1,0 +1,267 @@
+<roblox version="4"><Item class="ServerScriptService"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder"><Properties><string name="Name">VolleyballMythics</string></Properties><Item class="Script"><Properties><string name="Name">Bootstrap</string><ProtectedString name="Source">--!strict
+local Court = require(script.Parent.Court)
+Court.build(workspace)
+local spawn = workspace:FindFirstChild(&quot;SpawnLocation&quot;)
+if spawn and spawn:IsA(&quot;SpawnLocation&quot;) then
+	spawn.Position = Vector3.new(0, 3, -40)
+end
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Court</string><ProtectedString name="Source">--!strict
+local Court = {}
+Court.StudsPerMeter = 3.5
+Court.Origin = Vector3.new(0, 2, 0)
+
+function Court.build(parent: Instance): Model
+	local existing = parent:FindFirstChild(&quot;MythicsCourt&quot;)
+	if existing then
+		assert(existing:IsA(&quot;Model&quot;), &quot;MythicsCourt must be a Model&quot;)
+		return existing
+	end
+	local model = Instance.new(&quot;Model&quot;)
+	model.Name = &quot;MythicsCourt&quot;
+	local scale = Court.StudsPerMeter
+	local function part(name: string, size: Vector3, position: Vector3, color: Color3, collidable: boolean): Part
+		local item = Instance.new(&quot;Part&quot;)
+		item.Name = name
+		item.Anchored = true
+		item.Size = size * scale
+		item.Position = Court.Origin + position * scale
+		item.Color = color
+		item.Material = Enum.Material.SmoothPlastic
+		item.CanCollide = collidable
+		item.Parent = model
+		return item
+	end
+	local white = Color3.fromRGB(240, 243, 248)
+	part(&quot;Surround&quot;, Vector3.new(17, 0.15, 28), Vector3.new(0, -0.23, 0), Color3.fromRGB(30, 72, 77), true)
+	part(&quot;Floor&quot;, Vector3.new(9, 0.3, 18), Vector3.new(0, -0.15, 0), Color3.fromRGB(39, 112, 149), true)
+	for _, x in { -4.5, 4.5 } do
+		part(&quot;Sideline&quot;, Vector3.new(0.05, 0.01, 18), Vector3.new(x, 0.005, 0), white, false)
+	end
+	for _, z in { -9, -3, 0, 3, 9 } do
+		part(&quot;CrossLine&quot;, Vector3.new(9, 0.01, 0.05), Vector3.new(0, 0.005, z), white, false)
+	end
+	for _, x in { -4.8, 4.8 } do
+		part(&quot;Post&quot;, Vector3.new(0.12, 2.6, 0.12), Vector3.new(x, 1.3, 0), white, false)
+	end
+	local net = part(&quot;Net&quot;, Vector3.new(9, 0.9, 0.025), Vector3.new(0, 1.98, 0), Color3.fromRGB(20, 28, 40), false)
+	net.Transparency = 0.65
+	part(&quot;NetTape&quot;, Vector3.new(9, 0.05, 0.04), Vector3.new(0, 2.405, 0), white, false)
+	local ball = part(&quot;Ball&quot;, Vector3.new(0.22, 0.22, 0.22), Vector3.new(0, 1.6, -6.8), Color3.fromRGB(255, 209, 66), false)
+	ball.Shape = Enum.PartType.Ball
+	model:SetAttribute(&quot;StudsPerMeter&quot;, scale)
+	model:SetAttribute(&quot;RulesVersion&quot;, 4)
+	model.Parent = parent
+	return model
+end
+
+return Court
+</ProtectedString></Properties></Item><Item class="Folder"><Properties><string name="Name">Domain</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Ball</string><ProtectedString name="Source">--!strict
+-- Positions are meters. Keep doubles until converting to Roblox Vector3.
+local Ball = {}
+export type Vec3 = { x: number, y: number, z: number }
+export type State = { position: Vec3, velocity: Vec3, grounded: boolean }
+
+local function finite(value: number): boolean
+	return value == value and math.abs(value) &lt; math.huge
+end
+
+function Ball.validateVector(value: Vec3)
+	assert(finite(value.x) and finite(value.y) and finite(value.z), &quot;ball state must be finite&quot;)
+end
+
+function Ball.step(state: State): (State, boolean, boolean)
+	Ball.validateVector(state.position)
+	Ball.validateVector(state.velocity)
+	if state.grounded then
+		return state, false, false
+	end
+	local dt, radius = 1 / 60, 0.11
+	local p = state.position
+	local v = { x = state.velocity.x, y = state.velocity.y - 9.81 * dt, z = state.velocity.z }
+	local nextPosition = { x = p.x + v.x * dt, y = p.y + v.y * dt, z = p.z + v.z * dt }
+	local floorFraction = math.huge
+	if p.y &gt; radius and nextPosition.y &lt;= radius then
+		floorFraction = (p.y - radius) / (p.y - nextPosition.y)
+	end
+	local crossedNet = (p.z &lt; 0 and nextPosition.z &gt;= 0) or (p.z &gt; 0 and nextPosition.z &lt;= 0)
+	local netFraction = math.huge
+	if crossedNet then
+		netFraction = math.abs(p.z) / math.abs(nextPosition.z - p.z)
+	end
+	local netY = p.y + (nextPosition.y - p.y) * netFraction
+	local netX = p.x + (nextPosition.x - p.x) * netFraction
+	local netCollision = crossedNet and netFraction &gt;= 0 and netFraction &lt;= 1
+		and math.abs(netX) &lt;= 4.5 + radius and netY - radius &lt;= 2.43
+	local collisionFraction = if netCollision then netFraction else math.huge
+	if floorFraction &lt;= 1 and floorFraction &lt;= collisionFraction then
+		local fraction = math.max(0, floorFraction)
+		return {
+			position = { x = p.x + (nextPosition.x - p.x) * fraction, y = radius, z = p.z + (nextPosition.z - p.z) * fraction },
+			velocity = v, grounded = true,
+		}, false, true
+	end
+	if netCollision then
+		return {
+			position = { x = netX, y = netY, z = if p.z &lt; 0 then -radius else radius },
+			velocity = { x = v.x, y = v.y, z = -v.z * 0.45 }, grounded = false,
+		}, true, false
+	end
+	return { position = nextPosition, velocity = v, grounded = false }, false, false
+end
+
+function Ball.move(position: Vec3, input: { x: number, z: number }, speed: number, dt: number,
+	bounds: { minX: number, maxX: number, minZ: number, maxZ: number }): Vec3
+	Ball.validateVector(position)
+	for _, value in { input.x, input.z, speed, dt, bounds.minX, bounds.maxX, bounds.minZ, bounds.maxZ } do
+		assert(finite(value), &quot;movement inputs must be finite&quot;)
+	end
+	assert(speed &gt;= 0 and dt &gt;= 0, &quot;negative movement&quot;)
+	local length = math.sqrt(input.x * input.x + input.z * input.z)
+	local scale = if length &gt; 1 then 1 / length else 1
+	return {
+		x = math.clamp(position.x + input.x * scale * speed * dt, bounds.minX, bounds.maxX),
+		y = position.y,
+		z = math.clamp(position.z + input.z * scale * speed * dt, bounds.minZ, bounds.maxZ),
+	}
+end
+
+return Ball
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Contacts</string><ProtectedString name="Source">--!strict
+local Contacts = {}
+export type Side = &quot;A&quot; | &quot;B&quot;
+export type Mode = &quot;1v1&quot; | &quot;2v2&quot;
+export type State = {
+	mode: Mode, touches: number, lastPlayerId: string?, lastTouchSide: Side?, lastContactWasBlock: boolean,
+}
+export type Result = { legal: boolean, state: State?, counted: boolean?, pointFor: Side?, reason: string? }
+
+function Contacts.create(mode: Mode): State
+	return { mode = mode, touches = 0, lastPlayerId = nil, lastTouchSide = nil, lastContactWasBlock = false }
+end
+
+function Contacts.apply(state: State, playerId: string, side: Side, kind: &quot;hit&quot; | &quot;block&quot;): Result
+	assert(string.find(playerId, &quot;%S&quot;), &quot;playerId is required&quot;)
+	local other: Side = if side == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;
+	if kind == &quot;block&quot; then
+		return { legal = true, counted = false, state = {
+			mode = state.mode, touches = 0, lastPlayerId = playerId, lastTouchSide = side, lastContactWasBlock = true,
+		} }
+	end
+	local touches = if state.lastTouchSide ~= nil and state.lastTouchSide ~= side then 0 else state.touches
+	if state.mode == &quot;2v2&quot; and touches &gt; 0 and state.lastPlayerId == playerId and not state.lastContactWasBlock then
+		return { legal = false, pointFor = other, reason = &quot;consecutive_player&quot; }
+	end
+	if touches &gt;= 3 then
+		return { legal = false, pointFor = other, reason = &quot;fourth_touch&quot; }
+	end
+	return { legal = true, counted = true, state = {
+		mode = state.mode, touches = touches + 1, lastPlayerId = playerId, lastTouchSide = side, lastContactWasBlock = false,
+	} }
+end
+
+function Contacts.ground(position: { x: number, z: number }, lastSide: Side?): Side
+	assert(position.x == position.x and math.abs(position.x) &lt; math.huge
+		and position.z == position.z and math.abs(position.z) &lt; math.huge, &quot;position must be finite&quot;)
+	assert(lastSide ~= nil, &quot;grounded ball requires last touch side&quot;)
+	if math.abs(position.x) &lt;= 4.5 and math.abs(position.z) &lt;= 9 then
+		return if position.z &lt; 0 then &quot;B&quot; else &quot;A&quot;
+	end
+	return if lastSide == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;
+end
+
+return Contacts
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Match</string><ProtectedString name="Source">--!strict
+local Match = {}
+type Side = &quot;A&quot; | &quot;B&quot;
+export type State = {
+	matchId: string, mode: &quot;1v1&quot; | &quot;2v2&quot;, phase: string, score: { A: number, B: number },
+	servingSide: Side, servingSlot: number, nextServingSlot: { A: number, B: number },
+	rallyId: number, lastScoringSide: Side?, appliedPointIds: { string }, rulesVersion: number,
+}
+export type Event = { type: string, pointId: string?, scoringSide: Side? }
+
+function Match.create(id: string, mode: &quot;1v1&quot; | &quot;2v2&quot;): State
+	assert(string.find(id, &quot;%S&quot;), &quot;matchId is required&quot;)
+	return {
+		matchId = id, mode = mode, phase = &quot;lobby&quot;, score = { A = 0, B = 0 },
+		servingSide = &quot;A&quot;, servingSlot = 0, nextServingSlot = { A = 1, B = 0 },
+		rallyId = 0, lastScoringSide = nil, appliedPointIds = {}, rulesVersion = 4,
+	}
+end
+
+function Match.transition(state: State, event: Event): State
+	if state.phase == &quot;finished&quot; or state.phase == &quot;cancelled&quot; then return state end
+	local nextState = table.clone(state)
+	if event.type == &quot;CANCEL&quot; then
+		nextState.phase = &quot;cancelled&quot;
+	elseif event.type == &quot;START&quot; and state.phase == &quot;lobby&quot; then
+		nextState.phase = &quot;countdown&quot;
+	elseif event.type == &quot;COUNTDOWN_FINISHED&quot; and state.phase == &quot;countdown&quot; then
+		nextState.phase = &quot;serving&quot;
+		nextState.rallyId += 1
+	elseif event.type == &quot;SERVE_HIT&quot; and state.phase == &quot;serving&quot; then
+		nextState.phase = &quot;rally&quot;
+	elseif event.type == &quot;POINT_DELAY_FINISHED&quot; and state.phase == &quot;point&quot; then
+		nextState.phase = &quot;serving&quot;
+		nextState.rallyId += 1
+	elseif event.type == &quot;RALLY_POINT&quot; and (state.phase == &quot;rally&quot; or state.phase == &quot;serving&quot;) then
+		local id, side = event.pointId, event.scoringSide
+		if id == nil or id == &quot;&quot; or side == nil or table.find(state.appliedPointIds, id) then return state end
+		nextState.score = table.clone(state.score)
+		nextState.score[side] += 1
+		nextState.phase = if nextState.score[side] == 6 then &quot;finished&quot; else &quot;point&quot;
+		if side ~= state.servingSide and state.mode == &quot;2v2&quot; then
+			nextState.servingSlot = state.nextServingSlot[side]
+			nextState.nextServingSlot = table.clone(state.nextServingSlot)
+			nextState.nextServingSlot[side] = if nextState.servingSlot == 0 then 1 else 0
+		end
+		nextState.servingSide = side
+		nextState.lastScoringSide = side
+		nextState.appliedPointIds = table.clone(state.appliedPointIds)
+		table.insert(nextState.appliedPointIds, id)
+	else
+		return state
+	end
+	return nextState
+end
+
+return Match
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Rally</string><ProtectedString name="Source">--!strict
+local Rally = {}
+type Vec3 = { x: number, y: number, z: number }
+export type Attributes = { serve: number, receive: number, set: number, attack: number, block: number, speed: number, jump: number }
+
+function Rally.range(attribute: number): number
+	return 2.15 + 0.2 * (attribute - 1) / 99
+end
+
+function Rally.velocity(kind: string, ball: Vec3, athlete: Vec3, direction: number,
+	attributes: Attributes, teammate: Vec3?, aim: { x: number, z: number }?): Vec3
+	local x, z = 0, 0
+	if aim then x, z = aim.x, aim.z end
+	assert(x == x and z == z and math.abs(x) &lt; math.huge and math.abs(z) &lt; math.huge
+		and math.sqrt(x * x + z * z) &lt;= 1, &quot;Invalid aim&quot;)
+	local own = kind == &quot;receive&quot; or kind == &quot;set&quot;
+	local targetX = math.clamp((if own and teammate then teammate.x else 0) + x * 3.5, -3.8, 3.8)
+	local targetZ: number
+	if own then
+		local depth = if kind == &quot;set&quot; then math.clamp(2 + z, 1.2, 3)
+			else math.clamp((if teammate then math.abs(teammate.z) else 4) + z, 2, 7)
+		targetZ = -direction * depth
+	else
+		targetZ = direction * math.clamp(5 + z * 2, 3, 7)
+	end
+	local flight = 1.4
+	if kind == &quot;serve&quot; then flight = 2.2 - 0.15 * (attributes.serve - 1) / 99
+	elseif kind == &quot;receive&quot; then flight = 1.9
+	elseif kind == &quot;set&quot; then flight = 1.6
+	elseif kind == &quot;attack&quot; then flight = (if athlete.y &gt; 0.5 then 1.3 else 1.65) - 0.12 * (attributes.attack - 1) / 99 end
+	return {
+		x = (targetX - ball.x) / flight,
+		y = (0.11 - ball.y + 0.5 * 9.81 * flight * flight) / flight,
+		z = (targetZ - ball.z) / flight,
+	}
+end
+
+return Rally
+</ProtectedString></Properties></Item></Item></Item></Item></roblox>
