@@ -5,7 +5,8 @@ import type { Identity, VerifyToken } from "./auth.js";
 import { parseAuth, parseEnvelope } from "./envelope.js";
 import { createStaticHandler } from "./static.js";
 
-export interface Session extends Identity { send(type: string, payload: unknown): void }
+export interface SharedMessageEncoding { text?: string }
+export interface Session extends Identity { send(type: string, payload: unknown, encoding?: SharedMessageEncoding): void }
 export function createTransport(options: {
   verify: VerifyToken;
   origins: readonly string[];
@@ -41,9 +42,11 @@ export function createTransport(options: {
     let expiry: ReturnType<typeof setTimeout> | undefined;
     const timeout = setTimeout(() => ws.close(1008, "unauthorized"), options.authTimeoutMs ?? 5000);
     let windowStart = Date.now(), inputs = 0, commands = 0;
-    const send = (type: string, payload: unknown) => { if (ws.readyState === WebSocket.OPEN) {
+    const send = (type: string, payload: unknown, encoding?: SharedMessageEncoding) => { if (ws.readyState === WebSocket.OPEN) {
       if (ws.bufferedAmount > 65536) { ws.close(1013, "slow_consumer"); return; }
-      ws.send(JSON.stringify({ protocolVersion: 1, type, payload }));
+      const text = encoding?.text ?? JSON.stringify({ protocolVersion: 1, type, payload });
+      if (encoding) encoding.text = text;
+      ws.send(text);
     } };
     ws.on("error", () => {}); // Never log frame contents or authentication tokens.
     ws.on("close", () => {

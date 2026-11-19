@@ -1,5 +1,7 @@
 # Plano de otimização do jogo 2v2
 
+Os comandos de reprodução e os resultados da implementação estão no [registro dos ensaios](benchmarks/020-optimization.md).
+
 O objetivo é reduzir o trabalho por quadro no navegador e por sala no servidor, mantendo a experiência atual. A primeira entrega é uma referência reproduzível. As demais entram em ordem de ganho observado, cada uma em um commit reversível.
 
 ## 1. Medir a versão atual e fixar o comportamento
