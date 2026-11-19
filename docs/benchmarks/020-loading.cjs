@@ -3,7 +3,8 @@ const { writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { chromium } = require(resolve(".test-build/browser/node_modules/playwright"));
 
-const origin = "http://127.0.0.1:3024";
+const origin = "http://127.0.0.1:" + (process.env.VOLLEYBALL_FIXTURE_SOCKET_PORT ?? 3024);
+const catalogPort = process.env.VOLLEYBALL_FIXTURE_CATALOG_PORT ?? 3025;
 const output = process.argv[2] ?? ".test-build/020-loading.json";
 
 function trackResources() {
@@ -52,7 +53,7 @@ async function run() {
       socket.on("socketerror", error => sockets.push(error));
     });
     await page.addInitScript(trackResources);
-    const catalogResponse = await fetch("http://127.0.0.1:3025");
+    const catalogResponse = await fetch("http://127.0.0.1:" + catalogPort);
     assert.ok(catalogResponse.ok);
     const catalog = await catalogResponse.json();
     await page.route(origin + "/020-catalog", request => request.fulfill({ json: catalog }));
