@@ -4,7 +4,7 @@ Leia a [constituição](../.specify/memory/constitution.md), o [refinamento](../
 
 ## Pendências de entrega
 
-- **007 · Beta.** A T3 ainda exige Firefox, Safari e fallback gráfico online. A T4 exige ensaio real de staging. [Tarefas](007-release/tasks.md) · [Evidências](007-release/evidence.md) · [Roteiro](../docs/deployment/007-release.md).
+- **007 · Beta.** A T3 ainda exige Firefox, Safari e fallback gráfico online. A T4 exige ensaio real de staging. [Tarefas](../docs/archive/specs/007-release/tasks.md) · [Evidências](../docs/archive/specs/007-release/evidence.md) · [Roteiro](../docs/deployment/007-release.md).
 - **019 · Liberação de habilidades.** O aceite da configuração e dos clipes precede a habilitação dos candidatos e do sorteio em produção. [Contrato](contracts/019-random-roster-abilities.md) · [Evidências](../docs/archive/specs/019-random-roster-abilities/evidence.md).
 - **Operação e lançamento.** Confirmar o deploy do serviço único no Render e a configuração Auth/RPC da administração no ambiente alvo. O checklist inicial mantém hardware de referência, orçamento, hospedagem de produção, elenco e poderes finais como critérios para lançamento amplo. [Serviço único](../docs/archive/specs/hosting-single/evidence.md) · [Administração](../docs/admin/012-operations.md) · [Checklist](../docs/archive/specs/checklist.md).
 

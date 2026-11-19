@@ -12,6 +12,7 @@ Os registros abaixo descrevem o escopo e os aceites de cada entrega no momento d
 | 005 · Primeiras partidas | [Registro](005-match/evidence.md) | [#7](https://github.com/daniell0154/volleyball-mythics/pull/7) |
 | Elenco inicial | [Registro](roster-initial/evidence.md) | [#7](https://github.com/daniell0154/volleyball-mythics/pull/7) |
 | 006 · 2v2 e habilidades | [Registro](006-roster/evidence.md) | [#8](https://github.com/daniell0154/volleyball-mythics/pull/8) |
+| 007 · Beta | [Registro](007-release/evidence.md) | [#9](https://github.com/daniell0154/volleyball-mythics/pull/9) |
 | 008 · Modelos articulados | [Registro](008-character-models/evidence.md) | [#11](https://github.com/daniell0154/volleyball-mythics/pull/11) |
 | 009 · Animações | [Registro](009-character-animation/evidence.md) | [#12](https://github.com/daniell0154/volleyball-mythics/pull/12) |
 | 010 · Dinâmica do rally | [Registro](010-rally-dynamics/evidence.md) | [#13](https://github.com/daniell0154/volleyball-mythics/pull/13) |
