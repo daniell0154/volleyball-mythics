@@ -82,3 +82,15 @@ No cliente em Play, o perfil Studio iniciou com Fundamentos e um giro. O clique 
 DoublesAcceptance passou nove cenários no Studio com quatro identidades humanas simuladas. O modo começou com um humano e três bots, reservou três entradas durante rally e aplicou os controladores no saque seguinte. A ocupação final foi de dois humanos por lado, sem bots. O ensaio verificou incremento de geração, recarga de slot preservada, troca imediata para bot após queda, retorno ao mesmo slot, expiração, saída explícita e participante que não chegou a jogar antes do sexto ponto.
 
 O servidor habilita o cartão 2v2 online e devolve uma entrada pendente à busca quando a partida termina antes da admissão. A composição de cada trecho é guardada na sessão para o registro de resultado da T6. As validações de vários clientes de rede e de teleporte publicado permanecem nos aceites T6/T7.
+
+## T6 · Roteamento e resultados — implementação de 2026-11-19
+
+DirectoryAcceptance passou dez cenários em memória e dez no MemoryStore real MythicsAcceptance_v1, com chave de pool UUID exclusiva e expiração automática. Foram cobertos busca por dois serviços, lotação, criação de outra sessão, liberação com token incorreto, confirmação por JobId e PrivateServerId, retorno, reserva expirada, pools de console separados e isolamento do Solo.
+
+O ambiente nativo aceitou TeleportOptions.ReservedServerId. A implementação usa GUID fornecido pelo servidor e TeleportAsync, conforme a API atual, e mantém uma instância reservada por sessão. O pool inclui o modo e game.MatchmakingType. A chegada valida a reserva do UserId e o token no diretório. Falhas liberam apenas a reserva da operação e repetem até três tentativas. A confirmação vincula o JobId e o PrivateServerId. Anúncios são renovados a cada cinco segundos e vencem em sessenta segundos.
+
+ResultsAcceptance passou cinco cenários de falha parcial e retentativa com armazenamento injetado, incluindo conflito de resultado imutável e nenhum giro duplicado. O diário durável por usuário permite reparar gravações parciais ao reconectar. O resultado canônico precede a concessão do prêmio. Cancelamentos e desistências não concedem giros.
+
+O 1v1 foi aberto pelo cartão real no cliente Studio. Exibiu “Aguardando adversário · aquecimento”, placar vazio e apenas um atleta ativo. A assinatura de duplas equipada foi substituída por Fundamentos no duelo.
+
+Teleportes reais e medições entre instâncias dependem da publicação para teste, solicitada ao proprietário. A tarefa permanece pendente desse aceite publicado. A versão da experiência acessível aos jogadores ainda não foi alterada.

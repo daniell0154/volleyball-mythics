@@ -120,6 +120,7 @@ local function clearModels()
 	models = {}
 end
 local function receive(nextState: any, reliable: boolean)
+	if nextState.routing then lobby.setBusy(true) lobby.message("Entrando na quadra…") return end
 	if nextState.error then
 		lobby.setBusy(false)
 		if lobby.visible then lobby.message(nextState.error) else hud.feedback.Text = nextState.error end

@@ -35,8 +35,22 @@ function Server.start()
 	local membership: { [number]: any } = {}
 	local starting, loading, budgets, sequences = {}, {}, {}, {}
 	local function send(player: Player, value: any) if player.Parent then state:FireClient(player, value) end end
+	local routing = require(script.Parent.Routing).new(function(player, message) send(player,{error=message}) end)
+	local results = require(script.Parent.Results).new(profiles)
+	local routeJoin: any
+	local routingBusy = false
+	local function announce(session: any)
+		if routingBusy or not routing.enabled then return end
+		routingBusy = true
+		task.spawn(function()
+			local ok, failure = pcall(function() routing:announce(session) end)
+			routingBusy = false
+			if not ok then warn("Directory announcement failed",failure) end
+		end)
+	end
 	local function publish(session: any)
 		actors:refresh(session)
+		announce(session)
 		for _, player in Players:GetPlayers() do
 			if membership[player.UserId] == session then send(player, session:snapshot(player.UserId)) end
 		end
@@ -59,7 +73,17 @@ function Server.start()
 				task.delay(3, function() if not membership[player.UserId] then lobby(player) end end)
 			end) end
 		end)
-		task.spawn(lobby, player)
+		task.defer(function()
+			task.spawn(function() results:repair(player.UserId) end)
+			if not routing.enabled then lobby(player) return end
+			local ok, admission = pcall(function() return routing:arrive(player) end)
+			if ok and admission then routeJoin(player,admission,true)
+			elseif game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0 then routing:lobby(player)
+			else
+				local resumed, result = pcall(function() return routing:resume(player) end)
+				if not resumed or not result then lobby(player) end
+			end
+		end)
 	end
 	Players.PlayerAdded:Connect(added)
 	for _, player in Players:GetPlayers() do added(player) end
@@ -71,18 +95,27 @@ function Server.start()
 		value.count += 1
 		return value.count <= max
 	end
-	local function join(player: Player, data: any)
+	local function join(player: Player, data: any, arriving: boolean?)
 		if membership[player.UserId] or starting[player] then return end
 		if type(data) ~= "table" then return end
 		local mode = data.mode or "SoloBots2v2"
 		if mode ~= "SoloBots2v2" and mode ~= "Online1v1" and mode ~= "Online2v2" then send(player,{error="Modo indisponível"}) return end
 		local team = if data.team == "B" then "B" else "A"
 		local difficulty = if data.difficulty == "easy" or data.difficulty == "hard" then data.difficulty else "normal"
+		if routing.enabled and not arriving then
+			send(player,{routing=true})
+			routing:travel(player,mode,nil,{team=team,difficulty=difficulty})
+			return
+		end
 		starting[player] = true
 		local ability = profiles.equipped(player, mode)
 		starting[player] = nil
 		if not player.Parent then return end
-		if not ability then send(player,{error="Coleção indisponível. Tente novamente."}) return end
+		if not ability then
+			send(player,{error="Coleção indisponível. Tente novamente."})
+			if arriving and routing.enabled then routing:lobby(player) end
+			return
+		end
 		local selected = nil
 		for _, session in sessions do
 			if session.mode == mode and session.reservations[player.UserId] then
@@ -99,6 +132,7 @@ function Server.start()
 			end
 		end
 		if not selected then
+			if routing.enabled and next(sessions) then routing:lobby(player) return end
 			selected = Session.new(Http:GenerateGUID(false), mode, player.UserId, ability, team, difficulty, Random.new():NextInteger(1,2147483647))
 			sessions[selected.runtime.state.matchId] = selected
 		end
@@ -106,11 +140,15 @@ function Server.start()
 		if player.Character then player.Character:Destroy() end
 		publish(selected)
 	end
+	routeJoin = join
 	local function leave(player: Player, explicit: boolean)
 		local session = membership[player.UserId]
 		membership[player.UserId], sequences[player] = nil, nil
 		if session then session:leave(player.UserId, explicit, os.clock()) publish(session) end
-		if explicit then send(player,{lobby=true}) task.spawn(lobby,player) end
+		if explicit then
+			send(player,{lobby=true})
+			if routing.enabled and routing.room then routing:lobby(player) else task.spawn(lobby,player) end
+		end
 	end
 	local function finite(value: any): boolean return type(value)=="number" and value==value and math.abs(value)<math.huge end
 	local valid = { jump=true,receive=true,set=true,serve=true,attack=true,ability=true }
@@ -165,7 +203,7 @@ function Server.start()
 		starting[player],sequences[player]=nil,nil
 		budgets[tostring(player.UserId)..":input"],budgets[tostring(player.UserId)..":command"]=nil,nil
 	end)
-	local accumulator=0
+	local accumulator, lastAnnouncement=0,0
 	RunService.Heartbeat:Connect(function(dt)
 		accumulator+=dt
 		local steps=0
@@ -174,6 +212,8 @@ function Server.start()
 			steps+=1
 			for id,s in sessions do
 				if s.closed then
+					if not s.rewarded then s.rewarded=true results:finish(s) end
+					announce(s)
 					for userId, current in membership do
 						if current == s then
 							membership[userId] = nil
@@ -200,7 +240,7 @@ function Server.start()
 				end
 				if s.runtime.state.phase=="finished" and not s.rewarded then
 					s.rewarded=true
-					if s.runtime.state.reason=="points" then for userId in s.members do profiles.reward(userId,id) end end
+					results:finish(s)
 				end
 				if s.runtime.state.phase~=before then publish(s)
 				elseif s.runtime.tick%3==0 then
@@ -208,6 +248,10 @@ function Server.start()
 					for _,p in Players:GetPlayers() do if membership[p.UserId]==s then snapshot:FireClient(p,s:snapshot(p.UserId)) end end
 				end
 			end
+		end
+		if os.clock()-lastAnnouncement>=5 then
+			lastAnnouncement=os.clock()
+			for _,s in sessions do announce(s) end
 		end
 	end)
 end
