@@ -14,9 +14,22 @@ Esta spec define o produto Roblox. Os contratos 013, 015 e 019 descrevem a vers�
 
 **Entrada durante o 2v2.** Reservar uma vaga por usuário e admitir sob confirmação da instância. Se houver rally, mostrar placar e “Você entra no próximo saque”. Publicar o novo dono do slot e liberar comandos em uma única transição. Preservar placar, ordem do saque e recarga restante do slot. Remover modificadores pessoais expirados ou incompatíveis ao mudar de ocupante. Rejeitar comandos do controlador anterior. Se o sexto ponto vier antes da entrada, devolver o jogador à busca, sem registrar participação. Um resultado registra humanos que chegaram a jogar e a composição por trecho. Revanche gera novo matchId.
 
+## Lobby e HUD de entrada
+
+O avatar chega ao pátio de um ginásio escolar ao fim da tarde. Da entrada, vê uma quadra verde-azulada com faixa terracota, rede e arquibancada. Uma bancada com prancheta de treinador, carrinho de bolas e camisas numeradas identifica o espaço das Assinaturas. Usar a linha de ataque e a trajetória curva do saque como motivos gráficos na sinalização e nos ícones originais. Reservar o centro da tela para o avatar e a vista da quadra.
+
+| Acesso no HUD | Experiência |
+| --- | --- |
+| **Jogar** | Botão principal, com foco inicial no controle. Abre três cartões com composição e regra de entrada da tabela de modos. Selecionar Solo permite escolher lado e dificuldade antes de entrar. Nos modos online disponíveis, selecionar envia o pedido ao servidor e mostra o andamento até a chegada. Uma falha permite tentar novamente ou voltar. |
+| **Assinaturas** | “Assinatura” é a jogada característica de um personagem. O painel reúne a equipada, a coleção e o botão **Girar assinatura**, com saldo e chances visíveis antes do giro. Cada prêmio concede uma habilidade. O jogador conserva seu avatar e leva uma habilidade ativa à quadra. O combate esportivo não inclui ultimates. |
+| **Configurações** | Ajustar o volume dos efeitos do lobby e reduzir as animações de interface. Aplicar na prévia imediatamente, inclusive ao reabrir o painel na mesma sessão. A redução de animação preserva a leitura do resultado do giro. |
+| **Loja** | Vitrine em Robux com nome, prévia, benefício e preço do item selecionado. Proposta inicial: cosméticos de apresentação, como uma moldura para o cartão do jogador. Os giros continuam gratuitos. Exibir estado vazio enquanto não houver ofertas configuradas. |
+
+Ao entrar na quadra, recolher o HUD do lobby e apresentar a HUD compacta da T2. Voltar ao lobby restaura a navegação em Jogar.
+
 ## Roleta, coleção e aparência
 
-No lobby, o jogador abre **Habilidades**, vê os possíveis resultados e suas chances, gira, revela a habilidade ganha e escolhe se quer equipá-la. A coleção é permanente e uma habilidade fica ativa por vez. Mostrar nome, efeito, recarga e modos compatíveis antes de equipar. Camisa de time ou marcador identifica o lado em quadra. A roleta jamais troca rosto, cabelo, corpo, roupa ou avatar e jamais concede atributos permanentes de personagem.
+No lobby, o jogador abre **Assinaturas**, vê os possíveis resultados e suas chances, gira, revela a habilidade ganha e escolhe se quer equipá-la. A coleção é permanente e uma habilidade fica ativa por vez. Mostrar nome, efeito, recarga e modos compatíveis antes de equipar. Camisa de time ou marcador identifica o lado em quadra. A roleta jamais troca rosto, cabelo, corpo, roupa ou avatar e jamais concede atributos permanentes de personagem.
 
 **Defaults propostos para o protótipo.** Conceder uma habilidade inicial compatível com todos os modos e um giro gratuito no primeiro acesso. Cada partida concluída por pontos concede um giro a cada humano que participou até o fim. Aquecimento, cancelamento e desistência não geram giros. Sortear uniformemente entre habilidades habilitadas ainda não adquiridas. Com a coleção completa, mostrar “Você já tem todas” e preservar o saldo. Usar apenas giros gratuitos nesta versão. Conteúdo inicial para a implementação: uma habilidade base e pelo menos duas sorteáveis com efeitos e recargas definidos no catálogo de desenvolvimento. Validar o equilíbrio antes de habilitar o catálogo público.
 
