@@ -1,4 +1,68 @@
-<roblox version="4"><Item class="ServerScriptService"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder"><Properties><string name="Name">VolleyballMythics</string></Properties><Item class="Script"><Properties><string name="Name">Bootstrap</string><ProtectedString name="Source">--!strict
+<roblox version="4"><Item class="ServerScriptService"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder"><Properties><string name="Name">VolleyballMythics</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Actors</string><ProtectedString name="Source">--!strict
+local Players = game:GetService(&quot;Players&quot;)
+local Actors = {}
+Actors.__index = Actors
+function Actors.new(parent: Folder)
+	return setmetatable({ parent = parent, loading = {}, retry = {} }, Actors)
+end
+function Actors.refresh(self: any, session: any)
+	local matchId = session.runtime.state.matchId
+	local folder = self.parent:FindFirstChild(matchId)
+	if not folder then folder = Instance.new(&quot;Folder&quot;) folder.Name, folder.Parent = matchId, self.parent end
+	for _, athlete in session.runtime.athletes do
+		local existing = folder:FindFirstChild(athlete.id)
+		if existing and existing:GetAttribute(&quot;Generation&quot;) == athlete.generation then continue end
+		local key = matchId .. &quot;:&quot; .. athlete.id .. &quot;:&quot; .. athlete.generation
+		if self.loading[key] then continue end
+		if (self.retry[key] or 0) &gt; os.clock() then continue end
+		self.loading[key] = true
+		local generation, userId, bot = athlete.generation, athlete.userId, athlete.bot
+		task.spawn(function()
+			local description = Instance.new(&quot;HumanoidDescription&quot;)
+			if userId then
+				local ok, result = pcall(Players.GetHumanoidDescriptionFromUserIdAsync, Players, userId)
+				if ok then description:Destroy() description = result
+				else
+					description:Destroy()
+					self.loading[key], self.retry[key] = nil, os.clock()+5
+					warn(&quot;Retrying player appearance&quot;,userId)
+					return
+				end
+			else
+				local uniform = if athlete.team == &quot;A&quot; then Color3.fromRGB(21,76,138) else Color3.fromRGB(185,67,56)
+				description.HeadColor = Color3.fromRGB(210,166,124)
+				description.TorsoColor, description.LeftArmColor, description.RightArmColor = uniform, uniform, uniform
+				description.LeftLegColor, description.RightLegColor = Color3.fromRGB(35,46,59), Color3.fromRGB(35,46,59)
+			end
+			local ok, model = pcall(Players.CreateHumanoidModelFromDescriptionAsync, Players, description, Enum.HumanoidRigType.R15)
+			description:Destroy()
+			self.loading[key] = nil
+			if not ok then self.retry[key]=os.clock()+5 warn(&quot;Actor appearance unavailable&quot;, athlete.id) return end
+			if session.closed or session.runtime.state.matchId ~= matchId or athlete.generation ~= generation or not folder.Parent then model:Destroy() return end
+			model.Name = athlete.id
+			local humanoid = model:FindFirstChildOfClass(&quot;Humanoid&quot;)
+			if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+			for _, part in model:GetDescendants() do
+				if part:IsA(&quot;BasePart&quot;) then part.CanCollide, part.CanTouch, part.CanQuery = false, false, false end
+			end
+			local root = model:FindFirstChild(&quot;HumanoidRootPart&quot;)
+			if root then root.Anchored = true end
+			model:SetAttribute(&quot;MatchId&quot;, matchId)
+			model:SetAttribute(&quot;Generation&quot;, generation)
+			model:SetAttribute(&quot;ExpectedDescendants&quot;, #model:GetDescendants())
+			local old = folder:FindFirstChild(athlete.id)
+			if old then old:Destroy() end
+			model.Parent = folder
+		end)
+	end
+end
+function Actors.remove(self: any, matchId: string)
+	local folder = self.parent:FindFirstChild(matchId)
+	if folder then folder:Destroy() end
+	for key in self.retry do if key:sub(1,#matchId+1)==matchId..&quot;:&quot; then self.retry[key]=nil end end
+end
+return Actors
+</ProtectedString></Properties></Item><Item class="Script"><Properties><string name="Name">Bootstrap</string><ProtectedString name="Source">--!strict
 require(script.Parent.Server).start()
 </ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Bots</string><ProtectedString name="Source">--!strict
 local Bots = {}
@@ -104,6 +168,119 @@ function Bots.step(self: any, match: any)
 end
 
 return Bots
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Collection</string><ProtectedString name="Source">--!strict
+local Config = require(game.ReplicatedStorage.MythicsShared.Config)
+local Collection = {}
+Collection.__index = Collection
+
+function Collection.new(store: any, development: boolean)
+	return setmetatable({ store = store, development = development }, Collection)
+end
+
+function Collection.catalog(self: any)
+	local items = {
+		{ id = &quot;fundamentals&quot;, name = Config.Abilities.fundamentals.name, effect = &quot;Técnicas básicas de vôlei.&quot;, cooldown = 0, doublesOnly = false, enabled = true, initial = true },
+		{ id = &quot;teammate_rant&quot;, name = Config.Abilities.teammate_rant.name, effect = &quot;Reduz a velocidade e o alcance do parceiro por 5 segundos.&quot;, cooldown = 20, doublesOnly = true, enabled = self.development, development = true },
+		{ id = &quot;free_point_out&quot;, name = Config.Abilities.free_point_out.name, effect = &quot;Perto da bola, concede um ponto ao adversário.&quot;, cooldown = 25, doublesOnly = false, enabled = self.development, development = true },
+	}
+	return items
+end
+
+local function normalize(value: any): any
+	local p = if type(value) == &quot;table&quot; then value else {}
+	return {
+		version = 1, revision = p.revision or 0, sequence = p.sequence or 0,
+		owned = table.clone(p.owned or { fundamentals = true }),
+		equipped = p.equipped or &quot;fundamentals&quot;, spins = p.spins or 1,
+		receipts = table.clone(p.receipts or {}), order = table.clone(p.order or {}),
+		rewards = table.clone(p.rewards or {}),
+	}
+end
+
+function Collection.candidates(self: any, profile: any)
+	local result = {}
+	for _, item in self:catalog() do
+		if item.enabled and not item.initial and not profile.owned[item.id] then table.insert(result, item.id) end
+	end
+	return result
+end
+
+function Collection.view(self: any, profile: any)
+	local candidates = self:candidates(profile)
+	local chances = {}
+	for _, id in candidates do chances[id] = 1 / #candidates end
+	return { revision = profile.revision, sequence = profile.sequence, spins = profile.spins,
+		owned = table.clone(profile.owned), equipped = profile.equipped,
+		catalog = self:catalog(), chances = chances, complete = #candidates == 0 }
+end
+
+function Collection.update(self: any, userId: number, transform: (any) -&gt; any)
+	local lastError = &quot;&quot;
+	for attempt = 1, 3 do
+		local ok, result = pcall(function()
+			return self.store:UpdateAsync(&quot;user:&quot; .. userId, function(old)
+				return transform(normalize(old))
+			end)
+		end)
+		if ok and result then return result end
+		lastError = tostring(result)
+		if attempt &lt; 3 then task.wait(0.25 * 2^(attempt-1)) end
+	end
+	warn(&quot;Collection save failed&quot;, lastError)
+	return nil
+end
+
+function Collection.read(self: any, userId: number)
+	return self:update(userId, function(p) p.owned.fundamentals = true return p end)
+end
+
+function Collection.operate(self: any, userId: number, request: any)
+	if type(request) ~= &quot;table&quot; or type(request.id) ~= &quot;string&quot; or #request.id &lt; 8 or #request.id &gt; 80
+		or type(request.seq) ~= &quot;number&quot; or request.seq % 1 ~= 0 or request.seq &lt; 1
+		or type(request.revision) ~= &quot;number&quot; then return nil, &quot;invalid_request&quot; end
+	if request.kind ~= &quot;spin&quot; and request.kind ~= &quot;equip&quot; then return nil, &quot;invalid_request&quot; end
+	local sample = Random.new():NextNumber()
+	local result = self:update(userId, function(p)
+		if p.receipts[request.id] or request.seq &lt;= p.sequence or request.revision ~= p.revision then return p end
+		local receipt: any = { kind = request.kind, status = &quot;ok&quot;, seq = request.seq }
+		if request.kind == &quot;spin&quot; then
+			local candidates = self:candidates(p)
+			if #candidates == 0 then receipt.status = &quot;complete&quot;
+			elseif p.spins &lt; 1 then receipt.status = &quot;no_spins&quot;
+			else
+				local id = candidates[math.min(#candidates, math.floor(sample * #candidates) + 1)]
+				p.spins -= 1
+				p.owned[id], receipt.ability = true, id
+			end
+		else
+			local allowed = false
+			for _, item in self:catalog() do
+				if item.id == request.ability and item.enabled and p.owned[item.id] then allowed = true end
+			end
+			if allowed then p.equipped = request.ability else receipt.status = &quot;not_owned&quot; end
+		end
+		p.sequence, p.revision = request.seq, p.revision + 1
+		p.receipts[request.id] = receipt
+		table.insert(p.order, request.id)
+		if #p.order &gt; 32 then p.receipts[table.remove(p.order, 1)] = nil end
+		return p
+	end)
+	if not result then return nil, &quot;unavailable&quot; end
+	local receipt = result.receipts[request.id]
+	if not receipt or receipt.seq ~= request.seq or receipt.kind ~= request.kind then return result, &quot;stale&quot; end
+	return result, receipt.status, receipt
+end
+
+function Collection.reward(self: any, userId: number, matchId: string)
+	return self:update(userId, function(p)
+		if not p.rewards[matchId] then
+			p.rewards[matchId], p.spins, p.revision = true, p.spins + 1, p.revision + 1
+		end
+		return p
+	end)
+end
+
+return Collection
 </ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Court</string><ProtectedString name="Source">--!strict
 local Court = {}
 Court.StudsPerMeter = 3.5
@@ -171,6 +348,108 @@ function Court.build(parent: Instance): Model
 end
 
 return Court
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Directory</string><ProtectedString name="Source">--!strict
+local Directory = {}
+Directory.__index = Directory
+local capacity = { SoloBots2v2 = 1, Online1v1 = 2, Online2v2 = 4 }
+
+function Directory.new(map: any)
+	return setmetatable({ map = map }, Directory)
+end
+local function clone(value: any): any
+	if type(value) ~= &quot;table&quot; then return value end
+	local result = {}
+	for k, v in value do result[k] = clone(v) end
+	return result
+end
+local function clean(value: any, now: number)
+	local data = clone(value or {rooms={}})
+	for id, room in data.rooms do
+		if room.expires &lt;= now then data.rooms[id] = nil
+		else
+			for user, claim in room.claims do if claim.expires &lt;= now then room.claims[user] = nil end end
+			for user, deadline in room.returns do if deadline &lt;= now then room.returns[user] = nil end end
+		end
+	end
+	return data
+end
+function Directory.claim(self: any, pool: string, mode: string, userId: number, token: string, newRoom: string, now: number)
+	local user = tostring(userId)
+	local data = self.map:UpdateAsync(pool, function(old)
+		local nextData = clean(old, now)
+		local ids = {}
+		for id in nextData.rooms do table.insert(ids, id) end
+		table.sort(ids)
+		local selected = nil
+		-- Reentry precedes admission to another match.
+		for _, id in ids do
+			local room = nextData.rooms[id]
+			if room.mode == mode and (room.members[user] or room.returns[user] or room.claims[user]) then selected = room break end
+		end
+		if not selected and mode ~= &quot;SoloBots2v2&quot; then
+			for _, id in ids do
+				local room = nextData.rooms[id]
+				local occupied = {}
+				for u in room.members do occupied[u] = true end
+				for u in room.claims do occupied[u] = true end
+				for u in room.returns do occupied[u] = true end
+				local count = 0
+				for _ in occupied do count += 1 end
+				if room.mode == mode and room.open and count &lt; capacity[mode] then selected = room break end
+			end
+		end
+		if not selected then
+			if #ids &gt;= 48 then return nextData end
+			selected = { id=newRoom, mode=mode, reservedId=newRoom, expires=now+60, open=true, members={},claims={},returns={} }
+			nextData.rooms[newRoom] = selected
+		end
+		selected.claims[user] = { token=token, expires=now+40 }
+		return nextData
+	end, 120)
+	for _, room in data.rooms do
+		local claim = room.claims[user]
+		if claim and claim.token == token then return room end
+	end
+	return nil
+end
+function Directory.release(self: any, pool: string, roomId: string, userId: number, token: string)
+	self.map:UpdateAsync(pool, function(old)
+		local data = clone(old or {rooms={}})
+		local room = data.rooms[roomId]
+		local claim = if room then room.claims[tostring(userId)] else nil
+		if claim and claim.token == token then room.claims[tostring(userId)] = nil end
+		return data
+	end, 120)
+end
+function Directory.confirm(self: any, pool: string, roomId: string, userId: number, token: string, jobId: string, privateId: string, now: number)
+	local user = tostring(userId)
+	local data = self.map:UpdateAsync(pool, function(old)
+		local nextData = clean(old, now)
+		local room = nextData.rooms[roomId]
+		local claim = if room then room.claims[user] else nil
+		if not room or not claim or claim.token ~= token then return nextData end
+		if room.jobId and room.jobId ~= jobId then return nextData end
+		if room.privateId and room.privateId ~= privateId then return nextData end
+		room.jobId, room.privateId = jobId, privateId
+		room.members[user], room.claims[user], room.returns[user] = true, nil, nil
+		room.expires = now+60
+		return nextData
+	end, 120)
+	local room = data.rooms[roomId]
+	if room and room.jobId == jobId and room.privateId == privateId and room.members[user] then return room end
+	return nil
+end
+function Directory.announce(self: any, pool: string, roomId: string, jobId: string, members: any, returns: any, open: boolean, now: number)
+	self.map:UpdateAsync(pool, function(old)
+		local data = clean(old, now)
+		local room = data.rooms[roomId]
+		if room and room.jobId == jobId then
+			room.members, room.returns, room.open, room.expires = clone(members), clone(returns), open, now+60
+		end
+		return data
+	end, 120)
+end
+return Directory
 </ProtectedString></Properties></Item><Item class="Folder"><Properties><string name="Name">Domain</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Ball</string><ProtectedString name="Source">--!strict
 -- Positions are meters. Keep doubles until converting to Roblox Vector3.
 local Ball = {}
@@ -527,7 +806,7 @@ function LobbyServices.start(folder: Folder)
 			})
 		end
 		pending[player] = nil
-		return { modes = { SoloBots2v2 = true, Online1v1 = false, Online2v2 = false }, offers = items }
+		return { modes = { SoloBots2v2 = true, Online1v1 = true, Online2v2 = true }, offers = items }
 	end
 	Marketplace.PromptGamePassPurchaseFinished:Connect(function(player, id, purchased)
 		if not purchased then return end
@@ -536,6 +815,255 @@ function LobbyServices.start(folder: Folder)
 	Players.PlayerRemoving:Connect(function(player) pending[player], last[player] = nil, nil end)
 end
 return LobbyServices
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">ProfileService</string><ProtectedString name="Source">--!strict
+local RunService = game:GetService(&quot;RunService&quot;)
+local Players = game:GetService(&quot;Players&quot;)
+local Collection = require(script.Parent.Collection)
+local ProfileService = {}
+
+function ProfileService.new(folder: Folder)
+	local memory = {}
+	local store: any
+	local temporary = RunService:IsStudio() and workspace:GetAttribute(&quot;MythicsTemporaryProfiles&quot;) == true
+	if temporary then
+		store = { UpdateAsync = function(_, key, callback) memory[key] = callback(memory[key]) return memory[key] end }
+	else
+		store = game:GetService(&quot;DataStoreService&quot;):GetDataStore(if RunService:IsStudio() then &quot;MythicsStudioProfiles_v1&quot; else &quot;MythicsProfiles_v1&quot;)
+	end
+	local service = Collection.new(store, RunService:IsStudio())
+	local self: any = { collection = service, busy = {}, lastRequest = {}, temporary = temporary }
+	local remote = Instance.new(&quot;RemoteFunction&quot;)
+	remote.Name, remote.Parent = &quot;Collection&quot;, folder
+	local function publish(player: Player, profile: any)
+		if not player.Parent then return end
+		player:SetAttribute(&quot;EquippedSignature&quot;, profile.equipped)
+	end
+	self.load = function(player: Player)
+		local profile = service:read(player.UserId)
+		if profile then publish(player, profile) end
+		return profile
+	end
+	remote.OnServerInvoke = function(player: Player, request: any)
+		if self.busy[player] or os.clock() - (self.lastRequest[player] or -10) &lt; 0.5 then return { error = &quot;busy&quot; } end
+		self.lastRequest[player] = os.clock()
+		self.busy[player] = true
+		local profile, status, receipt
+		local ok, failure = pcall(function()
+			if request == nil then profile = self.load(player) status = &quot;ok&quot;
+			else profile, status, receipt = service:operate(player.UserId, request) end
+		end)
+		self.busy[player] = nil
+		if not ok then warn(failure) return { error = &quot;unavailable&quot; } end
+		if not profile then return { error = status or &quot;unavailable&quot; } end
+		publish(player, profile)
+		return { profile = service:view(profile), status = status, receipt = receipt, temporary = temporary }
+	end
+	self.equipped = function(player: Player, mode: string)
+		if self.busy[player] then return nil, false end
+		self.busy[player] = true
+		local profile = self.load(player)
+		self.busy[player] = nil
+		if not profile then return nil, false end
+		for _, item in service:catalog() do
+			if item.id == profile.equipped and profile.owned[item.id] and item.enabled then
+				local fallback = mode == &quot;Online1v1&quot; and item.doublesOnly
+				return if fallback then &quot;fundamentals&quot; else item.id, fallback
+			end
+		end
+		return &quot;fundamentals&quot;
+	end
+	Players.PlayerRemoving:Connect(function(player) self.lastRequest[player], self.busy[player] = nil, nil end)
+	return self
+end
+return ProfileService
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Results</string><ProtectedString name="Source">--!strict
+local Http = game:GetService(&quot;HttpService&quot;)
+local Run = game:GetService(&quot;RunService&quot;)
+local Results = {}
+Results.__index = Results
+local function canonical(value: any): string
+	if type(value) ~= &quot;table&quot; then return Http:JSONEncode(value) end
+	local keys = {}
+	for key in value do table.insert(keys, key) end
+	table.sort(keys, function(a,b) return tostring(a)&lt;tostring(b) end)
+	local parts = {}
+	for _, key in keys do table.insert(parts,Http:JSONEncode(tostring(key)) .. &quot;=&quot; .. canonical(value[key])) end
+	return &quot;{&quot; .. table.concat(parts,&quot;,&quot;) .. &quot;}&quot;
+end
+function Results.new(profiles: any, injectedStore: any?)
+	local store = injectedStore or game:GetService(&quot;DataStoreService&quot;):GetDataStore(if Run:IsStudio() then &quot;MythicsStudioResults_v1&quot; else &quot;MythicsResults_v1&quot;)
+	local self: any = setmetatable({store=store,profiles=profiles,pending={}},Results)
+	if Run:IsServer() then
+		game:BindToClose(function()
+			local deadline=os.clock()+25
+			while next(self.pending) and os.clock()&lt;deadline do task.wait(.2) end
+		end)
+	end
+	return self
+end
+function Results.save(self: any, payload: any): boolean
+	local id, signature = payload.matchId, canonical(payload)
+	-- The durable user inbox is also a repair journal if the process ends mid-write.
+	for _, userId in payload.participants do
+		self.store:UpdateAsync(&quot;user:&quot;..userId,function(old)
+			local index=table.clone(old or {})
+			local receipt=index[id]
+			if receipt then assert(receipt.signature==signature,&quot;Conflicting result&quot;)
+			else index[id]={payload=payload,signature=signature,complete=false} end
+			return index
+		end)
+	end
+	self.store:UpdateAsync(&quot;match:&quot;..id,function(old)
+		if old then assert(old.signature==signature,&quot;Conflicting immutable result&quot;) return old end
+		return {payload=payload,signature=signature}
+	end)
+	for _, userId in payload.participants do
+		if payload.reason==&quot;points&quot; and payload.eligible[tostring(userId)] then
+			if not self.profiles.collection:reward(userId,id) then return false end
+		end
+		self.store:UpdateAsync(&quot;user:&quot;..userId,function(old)
+			local index=table.clone(old or {})
+			local entry=table.clone(index[id])
+			entry.complete=true
+			index[id]=entry
+			return index
+		end)
+	end
+	return true
+end
+function Results.enqueue(self: any, payload: any)
+	if self.pending[payload.matchId] then return end
+	self.pending[payload.matchId]=true
+	task.spawn(function()
+		local saved=false
+		while not saved do
+			local ok,result=pcall(function() return self:save(payload) end)
+			saved=ok and result==true
+			if not saved then warn(&quot;Result save pending&quot;,payload.matchId,result) task.wait(5) end
+		end
+		self.pending[payload.matchId]=nil
+	end)
+end
+function Results.finish(self: any, session: any)
+	local participants,eligible={},{}
+	for userId in session.participants do table.insert(participants,userId) end
+	table.sort(participants)
+	for userId in session.members do eligible[tostring(userId)]=true end
+	local payload={matchId=session.runtime.state.matchId,mode=session.mode,score=table.clone(session.runtime.state.score),
+		winner=session.runtime.state.winner,reason=session.runtime.state.reason,history=table.clone(session.history),
+		participants=participants,eligible=eligible,finishedAt=os.time(),rulesVersion=4}
+	self:enqueue(payload)
+end
+function Results.repair(self: any, userId: number)
+	local ok,index=pcall(function() return self.store:GetAsync(&quot;user:&quot;..userId) end)
+	if ok and index then
+		for _, entry in index do if not entry.complete then self:enqueue(entry.payload) end end
+	end
+end
+return Results
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Routing</string><ProtectedString name="Source">--!strict
+local Http = game:GetService(&quot;HttpService&quot;)
+local Players = game:GetService(&quot;Players&quot;)
+local Teleport = game:GetService(&quot;TeleportService&quot;)
+local Run = game:GetService(&quot;RunService&quot;)
+local Directory = require(script.Parent.Directory)
+local Routing = {}
+Routing.__index = Routing
+function Routing.new(onFailure: (Player, string) -&gt; ())
+	local self: any = setmetatable({ enabled = not Run:IsStudio(), pending = {}, arrivals = {}, room = nil, onFailure = onFailure }, Routing)
+	if not self.enabled then return self end
+	self.poolType = game.MatchmakingType.Name
+	self.map = game:GetService(&quot;MemoryStoreService&quot;):GetSortedMap(&quot;MythicsDirectory_v1&quot;)
+	self.routes = game:GetService(&quot;MemoryStoreService&quot;):GetSortedMap(&quot;MythicsReturnRoutes_v1&quot;)
+	self.directory = Directory.new(self.map)
+	Teleport.TeleportInitFailed:Connect(function(player, _, _, _, options)
+		local pending = self.pending[player]
+		if not pending or pending.options ~= options then return end
+		self.pending[player] = nil
+		if pending.pool then pcall(function() self.directory:release(pending.pool, pending.roomId, player.UserId, pending.token) end) end
+		if pending.attempt &lt; 3 and player.Parent and pending.mode then
+			task.delay(1, function() self:travel(player, pending.mode, pending.attempt + 1, pending.preferences) end)
+		else onFailure(player, &quot;Falha no transporte. Tente novamente.&quot;) end
+	end)
+	Players.PlayerRemoving:Connect(function(player) self.pending[player] = nil end)
+	return self
+end
+function Routing.travel(self: any, player: Player, mode: string, attempt: number?, preferences: any?): boolean
+	if self.pending[player] then return true end
+	local token = Http:GenerateGUID(false)
+	local pool = mode .. &quot;:&quot; .. self.poolType
+	local options = Instance.new(&quot;TeleportOptions&quot;)
+	self.pending[player] = {mode=mode,attempt=attempt or 1,options=options,token=token,preferences=preferences}
+	local ok, failure = pcall(function()
+		local room = self.directory:claim(pool, mode, player.UserId, token, Http:GenerateGUID(false), os.time())
+		if not room then error(&quot;Matchmaking ocupado&quot;) end
+		local pending = self.pending[player]
+		if not pending or not player.Parent then self.directory:release(pool, room.id, player.UserId, token) return end
+		pending.pool, pending.roomId = pool, room.id
+		options.ReservedServerId = room.reservedId
+		options:SetTeleportData({mythics=1,pool=pool,roomId=room.id,token=token,startedAt=os.time(),preferences=preferences})
+		Teleport:TeleportAsync(game.PlaceId, {player}, options)
+	end)
+	if not ok then
+		local pending = self.pending[player]
+		self.pending[player] = nil
+		if pending and pending.pool then pcall(function() self.directory:release(pool,pending.roomId,player.UserId,token) end) end
+		if (attempt or 1)&lt;3 and player.Parent then
+			task.delay(1,function() self:travel(player,mode,(attempt or 1)+1,preferences) end)
+		else self.onFailure(player,&quot;Não foi possível entrar na quadra. Tente novamente.&quot;) end
+		warn(&quot;Match routing failed&quot;, failure)
+	end
+	return true
+end
+function Routing.arrive(self: any, player: Player)
+	if not self.enabled then return nil end
+	local data = player:GetJoinData().TeleportData
+	if type(data)~=&quot;table&quot; or data.mythics~=1 or type(data.pool)~=&quot;string&quot; or type(data.roomId)~=&quot;string&quot; or type(data.token)~=&quot;string&quot; then return nil end
+	local mode, poolType = data.pool:match(&quot;^([^:]+):(.+)$&quot;)
+	if poolType~=self.poolType or (mode~=&quot;SoloBots2v2&quot; and mode~=&quot;Online1v1&quot; and mode~=&quot;Online2v2&quot;) then return nil end
+	if self.room and (self.room.id~=data.roomId or self.room.pool~=data.pool) then return nil end
+	local confirmed = self.directory:confirm(data.pool,data.roomId,player.UserId,data.token,game.JobId,game.PrivateServerId,os.time())
+	if not confirmed then return nil end
+	self.room = { id=confirmed.id,pool=data.pool,mode=mode }
+	self.arrivals[player.UserId] = os.time()+40
+	self.routes:SetAsync(tostring(player.UserId),{mode=mode,roomId=confirmed.id,pool=data.pool,expires=os.time()+60},60)
+	return {mode=mode,roomId=confirmed.id,startedAt=data.startedAt,team=if type(data.preferences)==&quot;table&quot; then data.preferences.team else nil,
+		difficulty=if type(data.preferences)==&quot;table&quot; then data.preferences.difficulty else nil}
+end
+function Routing.announce(self: any, session: any)
+	if not self.enabled or not self.room then return end
+	local members, returns = {}, {}
+	for userId in session.members do members[tostring(userId)]=true end
+	for userId in session.pending do members[tostring(userId)]=true end
+	for userId, deadline in self.arrivals do
+		if members[tostring(userId)] or deadline&lt;=os.time() then self.arrivals[userId]=nil
+		else members[tostring(userId)]=true end
+	end
+	for userId, reservation in session.reservations do
+		returns[tostring(userId)]=os.time()+math.max(0,math.ceil(reservation.expires-os.clock()))
+	end
+	local open = not session.closed and session.runtime.state.phase~=&quot;finished&quot; and session.mode~=&quot;SoloBots2v2&quot;
+	self.directory:announce(self.room.pool,self.room.id,game.JobId,members,returns,open,os.time())
+	for userId in session.members do
+		self.routes:SetAsync(tostring(userId),{mode=self.room.mode,roomId=self.room.id,pool=self.room.pool,expires=os.time()+60},60)
+	end
+end
+function Routing.resume(self: any, player: Player): boolean
+	if not self.enabled then return false end
+	local route = self.routes:GetAsync(tostring(player.UserId))
+	if route and route.expires&gt;os.time() then self:travel(player,route.mode) return true end
+	return false
+end
+function Routing.lobby(self: any, player: Player)
+	if not self.enabled then return end
+	pcall(function() self.routes:RemoveAsync(tostring(player.UserId)) end)
+	local options = Instance.new(&quot;TeleportOptions&quot;)
+	options.ForcePublicServer = true
+	self.pending[player]={options=options,attempt=3}
+	local ok = pcall(function() Teleport:TeleportAsync(game.PlaceId,{player},options) end)
+	if not ok then self.pending[player]=nil self.onFailure(player,&quot;Falha ao voltar. Use Voltar para tentar novamente.&quot;) end
+end
+return Routing
 </ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Runtime</string><ProtectedString name="Source">--!strict
 local Ball = require(script.Parent.Domain.Ball)
 local Contacts = require(script.Parent.Domain.Contacts)
@@ -550,20 +1078,22 @@ local function distance(a: any, b: any): number
 	return math.sqrt((a.x-b.x)^2 + (a.y-b.y)^2 + (a.z-b.z)^2)
 end
 
-function Runtime.new(id: string, humanId: string, team: string, ability: string, difficulty: string, seed: number)
+function Runtime.new(id: string, humanId: string, team: string, ability: string, difficulty: string, seed: number, profile: string?)
+	local mode = if profile == &quot;Online1v1&quot; then &quot;1v1&quot; else &quot;2v2&quot;
 	local self: any = setmetatable({
-		state = Match.create(id, &quot;2v2&quot;), tick = 0, phaseTicks = 0, athletes = {},
-		inputs = {}, sequences = {}, touching = {}, contacts = Contacts.create(&quot;2v2&quot;),
+		state = Match.create(id, mode), tick = 0, phaseTicks = 0, athletes = {},
+		inputs = {}, sequences = {}, touching = {}, contacts = Contacts.create(mode),
 		ball = { position = { x = 0, y = 1.25, z = -6 }, velocity = { x = 0, y = 0, z = 0 }, grounded = false },
-		bots = Bots.new(seed, difficulty), feedback = &quot;&quot;, events = {}, eventId = 0,
+		bots = if mode == &quot;1v1&quot; then nil else Bots.new(seed, difficulty), feedback = &quot;&quot;, events = {}, eventId = 0,
 		humanId = humanId, abilityId = ability, cooldownUntil = 0, difficulty = difficulty,
 	}, Runtime)
 	for _, side in { &quot;A&quot;, &quot;B&quot; } do
-		for slot = 0, 1 do
+		for slot = 0, (if mode == &quot;1v1&quot; then 0 else 1) do
 			local human = side == team and slot == 0
 			table.insert(self.athletes, {
 				id = if human then humanId else &quot;bot:&quot; .. side .. slot,
-				team = side, slot = slot, bot = not human,
+				team = side, slot = slot, bot = mode ~= &quot;1v1&quot; and not human,
+				active = mode ~= &quot;1v1&quot; or human, abilityId = if human then ability else &quot;fundamentals&quot;, cooldownUntil = 0, generation = 1,
 				position = { x = if slot == 0 then -2 else 2, y = 0, z = if side == &quot;A&quot; then -6 else 6 },
 				velocityY = 0, recovery = 0, effectUntil = 0, attributes = table.clone(Config.Attributes),
 			})
@@ -600,6 +1130,12 @@ function Runtime.visual(self: any, athlete: any, kind: string)
 end
 
 function Runtime.point(self: any, side: any, reason: string)
+	if self.warmup then
+		self.state.phase, self.phaseTicks = &quot;serving&quot;, 0
+		for _, athlete in self.athletes do if athlete.active then self.state.servingSide = athlete.team break end end
+		self:resetRally()
+		return
+	end
 	local nextState = Match.transition(self.state, {
 		type = &quot;RALLY_POINT&quot;, scoringSide = side, pointId = self.state.matchId .. &quot;:&quot; .. self.state.rallyId,
 	})
@@ -609,17 +1145,22 @@ function Runtime.point(self: any, side: any, reason: string)
 end
 
 function Runtime.resetRally(self: any)
-	self.contacts, self.touching, self.inputs = Contacts.create(&quot;2v2&quot;), {}, {}
+	self.contacts, self.touching, self.inputs = Contacts.create(self.state.mode), {}, {}
 	self.feedback = &quot;&quot;
 	for _, athlete in self.athletes do
 		athlete.position = { x = if athlete.slot == 0 then -2 else 2, y = 0, z = if athlete.team == &quot;A&quot; then -6 else 6 }
 		athlete.velocityY, athlete.recovery = 0, 0
+		if athlete.team == self.state.servingSide and athlete.slot == self.state.servingSlot then
+			self.ball = { position = {x=athlete.position.x,y=1.25,z=athlete.position.z}, velocity={x=0,y=0,z=0}, grounded=false }
+		end
 	end
 end
 
 function Runtime.ability(self: any, athlete: any)
-	if self.tick &lt; self.cooldownUntil then self.feedback = &quot;Habilidade em recarga&quot; return end
-	if self.abilityId == &quot;teammate_rant&quot; then
+	local ability = athlete.abilityId or self.abilityId
+	local untilTick = athlete.cooldownUntil or self.cooldownUntil
+	if self.tick &lt; untilTick then self.feedback = &quot;Habilidade em recarga&quot; return end
+	if ability == &quot;teammate_rant&quot; then
 		local teammate = nil
 		for _, candidate in self.athletes do
 			if candidate.team == athlete.team and candidate.id ~= athlete.id then teammate = candidate end
@@ -628,10 +1169,12 @@ function Runtime.ability(self: any, athlete: any)
 		if teammate.effectUntil &gt; self.tick then self.feedback = &quot;Parceiro já tem um efeito ativo&quot; return end
 		teammate.effectUntil = self.tick + 300
 		self.cooldownUntil = self.tick + 1200
+		athlete.cooldownUntil = self.cooldownUntil
 		self:visual(athlete, &quot;rant&quot;)
-	elseif self.abilityId == &quot;free_point_out&quot; then
+	elseif ability == &quot;free_point_out&quot; then
 		if distance(self.ball.position, athlete.position) &gt; 1.9 then self.feedback = &quot;Chegue perto da bola&quot; return end
 		self.cooldownUntil = self.tick + 1500
+		athlete.cooldownUntil = self.cooldownUntil
 		self:visual(athlete, &quot;freePoint&quot;)
 		self:point(if athlete.team == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;, &quot;Foi Sem Querer&quot;)
 	end
@@ -653,7 +1196,7 @@ function Runtime.action(self: any, athlete: any, input: any)
 		end
 		self.state = Match.transition(self.state, { type = &quot;SERVE_HIT&quot; })
 		self.phaseTicks = 0
-		self.contacts = Contacts.create(&quot;2v2&quot;)
+		self.contacts = Contacts.create(self.state.mode)
 		self.contacts.lastTouchSide, self.contacts.lastPlayerId = athlete.team, athlete.id
 		local position = { x = athlete.position.x, y = athlete.position.y + 1.25, z = athlete.position.z }
 		self.ball = {
@@ -689,10 +1232,10 @@ function Runtime.action(self: any, athlete: any, input: any)
 end
 
 function Runtime.step(self: any)
-	if self.state.phase == &quot;finished&quot; then return end
+	if self.state.phase == &quot;finished&quot; or self.state.phase == &quot;cancelled&quot; or self.suspended then return end
 	self.tick += 1
 	self.phaseTicks += 1
-	self.bots:step(self)
+	if self.bots then self.bots:step(self) end
 	if self.state.phase == &quot;countdown&quot; then
 		if self.phaseTicks &lt; 180 then return end
 		self.state = Match.transition(self.state, { type = &quot;COUNTDOWN_FINISHED&quot; })
@@ -709,6 +1252,7 @@ function Runtime.step(self: any)
 		return
 	end
 	for _, athlete in self.athletes do
+		if not athlete.active then continue end
 		local input = self.inputs[athlete.id]
 		if input and self.tick - input.receivedTick &lt;= 15 then
 			local direction = if athlete.team == &quot;A&quot; then 1 else -1
@@ -746,19 +1290,25 @@ function Runtime.step(self: any)
 	end
 end
 
-function Runtime.snapshot(self: any)
+function Runtime.snapshot(self: any, viewer: string?)
 	local athletes = {}
+	local localAthlete = nil
 	for _, athlete in self.athletes do
+		if athlete.id == (viewer or self.humanId) then localAthlete = athlete end
 		table.insert(athletes, {
 			id = athlete.id, team = athlete.team, slot = athlete.slot, bot = athlete.bot,
 			position = table.clone(athlete.position), effectUntil = athlete.effectUntil,
+			generation = athlete.generation, active = athlete.active, userId = athlete.userId,
 		})
 	end
 	return {
 		matchId = self.state.matchId, tick = self.tick, rallyId = self.state.rallyId, phase = self.state.phase, score = table.clone(self.state.score),
 		phaseTicks = self.phaseTicks, servingSide = self.state.servingSide, servingSlot = self.state.servingSlot,
 		ball = table.clone(self.ball.position), athletes = athletes, events = table.clone(self.events),
-		abilityId = self.abilityId, cooldownUntil = self.cooldownUntil, humanId = self.humanId, feedback = self.feedback,
+		abilityId = if localAthlete then localAthlete.abilityId else self.abilityId,
+		cooldownUntil = if localAthlete then localAthlete.cooldownUntil else self.cooldownUntil,
+		humanId = viewer or self.humanId, feedback = self.feedback,
+		warmup = self.warmup == true, suspended = self.suspended == true,
 	}
 end
 
@@ -767,52 +1317,66 @@ return Runtime
 local Players = game:GetService(&quot;Players&quot;)
 local ReplicatedStorage = game:GetService(&quot;ReplicatedStorage&quot;)
 local RunService = game:GetService(&quot;RunService&quot;)
-local HttpService = game:GetService(&quot;HttpService&quot;)
-local Lighting = game:GetService(&quot;Lighting&quot;)
-local Runtime = require(script.Parent.Runtime)
-local Court = require(script.Parent.Court)
-local Lobby = require(script.Parent.Lobby)
-local LobbyServices = require(script.Parent.LobbyServices)
+local Http = game:GetService(&quot;HttpService&quot;)
 local Config = require(ReplicatedStorage.MythicsShared.Config)
+local Session = require(script.Parent.Session)
 local Server = {}
 
 function Server.start()
 	Players.CharacterAutoLoads = false
-	Court.build(workspace)
+	require(script.Parent.Court).build(workspace)
+	local Lobby = require(script.Parent.Lobby)
 	Lobby.build()
-	Lighting.ClockTime, Lighting.Brightness = 16.5, 2
-	Lighting.Ambient = Color3.fromRGB(150, 163, 146)
-	Lighting.OutdoorAmbient = Lighting.Ambient
-	local sky = Instance.new(&quot;Atmosphere&quot;)
-	sky.Color, sky.Density, sky.Parent = Color3.fromRGB(144, 201, 237), 0.15, Lighting
-	local remoteFolder = Instance.new(&quot;Folder&quot;)
-	remoteFolder.Name, remoteFolder.Parent = &quot;MythicsRemotes&quot;, ReplicatedStorage
-	LobbyServices.start(remoteFolder)
+	local lighting = game:GetService(&quot;Lighting&quot;)
+	lighting.ClockTime, lighting.Brightness = 16.5, 2
+	lighting.Ambient, lighting.OutdoorAmbient = Color3.fromRGB(150,163,146), Color3.fromRGB(150,163,146)
+	local folder = Instance.new(&quot;Folder&quot;)
+	folder.Name, folder.Parent = &quot;MythicsRemotes&quot;, ReplicatedStorage
 	local function remote(className: string, name: string): any
 		local item = Instance.new(className)
-		item.Name, item.Parent = name, remoteFolder
+		item.Name, item.Parent = name, folder
 		return item
 	end
 	local command = remote(&quot;RemoteEvent&quot;, &quot;Command&quot;)
 	local movement = remote(&quot;UnreliableRemoteEvent&quot;, &quot;Movement&quot;)
-	-- Full snapshots include event history. Keep them reliable until a bounded compact codec exists.
 	local snapshot = remote(&quot;RemoteEvent&quot;, &quot;Snapshot&quot;)
-	local reliable = remote(&quot;RemoteEvent&quot;, &quot;State&quot;)
-	local templates = Instance.new(&quot;Folder&quot;)
-	templates.Name, templates.Parent = &quot;MythicsActors&quot;, ReplicatedStorage
-	local session: any = nil
-	local owner: Player? = nil
-	local lastPhase = &quot;&quot;
-	local budgets: { [Player]: any } = {}
-	local channelSeq: any = { movement = 0, action = 0 }
-	local loading: { [Player]: boolean } = {}
-	local function spawnLobby(player: Player)
+	local state = remote(&quot;RemoteEvent&quot;, &quot;State&quot;)
+	local actorsFolder = Instance.new(&quot;Folder&quot;)
+	actorsFolder.Name, actorsFolder.Parent = &quot;MythicsActors&quot;, ReplicatedStorage
+	local actors = require(script.Parent.Actors).new(actorsFolder)
+	local profiles = require(script.Parent.ProfileService).new(folder)
+	require(script.Parent.LobbyServices).start(folder)
+	local sessions: { [string]: any } = {}
+	local membership: { [number]: any } = {}
+	local starting, loading, budgets, sequences = {}, {}, {}, {}
+	local function send(player: Player, value: any) if player.Parent then state:FireClient(player, value) end end
+	local routing = require(script.Parent.Routing).new(function(player, message) send(player,{error=message}) end)
+	local results = require(script.Parent.Results).new(profiles)
+	local routeJoin: any
+	local routingBusy = false
+	local function announce(session: any)
+		if routingBusy or not routing.enabled then return end
+		routingBusy = true
+		task.spawn(function()
+			local ok, failure = pcall(function() routing:announce(session) end)
+			routingBusy = false
+			if not ok then warn(&quot;Directory announcement failed&quot;,failure) end
+		end)
+	end
+	local function publish(session: any)
+		actors:refresh(session)
+		announce(session)
+		for _, player in Players:GetPlayers() do
+			if membership[player.UserId] == session then send(player, session:snapshot(player.UserId)) end
+		end
+	end
+	local function lobby(player: Player)
 		if loading[player] or not player.Parent then return end
 		loading[player] = true
 		local ok = pcall(function() player:LoadCharacterAsync() end)
 		loading[player] = nil
 		if ok and player.Character then
-			if player == owner then player.Character:Destroy() else player.Character:PivotTo(Lobby.Spawn) end
+			if membership[player.UserId] then player.Character:Destroy() else player.Character:PivotTo(Lobby.Spawn) end
 		end
 	end
 	local function added(player: Player)
@@ -820,153 +1384,394 @@ function Server.start()
 		player.DevTouchMovementMode = Enum.DevTouchMovementMode.Scriptable
 		player.CharacterAdded:Connect(function(character)
 			local humanoid = character:WaitForChild(&quot;Humanoid&quot;, 10)
-			if humanoid and humanoid:IsA(&quot;Humanoid&quot;) then
-				humanoid.Died:Connect(function() task.delay(3, function() if player ~= owner then spawnLobby(player) end end) end)
+			if humanoid then humanoid.Died:Connect(function()
+				task.delay(3, function() if not membership[player.UserId] then lobby(player) end end)
+			end) end
+		end)
+		task.defer(function()
+			task.spawn(function() results:repair(player.UserId) end)
+			if not routing.enabled then lobby(player) return end
+			local ok, admission = pcall(function() return routing:arrive(player) end)
+			if ok and admission then routeJoin(player,admission,true)
+			elseif game.PrivateServerId ~= &quot;&quot; and game.PrivateServerOwnerId == 0 then routing:lobby(player)
+			else
+				local resumed, result = pcall(function() return routing:resume(player) end)
+				if not resumed or not result then lobby(player) end
 			end
 		end)
-		task.spawn(spawnLobby, player)
 	end
 	Players.PlayerAdded:Connect(added)
 	for _, player in Players:GetPlayers() do added(player) end
-	local function permit(player: Player, category: string, limit: number): boolean
-		local budget = budgets[player]
-		if not budget then budget = {} budgets[player] = budget end
+	local function permit(player: Player, kind: string, max: number)
+		local key = tostring(player.UserId) .. &quot;:&quot; .. kind
+		local value = budgets[key]
 		local now = os.clock()
-		local bucket = budget[category]
-		if not bucket or now - bucket.since &gt;= 1 then
-			bucket = { since = now, count = 0 }
-			budget[category] = bucket
-		end
-		bucket.count += 1
-		return bucket.count &lt;= limit
+		if not value or now - value.since &gt;= 1 then value = {since=now,count=0} budgets[key]=value end
+		value.count += 1
+		return value.count &lt;= max
 	end
-	local function buildActors(player: Player, match: any)
-		for _, child in templates:GetChildren() do child:Destroy() end
-		local description: HumanoidDescription? = nil
-		local ok, result = pcall(function() return Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId) end)
-		if ok then description = result end
-		for _, athlete in match.athletes do
-			if session ~= match then break end
-			local appearance = if not athlete.bot and description then description else Instance.new(&quot;HumanoidDescription&quot;)
-			if athlete.bot then
-				local uniform = if athlete.team == &quot;A&quot; then Color3.fromRGB(21, 76, 138) else Color3.fromRGB(185, 67, 56)
-				appearance.HeadColor = Color3.fromRGB(210, 166, 124)
-				appearance.TorsoColor, appearance.LeftArmColor, appearance.RightArmColor = uniform, uniform, uniform
-				appearance.LeftLegColor, appearance.RightLegColor = Color3.fromRGB(35, 46, 59), Color3.fromRGB(35, 46, 59)
-			end
-			local success, model = pcall(function()
-				return Players:CreateHumanoidModelFromDescriptionAsync(appearance :: HumanoidDescription, Enum.HumanoidRigType.R15)
-			end)
-			if not success then
-				reliable:FireClient(player, { error = &quot;Não foi possível carregar o avatar. Volte ao início e tente novamente.&quot; })
-				continue
-			end
-			if session ~= match then model:Destroy() break end
-			model.Name = athlete.id
-			local humanoid = model:FindFirstChildOfClass(&quot;Humanoid&quot;)
-			if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
-			for _, child in model:GetDescendants() do
-				if child:IsA(&quot;BasePart&quot;) then
-					child.CanCollide, child.CanTouch, child.CanQuery = false, false, false
-					if athlete.bot and child.Name ~= &quot;Head&quot; then
-						child.Color = if athlete.team == &quot;A&quot; then Color3.fromRGB(21, 76, 138) else Color3.fromRGB(185, 67, 56)
-					end
-				end
-			end
-			local root = model:FindFirstChild(&quot;HumanoidRootPart&quot;)
-			if root and root:IsA(&quot;BasePart&quot;) then root.Anchored = true end
-			model:SetAttribute(&quot;MatchId&quot;, match.state.matchId)
-			model:SetAttribute(&quot;ExpectedDescendants&quot;, #model:GetDescendants())
-			model.Parent = templates
-			if athlete.bot or not description then appearance:Destroy() end
-		end
-		if description then description:Destroy() end
-	end
-	local function finite(value: any): boolean
-		return type(value) == &quot;number&quot; and value == value and math.abs(value) &lt; math.huge
-	end
-	local validActions = { jump = true, receive = true, set = true, serve = true, attack = true, ability = true }
-	local function acceptInput(player: Player, data: any, channel: string)
-		if player ~= owner or not session or type(data) ~= &quot;table&quot; or data.matchId ~= session.state.matchId then return end
-		if not finite(data.seq) or data.seq % 1 ~= 0 or data.seq &lt;= channelSeq[channel] then return end
-		if not finite(data.moveX) or not finite(data.moveZ) or data.moveX^2 + data.moveZ^2 &gt; 1.00001 then return end
-		if type(data.aim) ~= &quot;table&quot; or not finite(data.aim.x) or not finite(data.aim.z) or data.aim.x^2 + data.aim.z^2 &gt; 1.00001 then return end
-		local actions = {}
-		if channel == &quot;action&quot; then
-			if type(data.actions) ~= &quot;table&quot; or #data.actions &gt; 6 then return end
-			for key, action in data.actions do
-				if type(key) ~= &quot;number&quot; or type(action) ~= &quot;string&quot; or not validActions[action] then return end
-				if not table.find(actions, action) then table.insert(actions, action) end
-			end
-		end
-		channelSeq[channel] = data.seq
-		local aimLength = math.sqrt(data.aim.x^2 + data.aim.z^2)
-		local aimScale = math.max(1, aimLength)
-		session:submit(tostring(player.UserId), {
-			seq = (session.sequences[tostring(player.UserId)] or 0) + 1,
-			moveX = data.moveX, moveZ = data.moveZ,
-			aim = { x = data.aim.x/aimScale, z = data.aim.z/aimScale }, actions = actions,
-		})
-	end
-	movement.OnServerEvent:Connect(function(player: Player, data: any)
-		if permit(player, &quot;input&quot;, 60) then acceptInput(player, data, &quot;movement&quot;) end
-	end)
-	command.OnServerEvent:Connect(function(player: Player, kind: any, data: any)
-		if kind == &quot;input&quot; then
-			if permit(player, &quot;input&quot;, 60) then acceptInput(player, data, &quot;action&quot;) end
+	local function join(player: Player, data: any, arriving: boolean?)
+		if membership[player.UserId] or starting[player] then return end
+		if type(data) ~= &quot;table&quot; then return end
+		local mode = data.mode or &quot;SoloBots2v2&quot;
+		if mode ~= &quot;SoloBots2v2&quot; and mode ~= &quot;Online1v1&quot; and mode ~= &quot;Online2v2&quot; then send(player,{error=&quot;Modo indisponível&quot;}) return end
+		local team = if data.team == &quot;B&quot; then &quot;B&quot; else &quot;A&quot;
+		local difficulty = if data.difficulty == &quot;easy&quot; or data.difficulty == &quot;hard&quot; then data.difficulty else &quot;normal&quot;
+		if routing.enabled and not arriving then
+			send(player,{routing=true})
+			routing:travel(player,mode,nil,{team=team,difficulty=difficulty})
 			return
 		end
-		if not permit(player, &quot;command&quot;, 10) then return end
-		if kind == &quot;start&quot; then
-			if type(data) == &quot;table&quot; and data.mode and data.mode ~= &quot;SoloBots2v2&quot; then reliable:FireClient(player, { error = &quot;Modo ainda indisponível&quot; }) return end
-			if owner and owner ~= player then reliable:FireClient(player, { error = &quot;Esta quadra solo está ocupada&quot; }) return end
-			if session and session.state.phase ~= &quot;finished&quot; then return end
-			if type(data) ~= &quot;table&quot; or not Config.Abilities[data.ability] then return end
-			if data.team ~= &quot;A&quot; and data.team ~= &quot;B&quot; then return end
-			if data.difficulty ~= &quot;easy&quot; and data.difficulty ~= &quot;normal&quot; and data.difficulty ~= &quot;hard&quot; then return end
-			owner, channelSeq = player, { movement = 0, action = 0 }
-			if player.Character then player.Character:Destroy() end
-			session = Runtime.new(HttpService:GenerateGUID(false), tostring(player.UserId), data.team, data.ability, data.difficulty, Random.new():NextInteger(1, 2147483647))
-			lastPhase = &quot;&quot;
-			reliable:FireClient(player, session:snapshot())
-			task.spawn(buildActors, player, session)
-		elseif kind == &quot;sync&quot; then
-			if player == owner and session then reliable:FireClient(player, session:snapshot()) else reliable:FireClient(player, { lobby = true }) end
-		elseif kind == &quot;leave&quot; and player == owner then
-			session, owner = nil, nil
-			for _, child in templates:GetChildren() do child:Destroy() end
-			reliable:FireClient(player, { lobby = true })
-			task.spawn(spawnLobby, player)
+		starting[player] = true
+		local ability, fallback = profiles.equipped(player, mode)
+		starting[player] = nil
+		if not player.Parent then return end
+		if not ability then
+			send(player,{error=&quot;Coleção indisponível. Tente novamente.&quot;})
+			if arriving and routing.enabled then routing:lobby(player) end
+			return
+		end
+		local selected = nil
+		for _, session in sessions do
+			if session.mode == mode and session.reservations[player.UserId] then
+				local admitted = session:join(player.UserId, ability, os.clock())
+				if admitted then selected = session break end
+			end
+		end
+		if not selected and mode ~= &quot;SoloBots2v2&quot; then
+			for _, session in sessions do
+				if session.mode == mode then
+					local admitted = session:join(player.UserId, ability, os.clock())
+					if admitted then selected = session break end
+				end
+			end
+		end
+		if not selected then
+			if routing.enabled and next(sessions) then routing:lobby(player) return end
+			selected = Session.new(Http:GenerateGUID(false), mode, player.UserId, ability, team, difficulty, Random.new():NextInteger(1,2147483647))
+			sessions[selected.runtime.state.matchId] = selected
+		end
+		membership[player.UserId], sequences[player] = selected, {}
+		selected.fallbacks[player.UserId] = fallback == true
+		if player.Character then player.Character:Destroy() end
+		publish(selected)
+	end
+	routeJoin = join
+	local function leave(player: Player, explicit: boolean)
+		local session = membership[player.UserId]
+		membership[player.UserId], sequences[player] = nil, nil
+		if session then session:leave(player.UserId, explicit, os.clock()) publish(session) end
+		if explicit then
+			send(player,{lobby=true})
+			if routing.enabled and routing.room then routing:lobby(player) else task.spawn(lobby,player) end
+		end
+	end
+	local function finite(value: any): boolean return type(value)==&quot;number&quot; and value==value and math.abs(value)&lt;math.huge end
+	local valid = { jump=true,receive=true,set=true,serve=true,attack=true,ability=true }
+	local function input(player: Player, data: any, channel: string)
+		local s = membership[player.UserId]
+		if not s or s.runtime.suspended or s.pending[player.UserId] then return end
+		local slot = s.members[player.UserId]
+		local athlete = if slot then s:athlete(slot) else nil
+		if not athlete or type(data)~=&quot;table&quot; or data.matchId~=s.runtime.state.matchId or data.generation~=athlete.generation then return end
+		local sequence = sequences[player]
+		if not sequence then return end
+		if not finite(data.seq) or data.seq%1~=0 or data.seq&lt;=(sequence[channel] or 0) then return end
+		if not finite(data.moveX) or not finite(data.moveZ) or data.moveX^2+data.moveZ^2&gt;1.00001 then return end
+		if type(data.aim)~=&quot;table&quot; or not finite(data.aim.x) or not finite(data.aim.z) or data.aim.x^2+data.aim.z^2&gt;1.00001 then return end
+		local actions = {}
+		if channel==&quot;action&quot; then
+			if type(data.actions)~=&quot;table&quot; or #data.actions&gt;6 then return end
+			for key, action in data.actions do
+				if type(key)~=&quot;number&quot; or type(action)~=&quot;string&quot; or not valid[action] then return end
+				if not table.find(actions,action) then table.insert(actions,action) end
+			end
+		end
+		sequence[channel] = data.seq
+		local norm = math.max(1,math.sqrt(data.aim.x^2+data.aim.z^2))
+		s.runtime:submit(slot,{seq=(s.runtime.sequences[slot] or 0)+1, moveX=data.moveX,moveZ=data.moveZ,aim={x=data.aim.x/norm,z=data.aim.z/norm},actions=actions})
+	end
+	movement.OnServerEvent:Connect(function(player,data) if permit(player,&quot;input&quot;,60) then input(player,data,&quot;movement&quot;) end end)
+	command.OnServerEvent:Connect(function(player,kind,data)
+		if kind==&quot;input&quot; then if permit(player,&quot;input&quot;,60) then input(player,data,&quot;action&quot;) end return end
+		if not permit(player,&quot;command&quot;,10) then return end
+		if kind==&quot;start&quot; then join(player,data)
+		elseif kind==&quot;sync&quot; then
+			local s=membership[player.UserId]
+			send(player,if s then s:snapshot(player.UserId) else {lobby=true})
+		elseif kind==&quot;leave&quot; then leave(player,true)
+		elseif kind==&quot;rematch&quot; then
+			local s=membership[player.UserId]
+			if not s then return end
+			if s.runtime.state.phase~=&quot;finished&quot; or s.votes[player.UserId] then return end
+			local ability,fallback=profiles.equipped(player,s.mode)
+			if not ability then send(player,{error=&quot;Coleção indisponível. Tente a revanche novamente.&quot;}) return end
+			if membership[player.UserId]~=s or s.runtime.state.phase~=&quot;finished&quot; then return end
+			local slot=s.members[player.UserId]
+			if not slot then return end
+			s:athlete(slot).abilityId=ability
+			s.fallbacks[player.UserId]=fallback==true
+			local oldId=s.runtime.state.matchId
+			if s:vote(player.UserId,Http:GenerateGUID(false)) then
+				sessions[oldId]=nil
+				sessions[s.runtime.state.matchId]=s
+				actors:remove(oldId)
+				s.rewarded=nil
+				for id in s.members do local p=Players:GetPlayerByUserId(id) if p then sequences[p]={} end end
+			end
+			publish(s)
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
-		budgets[player] = nil
-		if player == owner then
-			session, owner = nil, nil
-			for _, child in templates:GetChildren() do child:Destroy() end
-		end
+		leave(player,false)
+		starting[player],sequences[player]=nil,nil
+		budgets[tostring(player.UserId)..&quot;:input&quot;],budgets[tostring(player.UserId)..&quot;:command&quot;]=nil,nil
 	end)
-	local accumulator = 0
+	local accumulator, lastAnnouncement, networkTick=0,0,0
 	RunService.Heartbeat:Connect(function(dt)
-		if not session or not owner then accumulator = 0 return end
-		if session.state.phase == &quot;finished&quot; then accumulator = 0 return end
-		accumulator += dt
-		local count = 0
-		while accumulator &gt;= Config.Step and count &lt; 8 do
-			accumulator -= Config.Step
-			count += 1
-			session:step()
-			if session.tick % 3 == 0 then snapshot:FireClient(owner, session:snapshot()) end
-			if lastPhase ~= session.state.phase then
-				lastPhase = session.state.phase
-				reliable:FireClient(owner, session:snapshot())
+		accumulator+=dt
+		local steps=0
+		while accumulator&gt;=Config.Step and steps&lt;8 do
+			accumulator-=Config.Step
+			steps+=1
+			networkTick=(networkTick+1)%3
+			for id,s in sessions do
+				if s.closed then
+					if not s.rewarded then s.rewarded=true results:finish(s) end
+					announce(s)
+					for userId, current in membership do
+						if current == s then
+							membership[userId] = nil
+							local player = Players:GetPlayerByUserId(userId)
+							if player then send(player,{lobby=true,message=&quot;A sessão terminou. Escolha uma nova partida.&quot;}) task.spawn(lobby,player) end
+						end
+					end
+					actors:remove(id) sessions[id]=nil continue
+				end
+				local before=s.runtime.state.phase
+				local waiting = table.clone(s.pending)
+				s:step(os.clock())
+				if s.runtime.state.phase == &quot;finished&quot; then
+					for userId in waiting do
+						if not s.members[userId] then
+							membership[userId] = nil
+							local player = Players:GetPlayerByUserId(userId)
+							if player then
+								send(player,{lobby=true,message=&quot;A partida terminou antes da sua entrada. Buscando outra…&quot;})
+								task.spawn(join,player,{mode=s.mode})
+							end
+						end
+					end
+				end
+				if s.runtime.state.phase==&quot;finished&quot; and not s.rewarded then
+					s.rewarded=true
+					results:finish(s)
+				end
+				if s.runtime.state.phase~=before then publish(s)
+				elseif networkTick==0 and s.runtime.state.phase~=&quot;finished&quot; then
+					actors:refresh(s)
+					for _,p in Players:GetPlayers() do if membership[p.UserId]==s then snapshot:FireClient(p,s:snapshot(p.UserId)) end end
+				end
 			end
-			if session.state.phase == &quot;finished&quot; then accumulator = 0 break end
+		end
+		if os.clock()-lastAnnouncement&gt;=5 then
+			lastAnnouncement=os.clock()
+			for _,s in sessions do announce(s) end
 		end
 	end)
 end
-
 return Server
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Session</string><ProtectedString name="Source">--!strict
+local Runtime = require(script.Parent.Runtime)
+local Match = require(script.Parent.Domain.Match)
+local Session = {}
+Session.__index = Session
+
+function Session.new(id: string, mode: string, userId: number, ability: string, team: string, difficulty: string, seed: number)
+	local runtime = Runtime.new(id, &quot;A0&quot;, team, ability, difficulty, seed, mode)
+	local self: any = setmetatable({ runtime = runtime, mode = mode, members = {}, reservations = {}, pending = {},
+		participants = {}, history = {}, votes = {}, disconnectUsed = {}, closed = false, fallbacks = {} }, Session)
+	for _, athlete in runtime.athletes do
+		athlete.id, athlete.userId = athlete.team .. athlete.slot, nil
+		athlete.abilityId, athlete.cooldownUntil = &quot;fundamentals&quot;, 0
+		athlete.bot, athlete.active = mode ~= &quot;Online1v1&quot;, mode ~= &quot;Online1v1&quot;
+	end
+	local slot = if mode == &quot;SoloBots2v2&quot; then team .. &quot;0&quot; else &quot;A0&quot;
+	self:assign(userId, slot, ability)
+	if mode == &quot;Online1v1&quot; then
+		runtime.warmup, runtime.state.phase, runtime.phaseTicks = true, &quot;serving&quot;, 0
+	end
+	return self
+end
+
+function Session.athlete(self: any, id: string)
+	for _, athlete in self.runtime.athletes do if athlete.id == id then return athlete end end
+	return nil
+end
+
+function Session.record(self: any, userId: number, slot: string, kind: string)
+	table.insert(self.history, { userId = userId, slot = slot, tick = self.runtime.tick, kind = kind,
+		generation = self:athlete(slot).generation, abilityId = self:athlete(slot).abilityId, abilityRevision = 1 })
+end
+
+function Session.assign(self: any, userId: number, slot: string, ability: string)
+	local athlete = self:athlete(slot)
+	local former = athlete.userId
+	if former then self.members[former] = nil self:record(former, slot, &quot;leave&quot;) end
+	athlete.generation += 1
+	athlete.userId, athlete.bot, athlete.active, athlete.abilityId, athlete.effectUntil = userId, false, true, ability, 0
+	self.runtime.inputs[slot], self.runtime.sequences[slot], self.runtime.touching[slot] = nil, nil, nil
+	self.members[userId], self.participants[userId] = slot, true
+	self.pending[userId], self.reservations[userId] = nil, nil
+	self:record(userId, slot, &quot;join&quot;)
+end
+
+function Session.join(self: any, userId: number, ability: string, now: number)
+	self:expire(now)
+	if self.closed or self.runtime.state.phase == &quot;finished&quot; then return false, &quot;finished&quot; end
+	if self.members[userId] or self.pending[userId] then return true end
+	local reservation = self.reservations[userId]
+	if reservation then
+		self.disconnectUsed[userId] = (self.disconnectUsed[userId] or 0) + math.max(0, now - reservation.since)
+		self:assign(userId, reservation.slot, reservation.ability)
+		if self.mode == &quot;Online1v1&quot; then
+			self.runtime.suspended = false
+			self.resumeAt = now + 3
+			self.runtime.suspended = true
+		end
+		return true
+	end
+	if self.mode == &quot;SoloBots2v2&quot; then return false, &quot;full&quot; end
+	local counts = { A = 0, B = 0 }
+	for _, slot in self.members do counts[slot:sub(1, 1)] += 1 end
+	for _, p in self.pending do counts[p.slot:sub(1, 1)] += 1 end
+	local preferred = if counts.A &lt; counts.B then &quot;A&quot; else &quot;B&quot;
+	local available = {}
+	for _, athlete in self.runtime.athletes do
+		local reserved = false
+		for _, r in self.reservations do if r.slot == athlete.id then reserved = true end end
+		for _, p in self.pending do if p.slot == athlete.id then reserved = true end end
+		if not athlete.userId and not reserved then table.insert(available, athlete) end
+	end
+	table.sort(available, function(a, b)
+		if a.team ~= b.team then return a.team == preferred end
+		return a.slot &lt; b.slot
+	end)
+	if #available == 0 then return false, &quot;full&quot; end
+	local slot = available[1].id
+	if self.mode == &quot;Online2v2&quot; and self.runtime.state.phase == &quot;rally&quot; then
+		self.pending[userId] = { slot = slot, ability = ability }
+	else self:assign(userId, slot, ability) end
+	if self.mode == &quot;Online1v1&quot; then
+		self.runtime.warmup, self.runtime.suspended = false, false
+		self.runtime.state = Match.transition(Match.create(self.runtime.state.matchId, &quot;1v1&quot;), { type = &quot;START&quot; })
+		self.runtime.phaseTicks = 0
+		for _, athlete in self.runtime.athletes do athlete.cooldownUntil = 0 end
+		self.runtime:resetRally()
+	end
+	return true
+end
+
+function Session.finish(self: any, winner: string?, reason: string)
+	local state = table.clone(self.runtime.state)
+	state.phase = if winner then &quot;finished&quot; else &quot;cancelled&quot;
+	state.winner, state.reason = winner, reason
+	self.runtime.state, self.runtime.suspended = state, false
+	self.runtime.inputs = {}
+	if not winner then self.closed = true end
+end
+
+function Session.leave(self: any, userId: number, explicit: boolean, now: number)
+	if self.pending[userId] then self.pending[userId] = nil return end
+	local slot = self.members[userId]
+	if not slot then return end
+	local athlete = self:athlete(slot)
+	self:record(userId, slot, if explicit then &quot;leave&quot; else &quot;disconnect&quot;)
+	self.members[userId], self.votes[userId] = nil, nil
+	athlete.userId, athlete.generation = nil, athlete.generation + 1
+	self.runtime.inputs[slot], self.runtime.sequences[slot] = nil, nil
+	local finished = self.runtime.state.phase == &quot;finished&quot;
+	local humans = 0
+	for _ in self.members do humans += 1 end
+	if humans == 0 then self.closed = true self:finish(nil, &quot;empty&quot;) return end
+	if not explicit and not finished and self.mode ~= &quot;SoloBots2v2&quot; then
+		local remaining = if self.mode == &quot;Online1v1&quot; then math.min(20, 40 - (self.disconnectUsed[userId] or 0)) else 20
+		if remaining &gt; 0 then
+			self.reservations[userId] = { slot = slot, since = now, expires = now + remaining, ability = athlete.abilityId }
+		end
+	end
+	if self.mode == &quot;Online1v1&quot; then
+		athlete.active, athlete.bot = false, false
+		if not finished and not self.runtime.warmup then
+			if self.reservations[userId] then self.runtime.suspended = true
+			else self:finish(if athlete.team == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;, &quot;forfeit&quot;) end
+		end
+	else
+		athlete.bot, athlete.active, athlete.abilityId, athlete.effectUntil = true, true, &quot;fundamentals&quot;, 0
+	end
+end
+
+function Session.expire(self: any, now: number)
+	for userId, reservation in self.reservations do
+		if now &gt;= reservation.expires then
+			self.reservations[userId] = nil
+			if self.mode == &quot;Online1v1&quot; and self.runtime.state.phase ~= &quot;finished&quot; then
+				self:finish(if reservation.slot:sub(1, 1) == &quot;A&quot; then &quot;B&quot; else &quot;A&quot;, &quot;forfeit&quot;)
+			end
+		end
+	end
+	if self.resumeAt and now &gt;= self.resumeAt then self.resumeAt, self.runtime.suspended = nil, false end
+end
+
+function Session.step(self: any, now: number)
+	self:expire(now)
+	if self.closed then return end
+	local phase = self.runtime.state.phase
+	if phase == &quot;finished&quot; then self.pending = {} return end
+	self.runtime:step()
+	if self.runtime.state.phase == &quot;serving&quot; and phase ~= &quot;serving&quot; then
+		for userId, p in self.pending do self:assign(userId, p.slot, p.ability) end
+	end
+	if self.runtime.state.phase == &quot;finished&quot; then
+		self.runtime.state.winner = self.runtime.state.lastScoringSide
+		self.runtime.state.reason = &quot;points&quot;
+		self.pending = {}
+	end
+end
+
+function Session.snapshot(self: any, userId: number)
+	local slot = self.members[userId]
+	local result = self.runtime:snapshot(slot or &quot;&quot;)
+	result.mode, result.pending, result.slot = self.mode, self.pending[userId] ~= nil, slot
+	result.winner, result.reason = self.runtime.state.winner, self.runtime.state.reason
+	result.votes = table.clone(self.votes)
+	result.abilityFallback = self.fallbacks[userId] == true
+	return result
+end
+
+function Session.vote(self: any, userId: number, newId: string)
+	if self.runtime.state.phase ~= &quot;finished&quot; or not self.members[userId] then return false end
+	self.votes[userId] = true
+	for id in self.members do if not self.votes[id] then return false end end
+	if next(self.reservations) then return false end
+	self.votes, self.history, self.participants = {}, {}, {}
+	self.disconnectUsed, self.resumeAt = {}, nil
+	local r = self.runtime
+	r.state = Match.transition(Match.create(newId, r.state.mode), { type = &quot;START&quot; })
+	r.tick, r.phaseTicks, r.events, r.eventId = 0, 0, {}, 0
+	r.inputs, r.sequences = {}, {}
+	r.cooldownUntil = 0
+	if r.bots then r.bots.history = {} end
+	for id, slot in self.members do
+		self.participants[id] = true
+		local athlete = self:athlete(slot)
+		athlete.cooldownUntil, athlete.effectUntil, athlete.generation = 0, 0, athlete.generation + 1
+		self:record(id, slot, &quot;join&quot;)
+	end
+	r:resetRally()
+	return true
+end
+return Session
 </ProtectedString></Properties></Item></Item></Item><Item class="ReplicatedStorage"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder"><Properties><string name="Name">MythicsShared</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Config</string><ProtectedString name="Source">--!strict
 -- Immutable rules for a match, derived from the browser's profile 4.
 return table.freeze({
@@ -975,11 +1780,111 @@ return table.freeze({
 	Origin = Vector3.new(0, 2, 0),
 	Attributes = table.freeze({ serve = 70, receive = 70, set = 70, attack = 70, block = 70, speed = 70, jump = 70 }),
 	Abilities = table.freeze({
+		fundamentals = table.freeze({ name = &quot;Fundamentos&quot;, cooldown = 0, duration = 0 }),
 		teammate_rant = table.freeze({ name = &quot;Bronca no Parceiro&quot;, cooldown = 20, duration = 5 }),
 		free_point_out = table.freeze({ name = &quot;Foi Sem Querer&quot;, cooldown = 25, duration = 0 }),
 	}),
 })
-</ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder"><Properties><string name="Name">MythicsClient</string></Properties><Item class="ModuleScript"><Properties><string name="Name">Controls</string><ProtectedString name="Source">--!strict
+</ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder"><Properties><string name="Name">MythicsClient</string></Properties><Item class="ModuleScript"><Properties><string name="Name">CollectionPanel</string><ProtectedString name="Source">--!strict
+local Http = game:GetService(&quot;HttpService&quot;)
+local CollectionPanel = {}
+
+function CollectionPanel.mount(panel: ScrollingFrame, button: any, text: any, onEquipped: (string) -&gt; (), reduced: () -&gt; boolean)
+	local remote = game.ReplicatedStorage.MythicsRemotes:WaitForChild(&quot;Collection&quot;) :: RemoteFunction
+	local self: any = { profile = nil, pending = nil, busy = false }
+	local equipped = text(panel, &quot;Equipped&quot;, &quot;Carregando coleção…&quot;, 62, 46)
+	local status = text(panel, &quot;Result&quot;, &quot;&quot;, 114, 44)
+	local balance = text(panel, &quot;Balance&quot;, &quot;&quot;, 160, 26)
+	local spin = button(panel, &quot;Spin&quot;, &quot;Girar assinatura&quot;, 196)
+	local retry = button(panel, &quot;Retry&quot;, &quot;Atualizar / tentar novamente&quot;, 250)
+	local cards = {}
+	local messages = { unavailable = &quot;Falha ao salvar. Tente novamente para consultar a mesma operação.&quot;,
+		stale = &quot;Sua coleção mudou. Confira os dados e tente novamente.&quot;,
+		no_spins = &quot;Você precisa de um giro. Conclua uma partida por pontos.&quot;,
+		complete = &quot;Você já tem todas. Seu saldo foi preservado.&quot;, not_owned = &quot;Habilidade indisponível para equipar.&quot;,
+		busy = &quot;Aguarde a operação em andamento.&quot; }
+	local request: any
+	local function render()
+		local p = self.profile
+		if not p then return end
+		local gui = game:GetService(&quot;GuiService&quot;)
+		if gui.SelectedObject and gui.SelectedObject:IsDescendantOf(panel) then self.selectionName = gui.SelectedObject.Name end
+		local byId = {}
+		for _, item in p.catalog do byId[item.id] = item end
+		equipped.Text = &quot;Em uso · &quot; .. (if byId[p.equipped] then byId[p.equipped].name else p.equipped)
+		balance.Text = p.spins .. &quot; giro(s)&quot; .. (if self.temporary then &quot; · Perfil temporário no Studio&quot; else &quot;&quot;)
+		spin.Text = if self.busy then &quot;Aguardando confirmação…&quot; elseif p.complete then &quot;Coleção completa&quot; else &quot;Girar assinatura&quot;
+		spin.Active = not self.busy and not p.complete
+		for _, card in cards do card:Destroy() end
+		cards = {}
+		local index = 0
+		for _, item in p.catalog do
+			if not item.enabled then continue end
+			local owned = p.owned[item.id] == true
+			local chance = p.chances[item.id]
+			local subtitle = if owned then (if p.equipped == item.id then &quot;Equipada&quot; else &quot;Equipar&quot;) elseif chance then string.format(&quot;%.1f%%&quot;, chance*100) else &quot;Inicial&quot;
+			local card = button(panel, &quot;Signature_&quot; .. item.id,
+				item.name .. &quot; · &quot; .. subtitle .. &quot;\n&quot; .. item.effect .. &quot;\n&quot; .. item.cooldown .. &quot;s de recarga&quot; .. (if item.doublesOnly then &quot; · Duplas&quot; else &quot; · Todos os modos&quot;) .. (if item.development then &quot; · Teste&quot; else &quot;&quot;), 314 + index*112)
+			card.Size, card.TextSize = UDim2.new(1, -40, 0, 100), 13
+			card.Active = owned and not self.busy and p.equipped ~= item.id
+			card.Activated:Connect(function()
+				if owned and not self.busy then request(&quot;equip&quot;, item.id) end
+			end)
+			table.insert(cards, card)
+			index += 1
+		end
+		local navigation = {spin, retry}
+		for _, card in cards do table.insert(navigation, card) end
+		for i, item in navigation do
+			item.NextSelectionDown, item.NextSelectionUp = navigation[i % #navigation + 1], navigation[(i-2) % #navigation + 1]
+		end
+		panel.CanvasSize = UDim2.fromOffset(0, 326 + index*112)
+		if self.selectionName and panel.Visible and game:GetService(&quot;UserInputService&quot;).PreferredInput == Enum.PreferredInput.Gamepad then
+			local target = panel:FindFirstChild(self.selectionName)
+			if target and target:IsA(&quot;GuiButton&quot;) then task.defer(function() if target.Parent then gui.SelectedObject = target end end) end
+		end
+		onEquipped(p.equipped)
+	end
+	request = function(kind: string?, ability: string?)
+		if self.busy then return end
+		if kind and not self.profile then return end
+		self.busy = true
+		if kind and not self.pending then
+			self.pending = { id = Http:GenerateGUID(false), kind = kind, ability = ability,
+				seq = self.profile.sequence + 1, revision = self.profile.revision }
+		end
+		render()
+		status.Text = if self.pending and self.pending.kind == &quot;spin&quot; then &quot;Consultando o resultado do giro…&quot; else &quot;Atualizando coleção…&quot;
+		task.spawn(function()
+			local ok, result = pcall(function() return remote:InvokeServer(self.pending) end)
+			self.busy = false
+			if not ok or not result or result.error then
+				status.Text = messages[if result then result.error else &quot;unavailable&quot;] or messages.unavailable
+				render()
+				return
+			end
+			self.profile, self.temporary = result.profile, result.temporary
+			self.pending = nil
+			if result.receipt and result.receipt.ability then
+				local name = result.receipt.ability
+				for _, item in result.profile.catalog do if item.id == name then name = item.name break end end
+				status.Text = &quot;Você ganhou &quot; .. name
+				if not reduced() then
+					status.TextTransparency = 0.6
+					game:GetService(&quot;TweenService&quot;):Create(status, TweenInfo.new(0.25), {TextTransparency = 0}):Play()
+				end
+			else status.Text = messages[result.status] or &quot;Coleção atualizada&quot; end
+			render()
+		end)
+	end
+	spin.Activated:Connect(function() if spin.Active then request(&quot;spin&quot;) end end)
+	retry.Activated:Connect(function() request(nil) end)
+	self.refresh = function() request(nil) end
+	self.refresh()
+	return self
+end
+return CollectionPanel
+</ProtectedString></Properties></Item><Item class="ModuleScript"><Properties><string name="Name">Controls</string><ProtectedString name="Source">--!strict
 local Input = game:GetService(&quot;UserInputService&quot;)
 local GuiService = game:GetService(&quot;GuiService&quot;)
 local Controls = {}
@@ -1218,17 +2123,15 @@ function Hud.new()
 			end
 		end)
 	end
-	self.selection = { ability = &quot;teammate_rant&quot;, difficulty = &quot;normal&quot;, team = &quot;A&quot; }
+	self.selection = { ability = &quot;fundamentals&quot;, difficulty = &quot;normal&quot;, team = &quot;A&quot; }
 	local function choices()
 		self.skillChoice.Text = &quot;Habilidade · &quot; .. Config.Abilities[self.selection.ability].name
 		local names = { easy = &quot;Fácil&quot;, normal = &quot;Normal&quot;, hard = &quot;Difícil&quot; }
 		self.difficultyChoice.Text = &quot;Dificuldade · &quot; .. names[self.selection.difficulty]
 		self.sideChoice.Text = &quot;Seu lado · &quot; .. self.selection.team
 	end
-	self.skillChoice.Activated:Connect(function()
-		self.selection.ability = if self.selection.ability == &quot;teammate_rant&quot; then &quot;free_point_out&quot; else &quot;teammate_rant&quot;
-		choices()
-	end)
+	self.skillChoice.Active = false
+	self.skillChoice.AutoButtonColor = false
 	self.difficultyChoice.Activated:Connect(function()
 		self.selection.difficulty = ({ easy = &quot;normal&quot;, normal = &quot;hard&quot;, hard = &quot;easy&quot; })[self.selection.difficulty]
 		choices()
@@ -1269,6 +2172,11 @@ function Hud.new()
 		self.aim.Position = UDim2.new(0.5, -63, 1, -(square + 54))
 		local margin = if gamepad then math.max(20, root.AbsoluteSize.X * 0.045) else 20
 		grid.Position = UDim2.new(1, -margin, 1, -20)
+		local topMargin = if gamepad then math.max(8, root.AbsoluteSize.Y * 0.045) else 8
+		self.leave.Position = UDim2.fromOffset(if gamepad then margin else 18, topMargin)
+		self.score.Position = UDim2.new(0.5, -140, 0, topMargin)
+		self.status.Position = UDim2.new(0.1, 0, 0, topMargin+38)
+		self.feedback.Position = UDim2.new(0.15, 0, 0, topMargin+76)
 		self.stick.Visible = touch and not self.panel.Visible
 		for name, binding in self.keys do
 			local code = self.keysByAction[name][if gamepad then 2 else 1]
@@ -1305,12 +2213,19 @@ function Hud.new()
 			finished = &quot;Fim da partida&quot;,
 		}
 		self.status.Text = names[state.phase] or &quot;&quot;
+		if state.warmup then self.status.Text = &quot;Aguardando adversário · aquecimento&quot; self.score.Text = &quot;&quot;
+		elseif state.suspended then self.status.Text = &quot;Aguardando reconexão · partida pausada&quot;
+		elseif state.pending then self.status.Text = &quot;Você entra no próximo saque&quot; end
 		local reasons = { consecutive_player = &quot;Dois toques seguidos do mesmo jogador&quot;, fourth_touch = &quot;Quarto toque&quot; }
 		self.feedback.Text = reasons[state.feedback] or state.feedback
+		if state.abilityFallback and (state.warmup or state.phase == &quot;countdown&quot;) then
+			self.feedback.Text = &quot;Fundamentos equipada para o duelo. Sua assinatura requer dupla.&quot;
+		end
 		self.actions.hit.ActionName.Text = if state.phase == &quot;serving&quot; then &quot;Sacar&quot; else &quot;Atacar&quot;
 		self.abilityName.Text = Config.Abilities[state.abilityId].name
 		local seconds = math.max(0, math.ceil((state.cooldownUntil-state.tick)/60))
 		self.abilityValue.Text = if seconds &gt; 0 then seconds .. &quot;s&quot; elseif state.phase == &quot;rally&quot; then &quot;◆&quot; else &quot;—&quot;
+		if state.abilityId == &quot;fundamentals&quot; then self.abilityValue.Text = &quot;Base&quot; end
 		self.ability.BackgroundColor3 = if seconds &gt; 0 then Color3.fromRGB(49, 58, 63) else Color3.fromRGB(16, 38, 45)
 	end
 	self.setMenu(true)
@@ -1592,14 +2507,11 @@ function LobbyHud.new(hud: any)
 	duel.Activated:Connect(function() online(&quot;Online1v1&quot;) end)
 	doubles.Activated:Connect(function() online(&quot;Online2v2&quot;) end)
 	local signature = panels.Signatures
-	local equipped = text(signature, &quot;Equipped&quot;, &quot;Em uso · &quot; .. Config.Abilities[hud.selection.ability].name, 64, 46)
-	text(signature, &quot;Collection&quot;, &quot;Uma jogada característica. Uma habilidade ativa.&quot;, 112, 42)
-	local chances = text(signature, &quot;Chances&quot;, &quot;Coleção e probabilidades disponíveis na próxima etapa.&quot;, 164, 60)
-	local spin = button(signature, &quot;Spin&quot;, &quot;Girar assinatura · Em breve&quot;, 242)
-	spin.AutoButtonColor = false
-	spin.BackgroundColor3 = Color3.fromRGB(61, 73, 77)
-	text(signature, &quot;Balance&quot;, &quot;Giros gratuitos&quot;, 298, 24)
-	link({spin, close})
+	local collectionPanel = require(script.Parent.CollectionPanel).mount(signature, button, text, function(id)
+		hud.selection.ability = id
+		hud.skillChoice.Text = &quot;Assinatura · &quot; .. Config.Abilities[id].name
+	end, function() return self.reduced end)
+	buttons.Signatures.Activated:Connect(function() collectionPanel.refresh() end)
 	local volume = button(panels.Settings, &quot;Volume&quot;, &quot;Efeitos · 50%&quot;, 70)
 	local reduced = button(panels.Settings, &quot;ReducedMotion&quot;, &quot;Animação reduzida · Desligada&quot;, 132)
 	text(panels.Settings, &quot;Scope&quot;, &quot;Ajustes aplicados ao lobby nesta sessão.&quot;, 200, 50)
@@ -1625,6 +2537,8 @@ function LobbyHud.new(hud: any)
 			return
 		end
 		self.catalog = catalog
+		duel.Text = if catalog.modes.Online1v1 then &quot;1v1 online&quot; else &quot;1v1 online · Em breve&quot;
+		doubles.Text = if catalog.modes.Online2v2 then &quot;2v2 online&quot; else &quot;2v2 online · Em breve&quot;
 		shopStatus.Text = if #catalog.offers == 0 then &quot;Novas ofertas em breve.\nOs giros de Assinaturas são gratuitos.&quot; else &quot;Cosméticos para o seu cartão de jogador.&quot;
 		for _, item in shopButtons do item:Destroy() end
 		shopButtons = {}
@@ -1675,16 +2589,11 @@ function LobbyHud.new(hud: any)
 		hud.score.Visible, hud.status.Visible, hud.feedback.Visible = not value, not value, not value
 		if value then
 			nav.Visible = true
-			equipped.Text = &quot;Em uso · &quot; .. Config.Abilities[hud.selection.ability].name
+			collectionPanel.refresh()
 			notice.Text = &quot;&quot;
 			returnTo = buttons.Play
 			open(nil)
 		end
-	end
-	-- Presentation fixtures can be injected by Studio acceptance scripts.
-	self.previewSignature = function(data: any)
-		equipped.Text, chances.Text, spin.Text = data.equipped, data.chances, data.status
-		signature.Balance.Text = data.balance
 	end
 	self.focus = function() focus(buttons.Play) end
 	game:GetService(&quot;ProximityPromptService&quot;).PromptTriggered:Connect(function(prompt, player)
@@ -1772,6 +2681,12 @@ camera.CameraType, camera.FieldOfView = Enum.CameraType.Custom, 65
 local visualFolder = Instance.new(&quot;Folder&quot;)
 visualFolder.Name, visualFolder.Parent = &quot;MythicsPresentation&quot;, workspace
 local court = workspace:WaitForChild(&quot;MythicsCourt&quot;)
+for _, object in workspace:GetDescendants() do
+	if object:IsA(&quot;SpawnLocation&quot;) then
+		object.LocalTransparencyModifier = 1
+		for _, child in object:GetChildren() do if child:IsA(&quot;Decal&quot;) then child.Transparency = 1 end end
+	end
+end
 local ball = court:WaitForChild(&quot;Ball&quot;) :: Part
 local marker = Instance.new(&quot;Part&quot;)
 marker.Name, marker.Shape, marker.Size = &quot;BallShadow&quot;, Enum.PartType.Cylinder, Vector3.new(0.025,1.1,1.1)
@@ -1784,12 +2699,14 @@ local function inputPayload(channel: string, actions: { string }?)
 	if not state then return nil end
 	local move, aim = controls.sample()
 	local humanTeam = &quot;A&quot;
-	for _, athlete in state.athletes do if athlete.id == state.humanId then humanTeam = athlete.team end end
+	local generation = 0
+	for _, athlete in state.athletes do if athlete.id == state.humanId then humanTeam, generation = athlete.team, athlete.generation end end
 	local direction = if humanTeam == &quot;A&quot; then 1 else -1
 	local sequence: number
 	if channel == &quot;action&quot; then actionSeq += 1 sequence = actionSeq else moveSeq += 1 sequence = moveSeq end
 	return {
 		matchId = state.matchId, seq = sequence,
+		generation = generation,
 		moveX = -direction * move.X, moveZ = direction * move.Y,
 		-- Rally targets use world X but own-side depth for Z.
 		aim = { x = -direction * aim.X, z = aim.Y }, actions = actions,
@@ -1802,6 +2719,7 @@ controls = Controls.new(hud, function(name)
 	hud.feedback.Text = &quot;Solicitado · aguardando confirmação&quot;
 end)
 hud.start.Activated:Connect(function()
+	if state and state.phase == &quot;finished&quot; then command:FireServer(&quot;rematch&quot;) hud.start.Text = &quot;Aguardando revanche…&quot; return end
 	if lobby.busy then return end
 	lobby.setBusy(true)
 	local selection = table.clone(hud.selection)
@@ -1815,6 +2733,14 @@ hud.start.Activated:Connect(function()
 		end
 	end)
 end)
+lobby.onMode = function(mode: string)
+	if lobby.busy then return end
+	lobby.setBusy(true)
+	command:FireServer(&quot;start&quot;, {mode=mode})
+	task.delay(10, function()
+		if lobby.busy then lobby.setBusy(false) lobby.message(&quot;A entrada demorou. Tente novamente.&quot;) command:FireServer(&quot;sync&quot;) end
+	end)
+end
 hud.leave.Activated:Connect(function() command:FireServer(&quot;leave&quot;) end)
 hud.onBack = function()
 	if lobby.visible then lobby.back() else command:FireServer(&quot;leave&quot;) end
@@ -1844,6 +2770,7 @@ local function clearModels()
 	models = {}
 end
 local function receive(nextState: any, reliable: boolean)
+	if nextState.routing then lobby.setBusy(true) lobby.message(&quot;Entrando na quadra…&quot;) return end
 	if nextState.error then
 		lobby.setBusy(false)
 		if lobby.visible then lobby.message(nextState.error) else hud.feedback.Text = nextState.error end
@@ -1860,6 +2787,7 @@ local function receive(nextState: any, reliable: boolean)
 		if Players.LocalPlayer.Character then camera.CameraSubject = Players.LocalPlayer.Character:FindFirstChildOfClass(&quot;Humanoid&quot;) end
 		marker.Transparency = 1
 		hud.score.Text, hud.status.Text, hud.feedback.Text = &quot;&quot;, &quot;&quot;, &quot;&quot;
+		if nextState.message then lobby.message(nextState.message) end
 		return
 	end
 	if not nextState.matchId then return end
@@ -1878,6 +2806,8 @@ local function receive(nextState: any, reliable: boolean)
 		controls.setEnabled(true)
 	end
 	state = nextState
+	local enabled = not state.pending and not state.suspended and state.phase ~= &quot;finished&quot; and state.phase ~= &quot;cancelled&quot;
+	if controls.enabled ~= enabled then controls.setEnabled(enabled) end
 	table.insert(buffer, { time = os.clock(), snapshot = nextState })
 	if #buffer &gt; 12 then table.remove(buffer, 1) end
 end
@@ -1888,9 +2818,19 @@ snapshotRemote.OnClientEvent:Connect(function(value) receive(value, false) end)
 command:FireServer(&quot;sync&quot;)
 
 local function modelFor(athlete: any): any
+	if models[athlete.id] and models[athlete.id].generation ~= athlete.generation then
+		models[athlete.id].model:Destroy()
+		models[athlete.id] = nil
+	end
+	if not athlete.active then
+		if models[athlete.id] then models[athlete.id].model:Destroy() models[athlete.id] = nil end
+		return nil
+	end
 	if models[athlete.id] then return models[athlete.id] end
-	local template = templates:FindFirstChild(athlete.id)
+	local folder = templates:FindFirstChild(state.matchId)
+	local template = if folder then folder:FindFirstChild(athlete.id) else nil
 	if not template or template:GetAttribute(&quot;MatchId&quot;) ~= state.matchId then return nil end
+	if template:GetAttribute(&quot;Generation&quot;) ~= athlete.generation then return nil end
 	local expected = template:GetAttribute(&quot;ExpectedDescendants&quot;)
 	if not expected or #template:GetDescendants() &lt; expected then return nil end
 	local model = template:Clone() :: Model
@@ -1906,10 +2846,10 @@ local function modelFor(athlete: any): any
 	badge.Adornee, badge.Parent = root, model
 	local text = Instance.new(&quot;TextLabel&quot;)
 	text.Size, text.BackgroundColor3, text.BackgroundTransparency = UDim2.fromScale(1,1), Color3.fromRGB(16,35,52), 0.15
-	text.Text, text.TextSize = if athlete.bot then &quot;BOT · &quot; .. athlete.team .. (athlete.slot+1) else &quot;VOCÊ&quot;, 15
+	text.Text, text.TextSize = if athlete.bot then &quot;BOT · &quot; .. athlete.team .. (athlete.slot+1) elseif athlete.id == state.humanId then &quot;VOCÊ&quot; else athlete.team .. (athlete.slot+1), 15
 	text.Font, text.TextColor3, text.Parent = Enum.Font.GothamBold, Color3.new(1,1,1), badge
 	model.Parent = visualFolder
-	local entry = { model = model, joints = joints, feet = humanoid.HipHeight + root.Size.Y/2, actionUntil = 0, last = nil, kind = &quot;&quot; }
+	local entry = { model = model, joints = joints, feet = humanoid.HipHeight + root.Size.Y/2, actionUntil = 0, last = nil, kind = &quot;&quot;, generation = athlete.generation }
 	models[athlete.id] = entry
 	return entry
 end
@@ -1951,7 +2891,7 @@ RunService.RenderStepped:Connect(function(dt)
 	hud.update(displayed)
 	if displayed.phase == &quot;finished&quot; and not hud.panel.Visible then
 		controls.setEnabled(false)
-		local side = if displayed.score.A == 6 then &quot;A&quot; else &quot;B&quot;
+		local side = displayed.winner or (if displayed.score.A == 6 then &quot;A&quot; else &quot;B&quot;)
 		hud.setMenu(true, &quot;Vitória do lado &quot; .. side)
 		hud.leave.Visible = true
 	end

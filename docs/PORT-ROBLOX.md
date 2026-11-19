@@ -4,7 +4,7 @@ Plano de implementação para o Sol • destino inicial: Place1 • plataformas:
 
 ## Experiência da primeira versão
 
-No lobby, o jogador vê seu avatar Roblox, pode girar a roleta, equipa uma habilidade da coleção e escolhe um dos três modos abaixo. Entrar em um modo basta para jogar. A partida termina aos seis pontos e oferece revanche ou retorno ao lobby. As regras específicas do Roblox e seus critérios de aceite estão na [spec 021](../specs/021-roblox/spec.md).
+No lobby, o jogador vê seu avatar Roblox, abre Assinaturas e pode girar a roleta, equipa uma habilidade da coleção e escolhe um dos três modos abaixo. Entrar em um modo basta para jogar. A partida termina aos seis pontos e oferece revanche ou retorno ao lobby. As regras específicas do Roblox e seus critérios de aceite estão na [spec 021](../specs/021-roblox/spec.md).
 
 O Place1 foi inspecionado em modo de edição. O Workspace contém câmera, baseplate, terreno e spawn. ReplicatedStorage, ServerScriptService e StarterGui estão vazios. O desenho abaixo parte desse estado. Os arquivos propostos em `roblox/` serão criados durante a implementação.
 
@@ -95,3 +95,5 @@ Na T2, o ensaio encontrou snapshots acima do limite de UnreliableRemoteEvent. A 
 Para aceitar a quarta etapa, concluir lobby → partida → resultado → revanche no PC com teclado, em telefone com dois polegares, no Xbox e no PlayStation com controle. Incluir tablet, telefone estreito com recorte, TV vista do sofá e troca de teclado para gamepad no PC. Conferir em captura que a habilidade está centrada na área útil, o quadrado mantém 1:1, nome e comando cabem juntos na borda e a grade permanece inteira e acionável no canto direito. Comparar as legendas LB e L1 nos respectivos aparelhos. Simular atraso e perda de snapshots e verificar que uma pressão produz no máximo uma ação e todos veem o mesmo ponto. Registrar separadamente o que foi medido no emulador e em aparelho físico.
 
 **Primeiro trabalho do Sol.** Entregar as etapas 1 e 2 em sequência, salvando o place de desenvolvimento e os fontes reproduzíveis no repositório. Usar a primeira partida solo para ajustar escala visual, alcance dos polegares e tamanho da HUD com capturas. A entrega de referência segue o [backlog da spec 021](../specs/021-roblox/tasks.md). A expansão para quatro jogadores depende da paridade de regras e do fluxo de entrada demonstrados nessa partida.
+
+Na implementação T3–T6, Collection mantém perfil e recibos em UpdateAsync, Session mantém slots e gerações de controle e Directory serializa reservas por modo e MatchmakingType. Routing usa TeleportOptions.ReservedServerId com GUID e TeleportAsync. O diário de Results prepara índices duráveis por usuário antes de confirmar o registro canônico e conceder o giro, permitindo reparar a operação após queda. O catálogo público contém Fundamentos. Os dois poderes legados ficam no catálogo de desenvolvimento até a revisão dos efeitos.

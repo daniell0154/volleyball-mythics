@@ -108,7 +108,7 @@ function Server.start()
 			return
 		end
 		starting[player] = true
-		local ability = profiles.equipped(player, mode)
+		local ability, fallback = profiles.equipped(player, mode)
 		starting[player] = nil
 		if not player.Parent then return end
 		if not ability then
@@ -137,6 +137,7 @@ function Server.start()
 			sessions[selected.runtime.state.matchId] = selected
 		end
 		membership[player.UserId], sequences[player] = selected, {}
+		selected.fallbacks[player.UserId] = fallback == true
 		if player.Character then player.Character:Destroy() end
 		publish(selected)
 	end
@@ -187,6 +188,14 @@ function Server.start()
 		elseif kind=="rematch" then
 			local s=membership[player.UserId]
 			if not s then return end
+			if s.runtime.state.phase~="finished" or s.votes[player.UserId] then return end
+			local ability,fallback=profiles.equipped(player,s.mode)
+			if not ability then send(player,{error="Coleção indisponível. Tente a revanche novamente."}) return end
+			if membership[player.UserId]~=s or s.runtime.state.phase~="finished" then return end
+			local slot=s.members[player.UserId]
+			if not slot then return end
+			s:athlete(slot).abilityId=ability
+			s.fallbacks[player.UserId]=fallback==true
 			local oldId=s.runtime.state.matchId
 			if s:vote(player.UserId,Http:GenerateGUID(false)) then
 				sessions[oldId]=nil
@@ -203,13 +212,14 @@ function Server.start()
 		starting[player],sequences[player]=nil,nil
 		budgets[tostring(player.UserId)..":input"],budgets[tostring(player.UserId)..":command"]=nil,nil
 	end)
-	local accumulator, lastAnnouncement=0,0
+	local accumulator, lastAnnouncement, networkTick=0,0,0
 	RunService.Heartbeat:Connect(function(dt)
 		accumulator+=dt
 		local steps=0
 		while accumulator>=Config.Step and steps<8 do
 			accumulator-=Config.Step
 			steps+=1
+			networkTick=(networkTick+1)%3
 			for id,s in sessions do
 				if s.closed then
 					if not s.rewarded then s.rewarded=true results:finish(s) end
@@ -243,7 +253,7 @@ function Server.start()
 					results:finish(s)
 				end
 				if s.runtime.state.phase~=before then publish(s)
-				elseif s.runtime.tick%3==0 then
+				elseif networkTick==0 and s.runtime.state.phase~="finished" then
 					actors:refresh(s)
 					for _,p in Players:GetPlayers() do if membership[p.UserId]==s then snapshot:FireClient(p,s:snapshot(p.UserId)) end end
 				end

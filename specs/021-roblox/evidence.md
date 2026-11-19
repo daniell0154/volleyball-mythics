@@ -94,3 +94,21 @@ ResultsAcceptance passou cinco cenários de falha parcial e retentativa com arma
 O 1v1 foi aberto pelo cartão real no cliente Studio. Exibiu “Aguardando adversário · aquecimento”, placar vazio e apenas um atleta ativo. A assinatura de duplas equipada foi substituída por Fundamentos no duelo.
 
 Teleportes reais e medições entre instâncias dependem da publicação para teste, solicitada ao proprietário. A tarefa permanece pendente desse aceite publicado. A versão da experiência acessível aos jogadores ainda não foi alterada.
+
+## T7 · Revisão e aceite parcial — 2026-11-19
+
+A rodada final em módulos recarregados passou 41 cenários de coleção, duelo, duplas, diretório e resultados, além das seis partidas completas do Solo nas três dificuldades e nos dois lados. Os resultados do Solo repetiram os ticks e placares da T2. A habilidade Foi Sem Querer continuou concedendo exatamente um ponto.
+
+No cliente Studio foram observadas partidas e revanches com quatro atletas. O observador registrou 26 mudanças de placar, incluindo reinícios, e zero antecipações nos eventos de ponto por chão. A amostra de cinco minutos reuniu 16.450 frames e p95 de 26,89 ms. Ela mistura resoluções emuladas, partida, menu e troca de dispositivo, portanto não aceita as metas de desempenho de hardware físico da spec.
+
+Foram capturadas HUDs de iPhone 17 Pro 874×402, Galaxy A06 800×360, iPad Pro M5 1376×1032, Xbox One 1920×1080 e PS5 1920×1080. Nome e comando permaneceram na borda da habilidade quadrada. Os consoles exibiram LB/LT/RB/RT/A e L1/L2/R1/R2/✕. O ensaio encontrou a SpawnLocation original em frente à câmera e a apresentação do cliente passou a ocultá-la. A HUD recebeu margem superior para controle e o foco da coleção passou a acompanhar a reconstrução dos cartões.
+
+O simulador foi lido inicialmente com seis valores zerados. O ensaio de conexão ruim aplicou latência de 150/180 ms, jitter de 70/90 ms e perda de 0,5% em cada direção. O ping observado chegou a 478,76 ms. Durante cerca de 49 segundos, a sessão continuou sem erro de script e o observador manteve zero pontos por chão antecipados. Ao fim, os seis ajustes retornaram aos valores originais, conforme escolha do proprietário.
+
+### Publicação e Player
+
+O proprietário autorizou publicar para teste. Save Place salvou a versão 16 no Roblox. A ação Publicar foi executada na interface do Studio, que informou “Tudo pronto para testar Volleyball Mythics”, disponível para o proprietário e colaboradores. O endpoint de histórico de versões recusou consulta com o escopo concedido, então o número exato da versão publicada não foi confirmado pela API.
+
+O proprietário autorizou instalar o Player oficial. O instalador veio de setup.rbxcdn.com, com assinatura válida da Roblox Corporation. O proprietário fez o login. O lobby da experiência foi aberto no Player e mostrou os três modos. O proprietário informou que o clique manual em 1v1 entrou na quadra. Os cliques automatizados nesse cartão não deram uma resposta consistente, e a inspeção não confirmou uma entrada ativa no diretório de servidores reservados.
+
+O controle de interface foi interrompido pelo Escape físico. A automação do Player encerrou nesse ponto. A T6 continua pendente da confirmação completa de teleportes, busca simultânea, retorno e cross-play em servidores publicados. A T7 continua pendente do ciclo completo em aparelhos físicos e do desempenho medido nesses aparelhos. O elenco público de poderes também exige definição, conforme o catálogo de desenvolvimento descrito na T3.

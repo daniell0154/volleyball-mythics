@@ -14,12 +14,11 @@ function ProfileService.new(folder: Folder)
 		store = game:GetService("DataStoreService"):GetDataStore(if RunService:IsStudio() then "MythicsStudioProfiles_v1" else "MythicsProfiles_v1")
 	end
 	local service = Collection.new(store, RunService:IsStudio())
-	local self: any = { collection = service, profiles = {}, busy = {}, pendingRewards = {}, temporary = temporary }
+	local self: any = { collection = service, busy = {}, lastRequest = {}, temporary = temporary }
 	local remote = Instance.new("RemoteFunction")
 	remote.Name, remote.Parent = "Collection", folder
 	local function publish(player: Player, profile: any)
 		if not player.Parent then return end
-		self.profiles[player.UserId] = profile
 		player:SetAttribute("EquippedSignature", profile.equipped)
 	end
 	self.load = function(player: Player)
@@ -28,7 +27,8 @@ function ProfileService.new(folder: Folder)
 		return profile
 	end
 	remote.OnServerInvoke = function(player: Player, request: any)
-		if self.busy[player] then return { error = "busy" } end
+		if self.busy[player] or os.clock() - (self.lastRequest[player] or -10) < 0.5 then return { error = "busy" } end
+		self.lastRequest[player] = os.clock()
 		self.busy[player] = true
 		local profile, status, receipt
 		local ok, failure = pcall(function()
@@ -41,41 +41,21 @@ function ProfileService.new(folder: Folder)
 		publish(player, profile)
 		return { profile = service:view(profile), status = status, receipt = receipt, temporary = temporary }
 	end
-	self.equipped = function(player: Player, mode: string): string?
-		if self.busy[player] then return nil end
+	self.equipped = function(player: Player, mode: string)
+		if self.busy[player] then return nil, false end
 		self.busy[player] = true
 		local profile = self.load(player)
 		self.busy[player] = nil
-		if not profile then return nil end
+		if not profile then return nil, false end
 		for _, item in service:catalog() do
 			if item.id == profile.equipped and profile.owned[item.id] and item.enabled then
-				return if mode == "Online1v1" and item.doublesOnly then "fundamentals" else item.id
+				local fallback = mode == "Online1v1" and item.doublesOnly
+				return if fallback then "fundamentals" else item.id, fallback
 			end
 		end
 		return "fundamentals"
 	end
-	self.reward = function(userId: number, matchId: string)
-		local key = matchId .. ":" .. userId
-		if self.pendingRewards[key] then return end
-		self.pendingRewards[key] = true
-		task.spawn(function()
-			local saved = false
-			while not saved do
-				local profile = service:reward(userId, matchId)
-				saved = profile ~= nil
-				if profile then
-					local player = Players:GetPlayerByUserId(userId)
-					if player then publish(player, profile) end
-				else task.wait(5) end
-			end
-			self.pendingRewards[key] = nil
-		end)
-	end
-	Players.PlayerRemoving:Connect(function(player) self.profiles[player.UserId] = nil end)
-	game:BindToClose(function()
-		local deadline = os.clock() + 25
-		while next(self.pendingRewards) and os.clock() < deadline do task.wait(0.2) end
-	end)
+	Players.PlayerRemoving:Connect(function(player) self.lastRequest[player], self.busy[player] = nil, nil end)
 	return self
 end
 return ProfileService

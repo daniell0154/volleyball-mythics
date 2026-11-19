@@ -37,6 +37,12 @@ camera.CameraType, camera.FieldOfView = Enum.CameraType.Custom, 65
 local visualFolder = Instance.new("Folder")
 visualFolder.Name, visualFolder.Parent = "MythicsPresentation", workspace
 local court = workspace:WaitForChild("MythicsCourt")
+for _, object in workspace:GetDescendants() do
+	if object:IsA("SpawnLocation") then
+		object.LocalTransparencyModifier = 1
+		for _, child in object:GetChildren() do if child:IsA("Decal") then child.Transparency = 1 end end
+	end
+end
 local ball = court:WaitForChild("Ball") :: Part
 local marker = Instance.new("Part")
 marker.Name, marker.Shape, marker.Size = "BallShadow", Enum.PartType.Cylinder, Vector3.new(0.025,1.1,1.1)

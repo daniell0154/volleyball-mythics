@@ -7,7 +7,7 @@ Session.__index = Session
 function Session.new(id: string, mode: string, userId: number, ability: string, team: string, difficulty: string, seed: number)
 	local runtime = Runtime.new(id, "A0", team, ability, difficulty, seed, mode)
 	local self: any = setmetatable({ runtime = runtime, mode = mode, members = {}, reservations = {}, pending = {},
-		participants = {}, history = {}, votes = {}, disconnectUsed = {}, closed = false, joinCounter = 0 }, Session)
+		participants = {}, history = {}, votes = {}, disconnectUsed = {}, closed = false, fallbacks = {} }, Session)
 	for _, athlete in runtime.athletes do
 		athlete.id, athlete.userId = athlete.team .. athlete.slot, nil
 		athlete.abilityId, athlete.cooldownUntil = "fundamentals", 0
@@ -27,7 +27,8 @@ function Session.athlete(self: any, id: string)
 end
 
 function Session.record(self: any, userId: number, slot: string, kind: string)
-	table.insert(self.history, { userId = userId, slot = slot, tick = self.runtime.tick, kind = kind, generation = self:athlete(slot).generation })
+	table.insert(self.history, { userId = userId, slot = slot, tick = self.runtime.tick, kind = kind,
+		generation = self:athlete(slot).generation, abilityId = self:athlete(slot).abilityId, abilityRevision = 1 })
 end
 
 function Session.assign(self: any, userId: number, slot: string, ability: string)
@@ -161,6 +162,7 @@ function Session.snapshot(self: any, userId: number)
 	result.mode, result.pending, result.slot = self.mode, self.pending[userId] ~= nil, slot
 	result.winner, result.reason = self.runtime.state.winner, self.runtime.state.reason
 	result.votes = table.clone(self.votes)
+	result.abilityFallback = self.fallbacks[userId] == true
 	return result
 end
 
@@ -170,10 +172,13 @@ function Session.vote(self: any, userId: number, newId: string)
 	for id in self.members do if not self.votes[id] then return false end end
 	if next(self.reservations) then return false end
 	self.votes, self.history, self.participants = {}, {}, {}
+	self.disconnectUsed, self.resumeAt = {}, nil
 	local r = self.runtime
 	r.state = Match.transition(Match.create(newId, r.state.mode), { type = "START" })
 	r.tick, r.phaseTicks, r.events, r.eventId = 0, 0, {}, 0
 	r.inputs, r.sequences = {}, {}
+	r.cooldownUntil = 0
+	if r.bots then r.bots.history = {} end
 	for id, slot in self.members do
 		self.participants[id] = true
 		local athlete = self:athlete(slot)

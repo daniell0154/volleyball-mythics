@@ -20,6 +20,8 @@ function CollectionPanel.mount(panel: ScrollingFrame, button: any, text: any, on
 	local function render()
 		local p = self.profile
 		if not p then return end
+		local gui = game:GetService("GuiService")
+		if gui.SelectedObject and gui.SelectedObject:IsDescendantOf(panel) then self.selectionName = gui.SelectedObject.Name end
 		local byId = {}
 		for _, item in p.catalog do byId[item.id] = item end
 		equipped.Text = "Em uso · " .. (if byId[p.equipped] then byId[p.equipped].name else p.equipped)
@@ -50,6 +52,10 @@ function CollectionPanel.mount(panel: ScrollingFrame, button: any, text: any, on
 			item.NextSelectionDown, item.NextSelectionUp = navigation[i % #navigation + 1], navigation[(i-2) % #navigation + 1]
 		end
 		panel.CanvasSize = UDim2.fromOffset(0, 326 + index*112)
+		if self.selectionName and panel.Visible and game:GetService("UserInputService").PreferredInput == Enum.PreferredInput.Gamepad then
+			local target = panel:FindFirstChild(self.selectionName)
+			if target and target:IsA("GuiButton") then task.defer(function() if target.Parent then gui.SelectedObject = target end end) end
+		end
 		onEquipped(p.equipped)
 	end
 	request = function(kind: string?, ability: string?)

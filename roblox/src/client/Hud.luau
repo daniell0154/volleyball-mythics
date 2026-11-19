@@ -171,6 +171,11 @@ function Hud.new()
 		self.aim.Position = UDim2.new(0.5, -63, 1, -(square + 54))
 		local margin = if gamepad then math.max(20, root.AbsoluteSize.X * 0.045) else 20
 		grid.Position = UDim2.new(1, -margin, 1, -20)
+		local topMargin = if gamepad then math.max(8, root.AbsoluteSize.Y * 0.045) else 8
+		self.leave.Position = UDim2.fromOffset(if gamepad then margin else 18, topMargin)
+		self.score.Position = UDim2.new(0.5, -140, 0, topMargin)
+		self.status.Position = UDim2.new(0.1, 0, 0, topMargin+38)
+		self.feedback.Position = UDim2.new(0.15, 0, 0, topMargin+76)
 		self.stick.Visible = touch and not self.panel.Visible
 		for name, binding in self.keys do
 			local code = self.keysByAction[name][if gamepad then 2 else 1]
@@ -212,10 +217,14 @@ function Hud.new()
 		elseif state.pending then self.status.Text = "Você entra no próximo saque" end
 		local reasons = { consecutive_player = "Dois toques seguidos do mesmo jogador", fourth_touch = "Quarto toque" }
 		self.feedback.Text = reasons[state.feedback] or state.feedback
+		if state.abilityFallback and (state.warmup or state.phase == "countdown") then
+			self.feedback.Text = "Fundamentos equipada para o duelo. Sua assinatura requer dupla."
+		end
 		self.actions.hit.ActionName.Text = if state.phase == "serving" then "Sacar" else "Atacar"
 		self.abilityName.Text = Config.Abilities[state.abilityId].name
 		local seconds = math.max(0, math.ceil((state.cooldownUntil-state.tick)/60))
 		self.abilityValue.Text = if seconds > 0 then seconds .. "s" elseif state.phase == "rally" then "◆" else "—"
+		if state.abilityId == "fundamentals" then self.abilityValue.Text = "Base" end
 		self.ability.BackgroundColor3 = if seconds > 0 then Color3.fromRGB(49, 58, 63) else Color3.fromRGB(16, 38, 45)
 	end
 	self.setMenu(true)
