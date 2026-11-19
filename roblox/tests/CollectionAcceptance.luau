@@ -1,9 +1,9 @@
 --!strict
-return function(root: Instance)
+return function(root: Instance, realStore: any?)
 	local Collection = require(root.Collection)
 	local data = {}
 	local calls = 0
-	local store = { UpdateAsync = function(_, key, callback)
+	local store = realStore or { UpdateAsync = function(_, key, callback)
 		calls += 1
 		-- Roblox can re-run transforms. Both attempts must produce the same prize.
 		local first = callback(data[key])
@@ -40,5 +40,5 @@ return function(root: Instance)
 	assert(a:read(1).equipped == equipped.equipped)
 	local public = Collection.new(store, false):view(equipped)
 	assert(public.complete and #public.catalog == 3)
-	return { scenarios = 9, transforms = calls * 2 }
+	return { scenarios = 9, transforms = calls * 2, persistent = realStore ~= nil }
 end

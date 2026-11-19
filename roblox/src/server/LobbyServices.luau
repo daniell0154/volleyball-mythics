@@ -33,7 +33,7 @@ function LobbyServices.start(folder: Folder)
 			})
 		end
 		pending[player] = nil
-		return { modes = { SoloBots2v2 = true, Online1v1 = true, Online2v2 = false }, offers = items }
+		return { modes = { SoloBots2v2 = true, Online1v1 = true, Online2v2 = true }, offers = items }
 	end
 	Marketplace.PromptGamePassPurchaseFinished:Connect(function(player, id, purchased)
 		if not purchased then return end

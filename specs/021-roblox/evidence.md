@@ -70,3 +70,15 @@ O módulo Session mantém slots A0 e B0, vínculo por UserId e geração do cont
 O ensaio DuelAcceptance no Studio passou oito cenários com zero bots. Cobriu aquecimento, segundo humano, pausa sem avanço do relógio, retorno com contagem de três segundos, contabilização do tempo de queda, expiração com desistência em 0–0, saída explícita e votação de revanche com novo matchId. O limite de retorno é 20 segundos por queda e 40 acumulados por jogador.
 
 O servidor usa snapshots próprios para cada participante, recusa geração antiga e mantém sessões locais independentes. Os atores preservam a descrição Roblox de cada humano. A interface informa aquecimento e reconexão, respeita vencedor por desistência e oferece votação de revanche. O ensaio com dois clientes de rede e aparelhos físicos integra os aceites posteriores.
+
+### T3 · Aceite adicional com DataStore real
+
+Após a confirmação dos acessos pelo proprietário, CollectionAcceptance foi executado com DataStoreService no namespace MythicsAcceptance_v1 e escopo UUID exclusivo. Os nove cenários passaram com persistent=true. O teste usou handles de serviço distintos sobre a mesma chave e releitura persistente. O callback repetido foi coberto pelo adaptador anterior.
+
+No cliente em Play, o perfil Studio iniciou com Fundamentos e um giro. O clique real em Girar assinatura confirmou “Você ganhou Bronca no Parceiro” e saldo zero. O namespace de produção permaneceu separado. Os testes simultâneos entre instâncias de servidor publicado ainda precisam do ambiente da T6.
+
+## T5 · Duplas online — 2026-11-19
+
+DoublesAcceptance passou nove cenários no Studio com quatro identidades humanas simuladas. O modo começou com um humano e três bots, reservou três entradas durante rally e aplicou os controladores no saque seguinte. A ocupação final foi de dois humanos por lado, sem bots. O ensaio verificou incremento de geração, recarga de slot preservada, troca imediata para bot após queda, retorno ao mesmo slot, expiração, saída explícita e participante que não chegou a jogar antes do sexto ponto.
+
+O servidor habilita o cartão 2v2 online e devolve uma entrada pendente à busca quando a partida termina antes da admissão. A composição de cada trecho é guardada na sessão para o registro de resultado da T6. As validações de vários clientes de rede e de teleporte publicado permanecem nos aceites T6/T7.

@@ -75,7 +75,7 @@ function Server.start()
 		if membership[player.UserId] or starting[player] then return end
 		if type(data) ~= "table" then return end
 		local mode = data.mode or "SoloBots2v2"
-		if mode ~= "SoloBots2v2" and mode ~= "Online1v1" then send(player,{error="Modo indisponível"}) return end
+		if mode ~= "SoloBots2v2" and mode ~= "Online1v1" and mode ~= "Online2v2" then send(player,{error="Modo indisponível"}) return end
 		local team = if data.team == "B" then "B" else "A"
 		local difficulty = if data.difficulty == "easy" or data.difficulty == "hard" then data.difficulty else "normal"
 		starting[player] = true
@@ -173,9 +173,31 @@ function Server.start()
 			accumulator-=Config.Step
 			steps+=1
 			for id,s in sessions do
-				if s.closed then actors:remove(id) sessions[id]=nil continue end
+				if s.closed then
+					for userId, current in membership do
+						if current == s then
+							membership[userId] = nil
+							local player = Players:GetPlayerByUserId(userId)
+							if player then send(player,{lobby=true,message="A sessão terminou. Escolha uma nova partida."}) task.spawn(lobby,player) end
+						end
+					end
+					actors:remove(id) sessions[id]=nil continue
+				end
 				local before=s.runtime.state.phase
+				local waiting = table.clone(s.pending)
 				s:step(os.clock())
+				if s.runtime.state.phase == "finished" then
+					for userId in waiting do
+						if not s.members[userId] then
+							membership[userId] = nil
+							local player = Players:GetPlayerByUserId(userId)
+							if player then
+								send(player,{lobby=true,message="A partida terminou antes da sua entrada. Buscando outra…"})
+								task.spawn(join,player,{mode=s.mode})
+							end
+						end
+					end
+				end
 				if s.runtime.state.phase=="finished" and not s.rewarded then
 					s.rewarded=true
 					if s.runtime.state.reason=="points" then for userId in s.members do profiles.reward(userId,id) end end

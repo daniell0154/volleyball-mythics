@@ -136,6 +136,7 @@ local function receive(nextState: any, reliable: boolean)
 		if Players.LocalPlayer.Character then camera.CameraSubject = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") end
 		marker.Transparency = 1
 		hud.score.Text, hud.status.Text, hud.feedback.Text = "", "", ""
+		if nextState.message then lobby.message(nextState.message) end
 		return
 	end
 	if not nextState.matchId then return end
