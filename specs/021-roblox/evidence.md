@@ -52,3 +52,13 @@ Implementada a arena circular azul com portal branco de Jogar, estação violeta
 - O bundle local foi regenerado com os módulos da T2.1. O roteiro da T3 permanece pendente.
 
 Decisão do gate da T2.1 aceita o lobby, os painéis e a integração local com Solo. Loja vazia e coleção indisponível são os estados previstos nesta etapa. Os ensaios financeiros com catálogo real e os aparelhos físicos permanecem explicitamente pendentes.
+
+## T3 · Coleção e roleta — implementação de 2026-11-19
+
+Nove cenários do módulo Collection passaram no Studio com adaptador de armazenamento em memória e 26 execuções de callbacks, incluindo repetição do callback, dois serviços sobre o mesmo perfil, reenvio da operação, revisão antiga, equipamento inválido, prêmio repetido, coleção completa e releitura. A amostra é fixada por operação e o recibo é gravado junto à dedução e ao prêmio. O perfil mantém sequência crescente e 32 recibos recentes, recusando repetições antigas pela sequência. O giro de conclusão usa matchId no perfil como chave idempotente.
+
+O painel Assinaturas usa o serviço Collection para consultar, girar, recuperar resposta e equipar. O início da partida consulta novamente a habilidade no servidor. Fundamentos é a habilidade inicial neutra. Os dois poderes legados são conteúdo de desenvolvimento, habilitado no Studio. O catálogo público precisa dos efeitos finais aprovados antes de receber esses prêmios.
+
+O serviço usa DataStoreService em namespaces distintos de Studio e produção. Um adaptador temporário exige o atributo explícito MythicsTemporaryProfiles no Workspace durante Studio. Falhas de acesso ao armazenamento são exibidas ao usuário e não substituem seu perfil por dados locais.
+
+O aceite de persistência real e a captura do ciclo completo aguardam a confirmação dos acessos solicitada ao proprietário. A T3 permanece pendente desse aceite.

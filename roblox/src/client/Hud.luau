@@ -122,17 +122,15 @@ function Hud.new()
 			end
 		end)
 	end
-	self.selection = { ability = "teammate_rant", difficulty = "normal", team = "A" }
+	self.selection = { ability = "fundamentals", difficulty = "normal", team = "A" }
 	local function choices()
 		self.skillChoice.Text = "Habilidade · " .. Config.Abilities[self.selection.ability].name
 		local names = { easy = "Fácil", normal = "Normal", hard = "Difícil" }
 		self.difficultyChoice.Text = "Dificuldade · " .. names[self.selection.difficulty]
 		self.sideChoice.Text = "Seu lado · " .. self.selection.team
 	end
-	self.skillChoice.Activated:Connect(function()
-		self.selection.ability = if self.selection.ability == "teammate_rant" then "free_point_out" else "teammate_rant"
-		choices()
-	end)
+	self.skillChoice.Active = false
+	self.skillChoice.AutoButtonColor = false
 	self.difficultyChoice.Activated:Connect(function()
 		self.selection.difficulty = ({ easy = "normal", normal = "hard", hard = "easy" })[self.selection.difficulty]
 		choices()

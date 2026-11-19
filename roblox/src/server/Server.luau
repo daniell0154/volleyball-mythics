@@ -33,6 +33,7 @@ function Server.start()
 	-- Full snapshots include event history. Keep them reliable until a bounded compact codec exists.
 	local snapshot = remote("RemoteEvent", "Snapshot")
 	local reliable = remote("RemoteEvent", "State")
+	local profiles = require(script.Parent.ProfileService).new(remoteFolder)
 	local templates = Instance.new("Folder")
 	templates.Name, templates.Parent = "MythicsActors", ReplicatedStorage
 	local session: any = nil
@@ -159,6 +160,10 @@ function Server.start()
 			if type(data) ~= "table" or not Config.Abilities[data.ability] then return end
 			if data.team ~= "A" and data.team ~= "B" then return end
 			if data.difficulty ~= "easy" and data.difficulty ~= "normal" and data.difficulty ~= "hard" then return end
+			local equipped = profiles.equipped(player, data.mode or "SoloBots2v2")
+			if not equipped then reliable:FireClient(player, { error = "Coleção indisponível. Tente novamente." }) return end
+			if session and session.state.phase ~= "finished" then return end
+			data.ability = equipped
 			owner, channelSeq = player, { movement = 0, action = 0 }
 			if player.Character then player.Character:Destroy() end
 			session = Runtime.new(HttpService:GenerateGUID(false), tostring(player.UserId), data.team, data.ability, data.difficulty, Random.new():NextInteger(1, 2147483647))
@@ -195,6 +200,7 @@ function Server.start()
 			if lastPhase ~= session.state.phase then
 				lastPhase = session.state.phase
 				reliable:FireClient(owner, session:snapshot())
+				if session.state.phase == "finished" then profiles.reward(owner.UserId, session.state.matchId) end
 			end
 			if session.state.phase == "finished" then accumulator = 0 break end
 		end

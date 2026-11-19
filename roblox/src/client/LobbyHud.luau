@@ -195,14 +195,11 @@ function LobbyHud.new(hud: any)
 	duel.Activated:Connect(function() online("Online1v1") end)
 	doubles.Activated:Connect(function() online("Online2v2") end)
 	local signature = panels.Signatures
-	local equipped = text(signature, "Equipped", "Em uso · " .. Config.Abilities[hud.selection.ability].name, 64, 46)
-	text(signature, "Collection", "Uma jogada característica. Uma habilidade ativa.", 112, 42)
-	local chances = text(signature, "Chances", "Coleção e probabilidades disponíveis na próxima etapa.", 164, 60)
-	local spin = button(signature, "Spin", "Girar assinatura · Em breve", 242)
-	spin.AutoButtonColor = false
-	spin.BackgroundColor3 = Color3.fromRGB(61, 73, 77)
-	text(signature, "Balance", "Giros gratuitos", 298, 24)
-	link({spin, close})
+	local collectionPanel = require(script.Parent.CollectionPanel).mount(signature, button, text, function(id)
+		hud.selection.ability = id
+		hud.skillChoice.Text = "Assinatura · " .. Config.Abilities[id].name
+	end, function() return self.reduced end)
+	buttons.Signatures.Activated:Connect(function() collectionPanel.refresh() end)
 	local volume = button(panels.Settings, "Volume", "Efeitos · 50%", 70)
 	local reduced = button(panels.Settings, "ReducedMotion", "Animação reduzida · Desligada", 132)
 	text(panels.Settings, "Scope", "Ajustes aplicados ao lobby nesta sessão.", 200, 50)
@@ -278,16 +275,11 @@ function LobbyHud.new(hud: any)
 		hud.score.Visible, hud.status.Visible, hud.feedback.Visible = not value, not value, not value
 		if value then
 			nav.Visible = true
-			equipped.Text = "Em uso · " .. Config.Abilities[hud.selection.ability].name
+			collectionPanel.refresh()
 			notice.Text = ""
 			returnTo = buttons.Play
 			open(nil)
 		end
-	end
-	-- Presentation fixtures can be injected by Studio acceptance scripts.
-	self.previewSignature = function(data: any)
-		equipped.Text, chances.Text, spin.Text = data.equipped, data.chances, data.status
-		signature.Balance.Text = data.balance
 	end
 	self.focus = function() focus(buttons.Play) end
 	game:GetService("ProximityPromptService").PromptTriggered:Connect(function(prompt, player)
